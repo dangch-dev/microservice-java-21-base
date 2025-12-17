@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Ticket API Guide</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; line-height: 1.5; color: #0f172a; background: #f8fafc; }
+    h1, h2 { color: #0b3b73; }
+    code, pre { background: #0b3b73; color: #e2e8f0; padding: 2px 6px; border-radius: 4px; }
+    pre { padding: 12px; overflow: auto; }
+    .card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px 20px; margin-bottom: 18px; box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05); }
+    ul { padding-left: 20px; }
+  </style>
+</head>
+<body>
+  <h1>Ticket API Guide</h1>
+  <p>Ticket API – quyền và luồng cho 2 role (USER, ADMIN), kèm endpoint và ví dụ.</p>
+
+  <div class="card">
+    <h2>Base URL</h2>
+    <ul>
+      <li>Qua Gateway: <code>http://localhost:8080/api/id</code></li>
+      <li>Trực tiếp Identity: <code>http://localhost:8081</code></li>
+    </ul>
+    <p>Luôn kèm header: <code>Authorization: Bearer &lt;access_token&gt;</code></p>
+  </div>
+
+  <div class="card">
+    <h2>Role & quyền</h2>
+    <ul>
+      <li><b>User</b>: tạo ticket; xem/list ticket của chính mình; hủy (cancel) ticket của mình nếu chưa RESOLVED/CLOSED/CANCELLED; đổi trạng thái hoặc comment chỉ khi là người tạo hoặc đang được assign.</li>
+      <li><b>Admin</b>: xem/list tất cả ticket; có thể assign ticket cho một admin khác; đổi trạng thái hoặc comment chỉ khi là người tạo hoặc được assign; chỉ admin mới được assign và assignee bắt buộc là admin.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Trạng thái ticket</h2>
+    <code>OPEN, IN_PROGRESS, RESOLVED, CLOSED</code>
+  </div>
+
+  <div class="card">
+    <h2>Endpoints</h2>
+    <ul>
+      <li><b>Tạo ticket</b> (User/Admin): POST <code>/tickets</code>
+<pre>{
+  "title": "Issue title",
+  "description": "Describe the issue"
+}</pre>
+      </li>
+      <li><b>Danh sách ticket</b>: GET <code>/tickets</code><br/>
+          - User: chỉ thấy ticket do mình tạo<br/>
+          - Admin: thấy tất cả (lọc page/size/status)
+<pre>/tickets?page=0&size=20&status=OPEN</pre>
+      </li>
+      <li><b>Chi tiết ticket</b>: GET <code>/tickets/{ticketId}</code><br/>
+          - User: chỉ xem ticket của mình<br/>
+          - Admin: xem bất kỳ ticket
+      </li>
+      <li><b>Cập nhật trạng thái / assign</b>: PATCH <code>/tickets/{ticketId}/status</code><br/>
+          - Status đổi được khi caller là creator hoặc assignee<br/>
+          - Assign chỉ Admin, và assignee phải là admin
+<pre>{
+  "status": "IN_PROGRESS",
+  "assignedTo": "adminUserId-optional"
+}</pre>
+      </li>
+      <li><b>Hủy ticket</b> (creator): POST <code>/tickets/{ticketId}/cancel</code> (chỉ khi chưa RESOLVED/CLOSED/CANCELLED)</li>
+      <li><b>Thêm comment</b> (creator hoặc assignee): POST <code>/tickets/{ticketId}/comments</code>
+<pre>{
+  "content": "Trao đổi về ticket..."
+}</pre>
+      </li>
+      <li><b>Danh sách comment</b> (creator hoặc assignee): GET <code>/tickets/{ticketId}/comments</code></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Luồng gợi ý</h2>
+    <ol>
+      <li>User đăng nhập → POST <code>/tickets</code> tạo ticket.</li>
+      <li>Admin xem tất cả: GET <code>/tickets</code>; assign (PATCH /status) cho admin xử lý.</li>
+      <li>Creator/Assignee trao đổi: POST/GET <code>/tickets/{id}/comments</code>.</li>
+      <li>Creator/Assignee cập nhật trạng thái (PATCH /status) theo tiến độ.</li>
+      <li>Creator có thể POST <code>/tickets/{id}/cancel</code> nếu cần hủy (khi chưa RESOLVED/CLOSED/CANCELLED).</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h2>Mẫu gọi nhanh (qua Gateway)</h2>
+<pre>POST http://localhost:8080/api/id/tickets
+Authorization: Bearer &lt;access_token&gt;
+{
+  "title": "Cannot login",
+  "description": "Login fails with 401"
+}
+
+GET http://localhost:8080/api/id/tickets?page=0&size=10&status=OPEN
+Authorization: Bearer &lt;access_token&gt;
+
+PATCH http://localhost:8080/api/id/tickets/{ticketId}/status
+Authorization: Bearer &lt;admin_access_token&gt;
+{
+  "status": "IN_PROGRESS",
+  "assignedTo": "01ADMIN...ULID"  // chỉ admin và assignee phải là admin
+}
+
+POST http://localhost:8080/api/id/tickets/{ticketId}/cancel
+Authorization: Bearer &lt;creator_access_token&gt;
+
+POST http://localhost:8080/api/id/tickets/{ticketId}/comments
+Authorization: Bearer &lt;creator_or_assignee_token&gt;
+{
+  "content": "Please provide more logs"
+}</pre>
+  </div>
+
+  <div class="card">
+    <h2>Notification (in-app only)</h2>
+    <p>Luan luu DB, pub/sub Redis, WebSocket real-time; khong gui email/push.</p>
+<pre><code class="language-mermaid">graph TD
+    A[Event Occurs<br/>Ticket update/new comment/assign] --> B(Backend Application)
+    B --> C{Store Notification}
+    C --> D[(MySQL)<br/>title, message, user_id,<br/>link, type, payload, is_read]
+
+    B --> E[Publish to Redis<br/>channel user.{user_id}]
+    E --> F[WebSocket Server]
+    F --> G{User Online?}
+    G -->|Yes| H[Push real-time<br/>WebSocket -> Client]
+    H --> I[Client updates<br/>badge/list/read sync]
+    G -->|No| J[Next login<br/>Client fetch via API<br/>from MySQL]
+
+    subgraph "Real-time"
+        E --> F --> G --> H --> I
+    end
+    subgraph "Offline fetch"
+        J
+    end
+
+    style D fill:#f9f,stroke:#333
+    style E fill:#ff9,stroke:#333</code></pre>
+    <h3>Nguyen tac thuc thi</h3>
+    <ul>
+      <li>Bang notification: id, user_id, type, title, message, link, payload (JSON), is_read, is_seen, created_at, read_at, seen_at, delivery_status, dedupe_key.</li>
+      <li>Idempotency + retry: unique key (dedupe_key = event_id + user_id) de worker retry khong tao trung; lock logic hoac upsert.</li>
+      <li>Real-time: backend publish Redis <code>user.{user_id}</code>; WebSocket server subscribe; client dang ky sau khi auth (JWT/ky token) de chan subscribe nham user khac.</li>
+      <li>Offline fetch: client fetch chua doc qua API; API mark-read/mark-seen tra ve va broadcast lai qua WebSocket cho cac session khac de dong bo badge.</li>
+      <li>Rate limit/flood control: limit so thong bao/giay theo user; gom nhung event trung nhau (vd lien tuc comment) bang throttle/debounce.</li>
+      <li>Cleanup/TTL: cron don dep thong bao cu hoac archive table; quy dinh retention.</li>
+      <li>Observability: log + metric (do tre, ti le fail per channel), alert khi Redis/WebSocket qua tai.</li>
+    </ul>
+  </div>
+</body>
+</html>

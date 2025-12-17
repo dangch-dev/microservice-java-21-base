@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Authentication Guide</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; line-height: 1.5; color: #0f172a; background: #f8fafc; }
+    h1, h2, h3 { color: #0b3b73; }
+    code, pre { background: #0b3b73; color: #e2e8f0; padding: 2px 6px; border-radius: 4px; }
+    pre { padding: 12px; overflow: auto; }
+    .card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px 20px; margin-bottom: 18px; box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05); }
+    ul { padding-left: 20px; }
+  </style>
+</head>
+<body>
+  <h1>Authentication Guide</h1>
+  <p>This page summarizes the keys to set, available auth-related functions, and example API call flows.</p>
+
+  <div class="card">
+    <h2>1) Keys / Secrets to configure</h2>
+    <ul>
+      <li><b>JWT HS256 secret</b>: <code>security.jwt.secret</code> (same for gateway & identity).</li>
+      <li><b>JWT issuer</b>: <code>security.jwt.issuer</code> (default <code>repo-identity</code>).</li>
+      <li><b>Access TTL</b>: <code>security.jwt.access-ttl</code> (default 5m).</li>
+      <li><b>Refresh TTL</b>: <code>security.jwt.refresh-ttl</code> (default 7d).</li>
+      <li><b>Redis</b>: host/port/password for refresh tokens + email/password reset tokens.</li>
+      <li><b>MySQL</b>: URL, username, password for user & role tables.</li>
+      <li><b>Eureka</b>: <code>eureka.client.service-url.defaultZone</code> (gateway + identity register here).</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>2) Main functions</h2>
+    <ul>
+      <li><b>Signup</b>: create account, email starts as unverified.</li>
+      <li><b>Login</b>: requires verified email; returns access + refresh tokens.</li>
+      <li><b>Refresh token</b>: rotate refresh, get new access.</li>
+      <li><b>Logout</b>: revoke refresh token.</li>
+      <li><b>Email verification</b>: request token via email, verify token to unlock login.</li>
+      <li><b>Forgot / Reset password</b>: request reset token via email, reset without old password.</li>
+      <li><b>Profile</b>: get/update current user.</li>
+      <li><b>Admin user management</b>: list (filter/paginate), detail, create/update, activate/block.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>3) API base paths</h2>
+    <ul>
+      <li><b>Direct to Identity</b>: <code>http://localhost:8081</code> (default).</li>
+      <li><b>Via API Gateway</b>: <code>http://localhost:8080/api/id</code> (gateway strips <code>/api/id</code>).</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>4) Auth flow (happy path)</h2>
+    <ol>
+      <li><b>Signup</b>: POST <code>/auth/signup</code> → returns tokens + emailVerified=false.</li>
+      <li><b>Request email verification</b>: POST <code>/auth/verify-email/request</code> with email.</li>
+      <li><b>Verify email</b>: POST <code>/auth/verify-email</code> with token → emailVerified=true and returns access/refresh tokens (no re-login needed).</li>
+      <li><b>Login</b>: POST <code>/auth/login</code> → access/refresh tokens (use when not using verify-email response tokens or for later sessions).</li>
+      <li><b>Refresh</b>: POST <code>/auth/refresh</code> with refresh token.</li>
+      <li><b>Logout</b>: POST <code>/auth/logout</code> with refresh token.</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h2>5) Forgot / Reset password flow</h2>
+    <ol>
+      <li><b>Request reset</b>: POST <code>/auth/forgot-password</code> with email (no login required).</li>
+      <li><b>Validate token (optional)</b>: GET <code>/auth/reset-password/validate?token=... </code></li>
+      <li><b>Reset</b>: POST <code>/auth/reset-password</code> with token + new password.</li>
+      <li><b>Login again</b>: use new password.</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h2>6) Required headers</h2>
+    <ul>
+      <li><code>Authorization: Bearer &lt;access_token&gt;</code> (protected APIs).</li>
+      <li>Gateway injects for downstream: <code>X-User-Id</code>, <code>X-Roles</code> from JWT.</li>
+      <li>Request correlation: <code>X-Request-Id</code> (optional).</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>7) Error handling</h2>
+    <ul>
+      <li>Response shape: <code>{"success": false, "errorCode": "...", "errorMessage": "...", "data": null}</code>.</li>
+      <li>Examples: <code>E233</code> (Email not verified), <code>E255</code> (Email exists), <code>E239</code> (Wrong password), <code>E241</code> (Token invalid), <code>E248</code> (Refresh token invalid), <code>E243</code> (Missing parameter).</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>8) Quick examples (Gateway paths)</h2>
+<pre>POST http://localhost:8080/api/id/auth/signup
+{ "email":"user@local", "password":"Admin@123", "fullName":"User Local" }
+
+POST http://localhost:8080/api/id/auth/verify-email/request
+{ "email":"user@local" }
+
+POST http://localhost:8080/api/id/auth/verify-email
+{ "token":"&lt;emailVerifyToken&gt;" }
+
+POST http://localhost:8080/api/id/auth/login
+{ "email":"user@local", "password":"Admin@123" }
+
+POST http://localhost:8080/api/id/auth/refresh
+{ "refreshToken":"&lt;refresh&gt;" }
+
+POST http://localhost:8080/api/id/auth/logout
+{ "refreshToken":"&lt;refresh&gt;" }
+
+POST http://localhost:8080/api/id/auth/forgot-password
+{ "email":"user@local" }
+
+POST http://localhost:8080/api/id/auth/reset-password
+{ "token":"&lt;resetToken&gt;", "newPassword":"NewPass@123" }</pre>
+  </div>
+</body>
+</html>

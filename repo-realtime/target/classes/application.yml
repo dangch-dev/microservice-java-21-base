@@ -1,0 +1,34 @@
+spring:
+  application:
+    name: repo-realtime
+  autoconfigure:
+    exclude:
+      # Database Off
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: realtime-noti
+      auto-offset-reset: latest
+
+server:
+  port: 8084
+
+security:
+  jwt:
+    secret: GF+Ew62Dj5dd9w23GrL18RWTnVRgF6fx7CiNkDdFa41u2eOMTsLdKFIY1uM8yquRqKuEeo1i/VQW3+UBR3D9TQ==
+    issuer: repo-identity-api
+
+logging:
+  level:
+    org.springframework.security: INFO
+
+notification:
+  dispatch:
+    topic: notification.dispatch
+
+internal:
+  notification:
+    service: repo-notification
+    callback-path: /internal/notifications/{id}/delivery

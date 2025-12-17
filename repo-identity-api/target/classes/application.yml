@@ -1,0 +1,61 @@
+spring:
+  application:
+    name: repo-identity-api
+  sql:
+    init:
+      mode: always
+      data-locations: classpath:init-data.sql
+  datasource:
+    url: jdbc:mysql://localhost:3306/id_mysql_database?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: root
+    password: mysql_root_password
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+    open-in-view: false
+    defer-datasource-initialization: true
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: redis_password
+  kafka:
+    bootstrap-servers: localhost:9092
+
+server:
+  port: 8081
+
+security:
+  jwt:
+    secret: GF+Ew62Dj5dd9w23GrL18RWTnVRgF6fx7CiNkDdFa41u2eOMTsLdKFIY1uM8yquRqKuEeo1i/VQW3+UBR3D9TQ==
+    issuer: repo-identity
+    access-ttl: PT5M
+    refresh-ttl: P7D
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+logging:
+  level:
+    org.springframework.security: INFO
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+  instance:
+    prefer-ip-address: true
+    ip-address: 127.0.0.1
+    hostname: localhost

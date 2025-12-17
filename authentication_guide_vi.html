@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Hướng Dẫn Xác Thực</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; line-height: 1.5; color: #0f172a; background: #f8fafc; }
+    h1, h2, h3 { color: #0b3b73; }
+    code, pre { background: #0b3b73; color: #e2e8f0; padding: 2px 6px; border-radius: 4px; }
+    pre { padding: 12px; overflow: auto; }
+    .card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px 20px; margin-bottom: 18px; box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05); }
+    ul { padding-left: 20px; }
+  </style>
+</head>
+<body>
+  <h1>Hướng Dẫn Xác Thực</h1>
+  <p>Tóm tắt các khóa cần cấu hình, chức năng xác thực và cách gọi API.</p>
+
+  <div class="card">
+    <h2>1) Khóa / Secret cần cấu hình</h2>
+    <ul>
+      <li><b>JWT HS256 secret</b>: <code>security.jwt.secret</code> (dùng chung gateway & identity).</li>
+      <li><b>JWT issuer</b>: <code>security.jwt.issuer</code> (mặc định <code>repo-identity</code>).</li>
+      <li><b>Access TTL</b>: <code>security.jwt.access-ttl</code> (mặc định 5 phút).</li>
+      <li><b>Refresh TTL</b>: <code>security.jwt.refresh-ttl</code> (mặc định 7 ngày).</li>
+      <li><b>Redis</b>: host/port/password cho refresh token + token xác minh email / đặt lại mật khẩu.</li>
+      <li><b>MySQL</b>: URL, username, password cho bảng user & role.</li>
+      <li><b>Eureka</b>: <code>eureka.client.service-url.defaultZone</code> (gateway & identity đăng ký ở đây).</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>2) Chức năng chính</h2>
+    <ul>
+      <li><b>Signup</b>: tạo tài khoản, email ban đầu chưa xác minh.</li>
+      <li><b>Login</b>: yêu cầu email đã xác minh; trả về access + refresh token.</li>
+      <li><b>Refresh token</b>: xoay refresh, cấp access mới.</li>
+      <li><b>Logout</b>: thu hồi refresh token.</li>
+      <li><b>Xác minh email</b>: gửi token qua email, xác minh để mở khóa login.</li>
+      <li><b>Quên / Đặt lại mật khẩu</b>: gửi token qua email, đặt lại không cần mật khẩu cũ.</li>
+      <li><b>Hồ sơ</b>: xem/cập nhật thông tin cá nhân.</li>
+      <li><b>Quản lý người dùng (Admin)</b>: danh sách (lọc/phân trang), chi tiết, tạo/cập nhật, active/block.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>3) Base path API</h2>
+    <ul>
+      <li><b>Đi thẳng Identity</b>: <code>http://localhost:8081</code>.</li>
+      <li><b>Qua API Gateway</b>: <code>http://localhost:8080/api/id</code> (gateway bỏ prefix <code>/api/id</code>).</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>4) Luồng xác thực (happy path)</h2>
+    <ol>
+      <li><b>Signup</b>: POST <code>/auth/signup</code> → trả token, <code>emailVerified=false</code>.</li>
+      <li><b>Yêu cầu xác minh email</b>: POST <code>/auth/verify-email/request</code> với email.</li>
+      <li><b>Xác minh email</b>: POST <code>/auth/verify-email</code> với token → <code>emailVerified=true</code> và trả về access/refresh token (không cần đăng nhập lại).</li>
+      <li><b>Login</b>: POST <code>/auth/login</code> → access/refresh token (dùng khi không lấy token từ bước verify-email hoặc cho lần đăng nhập sau).</li>
+      <li><b>Refresh</b>: POST <code>/auth/refresh</code> với refresh token.</li>
+      <li><b>Logout</b>: POST <code>/auth/logout</code> với refresh token.</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h2>5) Luồng quên / đặt lại mật khẩu</h2>
+    <ol>
+      <li><b>Yêu cầu reset</b>: POST <code>/auth/forgot-password</code> với email (không cần login).</li>
+      <li><b>Kiểm tra token (tùy chọn)</b>: GET <code>/auth/reset-password/validate?token=...</code></li>
+      <li><b>Đặt lại</b>: POST <code>/auth/reset-password</code> với token + mật khẩu mới.</li>
+      <li><b>Login lại</b>: dùng mật khẩu mới.</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h2>6) Header cần dùng</h2>
+    <ul>
+      <li><code>Authorization: Bearer &lt;access_token&gt;</code> (API bảo vệ).</li>
+      <li>Gateway thêm cho downstream: <code>X-User-Id</code>, <code>X-Roles</code> từ JWT.</li>
+      <li>Gợi ý: <code>X-Request-Id</code> (theo dõi request).</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>7) Xử lý lỗi</h2>
+    <ul>
+      <li>Format: <code>{"success": false, "errorCode": "...", "errorMessage": "...", "data": null}</code>.</li>
+      <li>Ví dụ: <code>E233</code> (Email chưa xác minh), <code>E255</code> (Email đã tồn tại), <code>E239</code> (Sai mật khẩu), <code>E241</code> (Token không hợp lệ), <code>E248</code> (Refresh token không hợp lệ), <code>E243</code> (Thiếu tham số).</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>8) Ví dụ nhanh (qua Gateway)</h2>
+<pre>POST http://localhost:8080/api/id/auth/signup
+{ "email":"user@local", "password":"Admin@123", "fullName":"User Local" }
+
+POST http://localhost:8080/api/id/auth/verify-email/request
+{ "email":"user@local" }
+
+POST http://localhost:8080/api/id/auth/verify-email
+{ "token":"&lt;emailVerifyToken&gt;" }
+
+POST http://localhost:8080/api/id/auth/login
+{ "email":"user@local", "password":"Admin@123" }
+
+POST http://localhost:8080/api/id/auth/refresh
+{ "refreshToken":"&lt;refresh&gt;" }
+
+POST http://localhost:8080/api/id/auth/logout
+{ "refreshToken":"&lt;refresh&gt;" }
+
+POST http://localhost:8080/api/id/auth/forgot-password
+{ "email":"user@local" }
+
+POST http://localhost:8080/api/id/auth/reset-password
+{ "token":"&lt;resetToken&gt;", "newPassword":"NewPass@123" }</pre>
+  </div>
+</body>
+</html>
