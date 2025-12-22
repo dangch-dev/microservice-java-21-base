@@ -30,7 +30,8 @@ server:
 
 security:
   jwt:
-    secret: GF+Ew62Dj5dd9w23GrL18RWTnVRgF6fx7CiNkDdFa41u2eOMTsLdKFIY1uM8yquRqKuEeo1i/VQW3+UBR3D9TQ==
+    public-key-path: file:../secrets/jwt-public.pem
+    private-key-path: file:../secrets/jwt-private.pem
     issuer: repo-identity
     access-ttl: PT5M
     refresh-ttl: P7D
@@ -57,5 +58,5 @@ eureka:
       defaultZone: http://localhost:8761/eureka
   instance:
     prefer-ip-address: true
-    ip-address: 127.0.0.1
     hostname: localhost
+    instance-id: ${spring.application.name}:${server.port}

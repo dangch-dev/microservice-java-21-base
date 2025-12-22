@@ -21,9 +21,18 @@ spring:
 server:
   port: 8083
 
+eureka:
+  instance:
+    prefer-ip-address: true
+    hostname: localhost
+    instance-id: ${spring.application.name}:${server.port}
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+
 security:
   jwt:
-    secret: GF+Ew62Dj5dd9w23GrL18RWTnVRgF6fx7CiNkDdFa41u2eOMTsLdKFIY1uM8yquRqKuEeo1i/VQW3+UBR3D9TQ==
+    public-key-path: file:../secrets/jwt-public.pem
     issuer: repo-identity-api
 
 logging:

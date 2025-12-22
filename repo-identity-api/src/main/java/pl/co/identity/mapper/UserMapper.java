@@ -20,6 +20,11 @@ public interface UserMapper {
     AdminUserResponse toAdmin(User user);
 
     default Set<String> toRoleNames(Set<Role> roles) {
-        return roles == null ? Set.of() : roles.stream().map(Role::getName).collect(Collectors.toSet());
+        return roles == null
+                ? Set.of()
+                : roles.stream()
+                .map(role -> role.getName().name())
+                .collect(Collectors.toSet());
     }
+
 }

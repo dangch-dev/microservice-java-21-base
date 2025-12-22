@@ -17,18 +17,32 @@ server:
 
 security:
   jwt:
-    secret: GF+Ew62Dj5dd9w23GrL18RWTnVRgF6fx7CiNkDdFa41u2eOMTsLdKFIY1uM8yquRqKuEeo1i/VQW3+UBR3D9TQ==
+    public-key-path: file:../secrets/jwt-public.pem
     issuer: repo-identity-api
 
+eureka:
+  instance:
+    prefer-ip-address: true
+    hostname: localhost
+    instance-id: ${spring.application.name}:${server.port}
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+
+#logging:
+#  level:
+#    org.springframework.security: INFO
 logging:
   level:
-    org.springframework.security: INFO
+    org.springframework:
+      cloud.gateway: INFO
+      web.reactive:
+        socket:
+          server: DEBUG
+      messaging: DEBUG
+    web.reactive.socket: DEBUG
+
 
 notification:
-  dispatch:
-    topic: notification.dispatch
-
-internal:
-  notification:
-    service: repo-notification
-    callback-path: /internal/notifications/{id}/delivery
+  kafka:
+    topic: notification.events

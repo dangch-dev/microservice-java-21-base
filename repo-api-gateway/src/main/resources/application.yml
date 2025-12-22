@@ -1,13 +1,13 @@
 spring:
   application:
     name: api-gateway
-  autoconfigure:
-    exclude:
-      # Database Off
-      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
-      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
-      # Spring security Off
-      - org.springframework.boot.autoconfigure.security.reactive.ReactiveSecurityAutoConfiguration
+#  autoconfigure:
+#    exclude:
+#      # Database Off
+#      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+#      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+#      # Spring security Off
+#      - org.springframework.boot.autoconfigure.security.reactive.ReactiveSecurityAutoConfiguration
   data:
     redis:
       host: localhost
@@ -15,6 +15,10 @@ spring:
       password: redis_password
   cloud:
     gateway:
+      httpclient:
+        wiretap: true
+      httpserver:
+        wiretap: true
       default-filters:
         - PreserveHostHeader
       discovery:
@@ -28,11 +32,21 @@ spring:
           filters:
             - StripPrefix=${config.strip-prefix}
         - id: realtime
-          uri: lb://REPO-REALTIME
+          uri: lb:ws://REPO-REALTIME
           predicates:
-            - Path=/ws/**
+            - Path=${config.ws-prefix}/realtime/**
+            - Header=Upgrade, websocket
+          filters:
+            - StripPrefix=${config.strip-prefix}
+        - id: notification
+          uri: lb://REPO-NOTIFICATION
+          predicates:
+            - Path=${config.api-prefix}/notification/**
+          filters:
+            - StripPrefix=${config.strip-prefix}
   main:
     web-application-type: reactive
+
 config:
   api-prefix: /api
   ws-prefix: /ws
@@ -41,28 +55,15 @@ config:
 server:
   port: 8080
 
-security:
-  jwt:
-    secret: GF+Ew62Dj5dd9w23GrL18RWTnVRgF6fx7CiNkDdFa41u2eOMTsLdKFIY1uM8yquRqKuEeo1i/VQW3+UBR3D9TQ==
-    required: true
-    permit-paths:
-      # Identity Service
-      - /api/id/auth/**
-      # Another Service
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info
-  endpoint:
-    health:
-      probes:
-        enabled: true
-
 logging:
   level:
-    org.springframework.cloud.gateway: INFO
+    org.springframework:
+      cloud.gateway: INFO
+      web.reactive:
+        socket:
+          server: DEBUG
+      messaging: DEBUG
+    web.reactive.socket: DEBUG
 
 eureka:
   client:

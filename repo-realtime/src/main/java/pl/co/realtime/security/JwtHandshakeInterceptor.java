@@ -1,7 +1,6 @@
 package pl.co.realtime.security;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
@@ -15,6 +14,7 @@ import pl.co.common.security.JwtUtils;
 import pl.co.common.security.SecurityConstants;
 
 import java.security.Principal;
+import java.security.interfaces.RSAPublicKey;
 import java.util.Map;
 import java.util.UUID;
 
@@ -22,8 +22,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class JwtHandshakeInterceptor implements HandshakeInterceptor {
 
-    @Value("${security.jwt.secret}")
-    private String jwtSecret;
+    private final RSAPublicKey jwtPublicKey;
 
     public static final String ATTR_PRINCIPAL_NAME = "wsPrincipalName";
 
@@ -32,15 +31,13 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
                                    WebSocketHandler wsHandler, Map<String, Object> attributes) {
         String token = resolveToken(request);
         if (token == null) {
-            return false;
-        }
-        try {
-            JwtUtils.JwtPayload payload = JwtUtils.verify(token, jwtSecret);
-            attributes.put(ATTR_PRINCIPAL_NAME, payload.userId());
+            // Allow anonymous handshake; principal will become anon-<uuid>
             return true;
-        } catch (ApiException ex) {
-            return false;
         }
+        // If token is present, require it to be valid and attach userId as principal
+        JwtUtils.JwtPayload payload = JwtUtils.verify(token, jwtPublicKey);
+        attributes.put(ATTR_PRINCIPAL_NAME, payload.userId());
+        return true;
     }
 
     @Override

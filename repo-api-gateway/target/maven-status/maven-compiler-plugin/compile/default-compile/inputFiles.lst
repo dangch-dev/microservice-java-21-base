@@ -1,3 +1,2 @@
-D:\Freelance Project\Services\repo-api-gateway\src\main\java\pl\co\apigateway\config\GatewaySecurityProperties.java
-D:\Freelance Project\Services\repo-api-gateway\src\main\java\pl\co\apigateway\filter\JwtAuthenticationFilter.java
-D:\Freelance Project\Services\repo-api-gateway\src\main\java\pl\co\apigateway\RepoApiGatewayApplication.java
+D:\Freelance Project\microservice-java-21-base\repo-api-gateway\src\main\java\pl\co\apigateway\exception\GlobalErrorHandler.java
+D:\Freelance Project\microservice-java-21-base\repo-api-gateway\src\main\java\pl\co\apigateway\RepoApiGatewayApplication.java

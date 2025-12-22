@@ -8,7 +8,7 @@ import pl.co.identity.entity.User;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-12-15T22:14:16+0700",
+    date = "2025-12-19T21:19:52+0700",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 21.0.9 (Oracle Corporation)"
 )
 @Component

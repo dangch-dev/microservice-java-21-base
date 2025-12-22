@@ -8,6 +8,7 @@ import pl.co.identity.dto.AdminUserFilterRequest;
 import pl.co.identity.dto.AdminUserPageResponse;
 import pl.co.identity.dto.AdminUserResponse;
 import pl.co.identity.entity.Role;
+import pl.co.identity.entity.RoleName;
 import pl.co.identity.entity.User;
 import pl.co.identity.entity.UserStatus;
 import pl.co.identity.mapper.UserMapper;
@@ -70,7 +71,7 @@ public class AdminServiceImpl implements AdminService {
         }
         Set<Role> roles = resolveRoles(request.getRoles());
         if (roles.isEmpty()) {
-            Role defaultRole = roleRepository.findByName("ROLE_USER")
+            Role defaultRole = roleRepository.findByName(RoleName.ROLE_USER)
                     .orElseThrow(() -> new ApiException(ErrorCode.E221, "Role not found data: ROLE_USER"));
             roles.add(defaultRole);
         }
@@ -154,10 +155,30 @@ public class AdminServiceImpl implements AdminService {
         if (names == null || names.isEmpty()) {
             return new HashSet<>();
         }
+
         return names.stream()
-                .map(name -> roleRepository.findByName(name)
-                        .orElseThrow(() -> new ApiException(ErrorCode.E221, "Role not found data: " + name)))
+                .map(name -> {
+                    if (!isValidRoleName(name)) {
+                        throw new ApiException(
+                                ErrorCode.E221,
+                                "Role not found data: " + name
+                        );
+                    }
+
+                    Role role = new Role();
+                    role.setName(RoleName.valueOf(name));
+                    return role;
+                })
                 .collect(Collectors.toSet());
+    }
+
+    private boolean isValidRoleName(String name) {
+        try {
+            RoleName.valueOf(name);
+            return true;
+        } catch (IllegalArgumentException ex) {
+            return false;
+        }
     }
 
     private Specification<User> buildSpec(AdminUserFilterRequest filter) {

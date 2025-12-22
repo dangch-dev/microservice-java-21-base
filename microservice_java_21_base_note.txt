@@ -1,0 +1,22 @@
+mvn clean install -DskipTests
+
+
+powershell clean cache
+
+$env:JAVA_HOME="C:\Program Files\Java\jdk-21"
+$env:PATH="$env:JAVA_HOME\bin;C:\Program Files\Maven\apache-maven-3.9.9\bin;$env:PATH"
+
+# dọn build cũ trong repo hiện tại và cache m2 của group pl.co
+cd "D:\Freelance Project\microservice-java-21-base"
+Get-ChildItem -Recurse -Directory -Filter target | Remove-Item -Recurse -Force
+Remove-Item "$env:USERPROFILE\.m2\repository\pl\co" -Recurse -Force
+
+# build lại theo thứ tự
+cd repo-common-parent
+mvn clean install -DskipTests
+cd ..\repo-common-framework
+mvn clean install -DskipTests
+cd ..\repo-notification
+mvn clean package -DskipTests
+cd ..\repo-identity-api
+mvn clean package -DskipTests

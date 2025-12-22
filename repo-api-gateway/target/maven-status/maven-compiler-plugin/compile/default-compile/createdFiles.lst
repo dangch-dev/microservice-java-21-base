@@ -1,2 +1,3 @@
+pl\co\apigateway\exception\GlobalErrorHandler$1.class
 pl\co\apigateway\RepoApiGatewayApplication.class
-pl\co\apigateway\filter\JwtAuthenticationFilter.class
+pl\co\apigateway\exception\GlobalErrorHandler.class

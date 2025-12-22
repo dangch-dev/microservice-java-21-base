@@ -1,8 +1,6 @@
 package pl.co.identity.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,6 +17,7 @@ import pl.co.common.jpa.BaseEntity;
 @Table(name = "role")
 public class Role extends BaseEntity {
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, unique = true, length = 64)
-    private String name;
+    private RoleName name;
 }

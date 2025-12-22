@@ -1,16 +1,17 @@
 package pl.co.common.security;
 
-import pl.co.common.exception.ApiException;
-import pl.co.common.exception.ErrorCode;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
-import com.nimbusds.jose.Payload;
-import com.nimbusds.jose.crypto.MACSigner;
-import com.nimbusds.jose.crypto.MACVerifier;
+import com.nimbusds.jose.crypto.RSASSASigner;
+import com.nimbusds.jose.crypto.RSASSAVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import pl.co.common.exception.ApiException;
+import pl.co.common.exception.ErrorCode;
 
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
 import java.time.Duration;
 import java.time.Instant;
@@ -28,14 +29,14 @@ public final class JwtUtils {
                                              boolean emailVerified,
                                              Duration ttl,
                                              String issuer,
-                                             String secret) {
-        return signToken(userId, email, roles, emailVerified, ttl, issuer, secret, UUID.randomUUID().toString());
+                                             RSAPrivateKey privateKey) {
+        return signToken(userId, email, roles, emailVerified, ttl, issuer, privateKey, UUID.randomUUID().toString());
     }
 
     public static String generateRefreshToken(String userId,
                                               Duration ttl,
                                               String issuer,
-                                              String secret,
+                                              RSAPrivateKey privateKey,
                                               String parentJti) {
         Instant now = Instant.now();
         JWTClaimsSet claims = new JWTClaimsSet.Builder()
@@ -47,12 +48,12 @@ public final class JwtUtils {
                 .claim("typ", "refresh")
                 .claim("prt", parentJti)
                 .build();
-        return sign(claims, secret);
+        return sign(claims, privateKey);
     }
 
-    public static JwtPayload verify(String token, String secret) {
+    public static JwtPayload verify(String token, RSAPublicKey publicKey) {
         SignedJWT jwt = parse(token);
-        boolean valid = verifySignature(jwt, secret);
+        boolean valid = verifySignature(jwt, publicKey);
         if (!valid) {
             throw new ApiException(ErrorCode.UNAUTHORIZED, "Invalid token signature");
         }
@@ -96,7 +97,7 @@ public final class JwtUtils {
                                     boolean emailVerified,
                                     Duration ttl,
                                     String issuer,
-                                    String secret,
+                                    RSAPrivateKey privateKey,
                                     String jti) {
         Instant now = Instant.now();
         JWTClaimsSet claims = new JWTClaimsSet.Builder()
@@ -111,26 +112,22 @@ public final class JwtUtils {
                 .claim(SecurityConstants.CLAIM_EMAIL_VERIFIED, emailVerified)
                 .claim("typ", "access")
                 .build();
-        return sign(claims, secret);
+        return sign(claims, privateKey);
     }
 
-    private static String sign(JWTClaimsSet claims, String secret) {
+    private static String sign(JWTClaimsSet claims, RSAPrivateKey privateKey) {
         try {
-            byte[] secretBytes = secret.getBytes();
-            if (secretBytes.length < 32) {
-                throw new ApiException(ErrorCode.INTERNAL_ERROR, "JWT secret must be at least 256 bits");
-            }
-            SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.HS256), claims);
-            signedJWT.sign(new MACSigner(secretBytes));
+            SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.RS256), claims);
+            signedJWT.sign(new RSASSASigner(privateKey));
             return signedJWT.serialize();
         } catch (JOSEException e) {
             throw new ApiException(ErrorCode.INTERNAL_ERROR, "Failed to sign JWT", e);
         }
     }
 
-    private static boolean verifySignature(SignedJWT jwt, String secret) {
+    private static boolean verifySignature(SignedJWT jwt, RSAPublicKey publicKey) {
         try {
-            return jwt.verify(new MACVerifier(secret.getBytes()));
+            return jwt.verify(new RSASSAVerifier(publicKey));
         } catch (JOSEException e) {
             throw new ApiException(ErrorCode.UNAUTHORIZED, "Invalid token signature", e);
         }

@@ -1,4 +1,7 @@
 pl\co\realtime\listener\NotificationKafkaToWsListener.class
-pl\co\realtime\RepoRealtimeApplication.class
 pl\co\realtime\config\SecurityConfig.class
+pl\co\realtime\security\JwtHandshakeInterceptor.class
+pl\co\realtime\security\WsAuthChannelInterceptor.class
+pl\co\realtime\security\JwtHandshakeInterceptor$1.class
+pl\co\realtime\RepoRealtimeApplication.class
 pl\co\realtime\config\WebSocketConfig.class
