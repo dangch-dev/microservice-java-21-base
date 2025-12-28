@@ -38,19 +38,50 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     @Transactional
-    public NotificationResponse create(NotificationEvent request) {
-        validateCreateRequest(request);
+    public void create(NotificationEvent request) {
+        if (request == null) {
+            throw new IllegalArgumentException("Notification request is required");
+        }
+        if (request.userId() == null || request.userId().isBlank()) {
+            throw new IllegalArgumentException("Notification userId is required");
+        }
+        if (request.topic() == null || request.topic().isBlank()) {
+            throw new IllegalArgumentException("Notification topic is required");
+        }
+        if (request.title() == null || request.title().isBlank()) {
+            throw new IllegalArgumentException("Notification title is required");
+        }
+        if (request.message() == null || request.message().isBlank()) {
+            throw new IllegalArgumentException("Notification message is required");
+        }
 
-        String dedupeKey = normalizeDedupeKey(request.dedupeKey());
+        String dedupeKey = null;
+        if (request.dedupeKey() != null) {
+            String trimmed = request.dedupeKey().trim();
+            if (trimmed.isEmpty()) {
+                return;
+            }
+            dedupeKey = trimmed.length() > MAX_DEDUPE_LENGTH ? trimmed.substring(0, MAX_DEDUPE_LENGTH) : trimmed;
+        }
+
+
         if (dedupeKey != null) {
             Optional<Notification> existing = notificationRepository.findByDedupeKey(dedupeKey);
             if (existing.isPresent()) {
-                Notification found = existing.get();
-                return toResponse(found);
+                return;
             }
         }
 
-        String payloadJson = toPayloadJson(request.payload());
+        String payloadJson = null;
+        if (request.payload() != null && !request.payload().isEmpty()) {
+            try {
+                payloadJson = objectMapper.writeValueAsString(request.payload());
+            } catch (JsonProcessingException e) {
+                log.warn("Failed to serialize notification payload: {}", e.getMessage());
+            }
+        }
+
+
         Notification notification = Notification.builder()
                 .userId(request.userId())
                 .topic(request.topic().trim())
@@ -63,18 +94,16 @@ public class NotificationServiceImpl implements NotificationService {
                 .isSeen(false)
                 .dedupeKey(dedupeKey)
                 .build();
-        Notification saved;
         try {
-            saved = notificationRepository.save(notification);
+            notificationRepository.save(notification);
         } catch (DataIntegrityViolationException ex) {
             if (dedupeKey != null) {
-                return notificationRepository.findByDedupeKey(dedupeKey)
-                        .map(this::toResponse)
+                notificationRepository.findByDedupeKey(dedupeKey)
                         .orElseThrow(() -> ex);
+                return;
             }
             throw ex;
         }
-        return toResponse(saved);
     }
 
     @Override
@@ -150,49 +179,20 @@ public class NotificationServiceImpl implements NotificationService {
         return notificationRepository.countByUserIdAndIsReadFalse(userId);
     }
 
-    private void validateCreateRequest(NotificationEvent request) {
-        if (request == null) {
-            throw new IllegalArgumentException("Notification request is required");
-        }
-        if (request.userId() == null || request.userId().isBlank()) {
-            throw new IllegalArgumentException("Notification userId is required");
-        }
-        if (request.topic() == null || request.topic().isBlank()) {
-            throw new IllegalArgumentException("Notification topic is required");
-        }
-        if (request.title() == null || request.title().isBlank()) {
-            throw new IllegalArgumentException("Notification title is required");
-        }
-        if (request.message() == null || request.message().isBlank()) {
-            throw new IllegalArgumentException("Notification message is required");
-        }
-    }
-
-    private String normalizeDedupeKey(String dedupeKey) {
-        if (dedupeKey == null) {
-            return null;
-        }
-        String trimmed = dedupeKey.trim();
-        if (trimmed.isEmpty()) {
-            return null;
-        }
-        return trimmed.length() > MAX_DEDUPE_LENGTH ? trimmed.substring(0, MAX_DEDUPE_LENGTH) : trimmed;
-    }
-
-    private String toPayloadJson(Map<String, Object> payload) {
-        if (payload == null || payload.isEmpty()) {
-            return null;
-        }
-        try {
-            return objectMapper.writeValueAsString(payload);
-        } catch (JsonProcessingException e) {
-            log.warn("Failed to serialize notification payload: {}", e.getMessage());
-            return null;
-        }
-    }
-
     private NotificationResponse toResponse(Notification notification) {
-        Map<String, Object> payload = parsePayload(notification.getPayload());
+        Map<String, Object> payload = null;
+        String payloadJson = notification.getPayload();
+        if (payloadJson != null && !payloadJson.isBlank()) {
+            try {
+                payload = objectMapper.readValue(payloadJson, MAP_TYPE);
+            } catch (Exception ex) {
+                log.warn("Failed to parse notification payload: {}", ex.getMessage());
+                Map<String, Object> fallback = new HashMap<>();
+                fallback.put("raw", payloadJson);
+                payload =  fallback;
+            }
+        }
+
         return NotificationResponse.builder()
                 .id(notification.getId())
                 .topic(notification.getTopic())
@@ -209,19 +209,4 @@ public class NotificationServiceImpl implements NotificationService {
                 .dedupeKey(notification.getDedupeKey())
                 .build();
     }
-
-    private Map<String, Object> parsePayload(String payloadJson) {
-        if (payloadJson == null || payloadJson.isBlank()) {
-            return null;
-        }
-        try {
-            return objectMapper.readValue(payloadJson, MAP_TYPE);
-        } catch (Exception ex) {
-            log.warn("Failed to parse notification payload: {}", ex.getMessage());
-            Map<String, Object> fallback = new HashMap<>();
-            fallback.put("raw", payloadJson);
-            return fallback;
-        }
-    }
-
 }

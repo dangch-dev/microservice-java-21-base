@@ -5,7 +5,7 @@ import pl.co.notification.dto.NotificationPageResponse;
 import pl.co.notification.dto.NotificationResponse;
 
 public interface NotificationService {
-    NotificationResponse create(NotificationEvent request);
+    void create(NotificationEvent request);
     NotificationPageResponse list(String userId, int page, int size);
     NotificationResponse markSeen(String userId, String notificationId);
     NotificationResponse markRead(String userId, String notificationId);
