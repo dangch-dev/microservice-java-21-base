@@ -18,6 +18,11 @@ import java.security.interfaces.RSAPublicKey;
 import java.util.Map;
 import java.util.UUID;
 
+/*
+* Runs during the HTTP→WebSocket upgrade.
+* Checks/sets info (e.g., validate JWT, put attributes).
+* Called after the Security filter chain allows the handshake, but before the WebSocket connection is opened.
+* */
 @Component
 @RequiredArgsConstructor
 public class JwtHandshakeInterceptor implements HandshakeInterceptor {
