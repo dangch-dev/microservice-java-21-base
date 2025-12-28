@@ -1,0 +1,3 @@
+# Ignore build outputs and IDE metadata anywhere in the tree
+**/target/
+**/.idea/
