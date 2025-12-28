@@ -247,10 +247,6 @@ public class TicketServiceImpl implements TicketService {
                     "Ticket '" + ticket.getTitle() + "' changed to " + ticket.getStatus(),
                     payload,
                     "ticket:" + ticket.getId() + ":status:" + ticket.getStatus() + ":user:" + target);
-
-
-            // TODO: Call API for send notification
-
         }
     }
 
