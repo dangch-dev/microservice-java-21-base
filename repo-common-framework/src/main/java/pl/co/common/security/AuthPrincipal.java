@@ -23,8 +23,4 @@ public record AuthPrincipal(String userId, String email, boolean emailVerified, 
     public boolean hasAnyRole(Collection<String> candidate) {
         return roles != null && candidate.stream().anyMatch(roles::contains);
     }
-
-    public boolean isEmailVerified() {
-        return emailVerified;
-    }
 }

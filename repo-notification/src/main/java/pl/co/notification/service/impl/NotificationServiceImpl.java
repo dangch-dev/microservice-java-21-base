@@ -45,9 +45,6 @@ public class NotificationServiceImpl implements NotificationService {
         if (request.userId() == null || request.userId().isBlank()) {
             throw new IllegalArgumentException("Notification userId is required");
         }
-        if (request.topic() == null || request.topic().isBlank()) {
-            throw new IllegalArgumentException("Notification topic is required");
-        }
         if (request.title() == null || request.title().isBlank()) {
             throw new IllegalArgumentException("Notification title is required");
         }
@@ -84,7 +81,7 @@ public class NotificationServiceImpl implements NotificationService {
 
         Notification notification = Notification.builder()
                 .userId(request.userId())
-                .topic(request.topic().trim())
+                .action(request.action() != null ? request.action().name() : null)
                 .title(request.title())
                 .message(request.message())
                 .resourceType(request.resourceType() != null ? request.resourceType().name() : null)
@@ -195,7 +192,7 @@ public class NotificationServiceImpl implements NotificationService {
 
         return NotificationResponse.builder()
                 .id(notification.getId())
-                .topic(notification.getTopic())
+                .action(notification.getAction())
                 .title(notification.getTitle())
                 .message(notification.getMessage())
                 .resourceType(notification.getResourceType())

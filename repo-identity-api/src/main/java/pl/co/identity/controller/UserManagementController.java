@@ -23,8 +23,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/admin/users")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
-public class AdminController {
+@PreAuthorize("hasAnyRole('ADMIN')")
+public class UserManagementController {
 
     private final AdminService adminService;
 

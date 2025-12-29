@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.co.common.exception.ApiException;
 import pl.co.common.exception.ErrorCode;
+import pl.co.common.notification.NotificationAction;
 import pl.co.common.security.AuthPrincipal;
 import pl.co.identity.dto.TicketCommentRequest;
 import pl.co.identity.dto.TicketCommentResponse;
@@ -26,7 +27,7 @@ import pl.co.identity.mapper.TicketMapper;
 import pl.co.identity.repository.TicketCommentRepository;
 import pl.co.identity.repository.TicketRepository;
 import pl.co.identity.repository.UserRepository;
-import pl.co.identity.service.TicketService;
+import pl.co.identity.service.TicketUserService;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,7 +38,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class TicketServiceImpl implements TicketService {
+public class TicketUserServiceImpl implements TicketUserService {
 
     private final TicketRepository ticketRepository;
     private final TicketMapper ticketMapper;
@@ -92,19 +93,9 @@ public class TicketServiceImpl implements TicketService {
         TicketStatus previousStatus = ticket.getStatus();
         String previousAssignee = ticket.getAssignedTo();
         String newAssigneeName = null;
-        // Assign only by admin
+        // User flow: không cho tự assign qua endpoint này
         if (request.getAssignedTo() != null && !request.getAssignedTo().isBlank()) {
-            if (!principal.hasRole("ROLE_ADMIN")) {
-                throw new ApiException(ErrorCode.E230, "No authority to assign");
-            }
-            var user = userRepository.findById(request.getAssignedTo())
-                    .orElseThrow(() -> new ApiException(ErrorCode.E227, "Assignee not found"));
-            boolean isAdmin = user.getRoles().stream().anyMatch(r -> "ROLE_ADMIN".equals(r.getName()));
-            if (!isAdmin) {
-                throw new ApiException(ErrorCode.E230, "Assignee must be an admin");
-            }
-            ticket.setAssignedTo(request.getAssignedTo());
-            newAssigneeName = user.getFullName();
+            throw new ApiException(ErrorCode.E230, "Cannot assign in user endpoint");
         }
         // Status change only by creator or assignee (after assignment if any)
         if (request.getStatus() != null) {
@@ -166,9 +157,7 @@ public class TicketServiceImpl implements TicketService {
     private Specification<Ticket> buildSpec(AuthPrincipal principal, TicketFilterRequest filter) {
         return (root, query, cb) -> {
             var predicates = new java.util.ArrayList<jakarta.persistence.criteria.Predicate>();
-            if (!principal.hasRole("ROLE_ADMIN")) {
-                predicates.add(cb.equal(root.get("createdBy"), principal.userId()));
-            }
+            predicates.add(cb.equal(root.get("createdBy"), principal.userId()));
             if (filter.getStatus() != null) {
                 predicates.add(cb.equal(root.get("status"), filter.getStatus()));
             }
@@ -177,19 +166,12 @@ public class TicketServiceImpl implements TicketService {
     }
 
     private void enforceAccess(AuthPrincipal principal, Ticket ticket) {
-        if (principal.hasRole("ROLE_ADMIN")) {
-            return;
-        }
         if (!ticket.getCreatedBy().equals(principal.userId())) {
             throw new ApiException(ErrorCode.E230, "No authority");
         }
     }
 
     private void enforceCommentAccess(AuthPrincipal principal, Ticket ticket) {
-        if (principal.hasRole("ROLE_ADMIN")) {
-            // admin can comment only if assigned or creator? requirement says creator or assignee
-            // so fall through to same rule
-        }
         if (!ticket.getCreatedBy().equals(principal.userId()) &&
                 (ticket.getAssignedTo() == null || !principal.userId().equals(ticket.getAssignedTo()))) {
             throw new ApiException(ErrorCode.E230, "No authority to comment");
@@ -212,15 +194,19 @@ public class TicketServiceImpl implements TicketService {
             String creatorId = ticket.getCreatedBy();
             Map<String, Object> payload = baseTicketPayload(ticket, actor.userId());
             payload.put("assigneeName", assigneeName);
-            sendNotificationIfTarget(actor.userId(), assigneeId,
-                    "ticket.assigned",
+            sendNotificationIfTarget(
+                    actor.userId(),
+                    assigneeId,
+                    NotificationAction.TICKET_ASSIGNED,
                     "Ticket assigned",
                     "Ticket '" + ticket.getTitle() + "' assigned to you",
                     payload,
                     "ticket:" + ticket.getId() + ":assigned:" + assigneeId + ":user:" + assigneeId);
             if (!creatorId.equals(assigneeId)) {
-                sendNotificationIfTarget(actor.userId(), creatorId,
-                        "ticket.assigned",
+                sendNotificationIfTarget(
+                        actor.userId(),
+                        creatorId,
+                        NotificationAction.TICKET_ASSIGNED,
                         "Ticket assigned",
                         "Ticket '" + ticket.getTitle() + "' assigned to " + (assigneeName != null ? assigneeName : assigneeId),
                         payload,
@@ -241,8 +227,10 @@ public class TicketServiceImpl implements TicketService {
             targets.add(ticket.getAssignedTo());
         }
         for (String target : targets) {
-            sendNotificationIfTarget(actor.userId(), target,
-                    "ticket.status",
+            sendNotificationIfTarget(
+                    actor.userId(),
+                    target,
+                    NotificationAction.TICKET_STATUS_UPDATED,
                     "Ticket status changed",
                     "Ticket '" + ticket.getTitle() + "' changed to " + ticket.getStatus(),
                     payload,
@@ -255,8 +243,10 @@ public class TicketServiceImpl implements TicketService {
             return;
         }
         Map<String, Object> payload = baseTicketPayload(ticket, actor.userId());
-        sendNotificationIfTarget(actor.userId(), ticket.getAssignedTo(),
-                "ticket.cancelled",
+        sendNotificationIfTarget(
+                actor.userId(),
+                ticket.getAssignedTo(),
+                NotificationAction.TICKET_STATUS_UPDATED,
                 "Ticket cancelled",
                 "Ticket '" + ticket.getTitle() + "' was cancelled",
                 payload,
@@ -278,8 +268,10 @@ public class TicketServiceImpl implements TicketService {
         payload.put("commentId", comment.getId());
         payload.put("comment", comment.getContent());
         for (String target : targets) {
-            sendNotificationIfTarget(actor.userId(), target,
-                    "ticket.commented",
+            sendNotificationIfTarget(
+                    actor.userId(),
+                    target,
+                    NotificationAction.TICKET_COMMENT_ADDED,
                     "New ticket comment",
                     "New comment on ticket '" + ticket.getTitle() + "'",
                     payload,
@@ -289,7 +281,7 @@ public class TicketServiceImpl implements TicketService {
 
     private void sendNotificationIfTarget(String actorId,
                                           String targetUserId,
-                                          String topic,
+                                          NotificationAction action,
                                           String title,
                                           String message,
                                           Map<String, Object> payload,
@@ -299,7 +291,7 @@ public class TicketServiceImpl implements TicketService {
         }
         NotificationEvent event = new NotificationEvent(
                 targetUserId,
-                topic,
+                action,
                 title,
                 message,
                 ResourceType.TICKET,

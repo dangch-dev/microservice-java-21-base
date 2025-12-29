@@ -33,7 +33,7 @@ public class Notification extends BaseEntity {
     private String userId;
 
     @Column(nullable = false, length = 100)
-    private String topic;
+    private String action;
 
     @Column(nullable = false, length = 200)
     private String title;
