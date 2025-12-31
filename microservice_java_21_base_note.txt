@@ -18,5 +18,5 @@ cd ..\repo-common-framework
 mvn clean install -DskipTests
 cd ..\repo-notification
 mvn clean package -DskipTests
-cd ..\repo-identity-api
+cd ..\repo-identity
 mvn clean package -DskipTests

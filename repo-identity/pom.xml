@@ -10,9 +10,9 @@
         <relativePath>../repo-common-parent/pom.xml</relativePath>
     </parent>
 
-    <artifactId>repo-identity-api</artifactId>
+    <artifactId>repo-identity</artifactId>
     <version>1.0.0</version>
-    <name>repo-identity-api</name>
+    <name>repo-identity</name>
     <packaging>jar</packaging>
 
     <dependencies>

@@ -1,15 +1,15 @@
 # Hướng dẫn test STOMP WebSocket bằng Postman
 
-Dùng cho backend realtime (/ws) hoặc qua API Gateway (/ws/realtime/ws). Yêu cầu: gửi đúng frame STOMP (có byte NUL kết thúc), CONNECT trước khi SUBSCRIBE/SEND.
+Dành cho backend realtime (`/ws`) hoặc qua API Gateway (`/ws/realtime/ws`). Cần gửi đúng frame STOMP (kết thúc bằng byte NUL), CONNECT trước khi SUBSCRIBE/SEND.
 
 ## 1) URL và header
-- Nội bộ realtime: `ws://localhost:8084/ws`
+- Trực tiếp realtime: `ws://localhost:8084/ws`
 - Qua gateway: `ws://localhost:8080/ws/realtime/ws`
-- Token (nếu cần): thêm header `Authorization: Bearer <token>` (hoặc query `access_token` khi browser).
+- Token (nếu cần): header `Authorization: Bearer <token>` (hoặc query `access_token`).
 - Subprotocol: nếu Postman hỗ trợ, chọn `v12.stomp`.
 
 ## 2) Frame CONNECT (bắt buộc, gửi trước)
-Chế độ Text (có dòng trống và NUL cuối):
+Text (có dòng trống và NUL cuối):
 ```
 CONNECT
 accept-version:1.2
@@ -18,14 +18,14 @@ heart-beat:0,0
 
 ^@   (NUL)
 ```
-Nếu không gõ được NUL, dùng Binary/Hex và dán chuỗi:
+Hex nếu cần dán binary:
 ```
 434f4e4e4543540a6163636570742d76657273696f6e3a312e320a686f73743a7265706f2d7265616c74696d650a68656172742d626561743a302c300a0a00
 ```
-Gửi và đợi thấy `CONNECTED` trong Response trước khi bước tiếp.
+Gửi và đợi nhận `CONNECTED` trước khi bước tiếp.
 
-## 3) SUBSCRIBE (sau khi đã CONNECTED)
-Text:
+## 3) SUBSCRIBE
+Chat public:
 ```
 SUBSCRIBE
 id:sub-chat
@@ -33,13 +33,31 @@ destination:/topic/chat
 
 ^@
 ```
+
+Notification theo user (server push qua `convertAndSendToUser(..., "/queue/notifications")`):
+```
+SUBSCRIBE
+id:sub-noti
+destination:/user/queue/notifications
+
+^@
+```
 Hex:
 ```
-5355425343524942450a69643a7375622d636861740a64657374696e6174696f6e3a2f746f7069632f636861740a0a00
+5355425343524942450a69643a7375622d6e6f74690a64657374696e6174696f6e3a2f757365722f71756575652f6e6f74696669636174696f6e730a0a00
 ```
 
+UNSUBSCRIBE (khi thoát kênh noti):
+```
+UNSUBSCRIBE
+id:sub-noti
+
+^@
+```
+
+Giải thích `/user/queue/notifications`: đây là user-destination. Server gán userId từ token, map ra kênh riêng từng session. Client chỉ subscribe; client không thể gửi message đến user khác qua đích này.
+
 ## 4) SEND message (client gửi)
-Text:
 ```
 SEND
 destination:/topic/chat
@@ -54,6 +72,8 @@ Hex:
 ```
 
 ## Lưu ý
-- Mỗi tab/connection phải gửi CONNECT và nhận CONNECTED trước khi SUBSCRIBE/SEND.
-- Phải có dòng trống trước byte NUL (kết thúc frame). Byte NUL là `00` trong Hex.
-- `/topic/chat` cho phép anonymous; `/topic/notifications` yêu cầu token hợp lệ khi handshake. Bạn có thể thay destination trong SUBSCRIBE/SEND tương ứng.
+- Mỗi connection phải CONNECT và nhận CONNECTED trước khi SUBSCRIBE/SEND.
+- Luôn có dòng trống trước byte NUL (`00` hex).
+- `/topic/chat` không yêu cầu auth; `/user/queue/notifications` yêu cầu token hợp lệ và userId khớp với event được push. Client không gửi noti vào đích này; chỉ server push theo user.
+- CONNECT: nên giữ `accept-version` (ví dụ 1.2) và `host` (ví dụ repo-realtime). `heart-beat` có thể bỏ; auth header bắt buộc nếu kênh bảo vệ.
+- SUBSCRIBE: `id` phải duy nhất và dùng lại khi `UNSUBSCRIBE`; `destination` là kênh server publish; `ack` tùy chọn (mặc định auto).

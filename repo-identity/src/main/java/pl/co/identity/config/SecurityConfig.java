@@ -34,7 +34,7 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/auth/**", "/oauth/**").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(commonRequestContextFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(baseJwtFilter, UsernamePasswordAuthenticationFilter.class)
@@ -47,12 +47,12 @@ public class SecurityConfig {
     public BaseJwtFilter baseJwtFilter(RSAPublicKey jwtPublicKey) {
         return new BaseJwtFilter(jwtPublicKey,
                 List.of(),               // skip patterns
-                List.of("/auth/**"));    // optional auth paths
+                List.of("/auth/**", "/oauth/**"));    // optional auth paths
     }
 
     @Bean
     public EmailVerifiedFilter emailVerifiedFilter() {
-        return new EmailVerifiedFilter(List.of("/auth/**"));
+        return new EmailVerifiedFilter(List.of("/auth/**", "/oauth/**"));
     }
 
     @Bean

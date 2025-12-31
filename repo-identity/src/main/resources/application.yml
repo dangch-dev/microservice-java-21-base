@@ -1,6 +1,6 @@
 spring:
   application:
-    name: repo-identity-api
+    name: repo-identity
   sql:
     init:
       mode: always
@@ -35,6 +35,12 @@ security:
     issuer: repo-identity
     access-ttl: PT5M
     refresh-ttl: P7D
+  internal-jwt:
+    issuer: repo-identity
+    ttl: PT10M
+    scope: internal
+    audience: internal
+    token-type: SERVICE
 
 management:
   endpoints:

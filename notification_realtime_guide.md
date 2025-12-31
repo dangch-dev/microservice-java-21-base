@@ -1,7 +1,7 @@
 ## Hướng dẫn Notification & Realtime (Phương án A)
 
 ### Kiến trúc tổng quát
-- **Producer services** (vd: repo-identity-api, tương lai order/chat/...): bắn `NotificationEvent` bằng `NotificationPublisher` (Kafka, topic mặc định `notification.events`, key = `userId`).
+- **Producer services** (vd: repo-identity, tương lai order/chat/...): bắn `NotificationEvent` bằng `NotificationPublisher` (Kafka, topic mặc định `notification.events`, key = `userId`).
 - **repo-notification** (consumer group `notification-service`): nhận Kafka, lưu DB, cung cấp REST API list/unread/mark.
 - **repo-realtime** (consumer group `realtime-noti`): nhận Kafka, đẩy WebSocket/STOMP tới browser. Không qua Redis.
 - **common-framework**: chứa contract `NotificationEvent`, `ResourceType`, `NotificationPublisher` để mọi service tái dùng.
@@ -12,7 +12,7 @@ Luồng: Service phát sinh sự kiện → Kafka `notification.events` → repo
 ```java
 public record NotificationEvent(
     String userId,           // bắt buộc, key Kafka, định tuyến WS
-    String topic,            // e.g. "ticket.assigned"
+    String action,           // e.g. "ticket.assigned"
     String title,            // tiêu đề ngắn
     String message,          // mô tả ngắn
     ResourceType resourceType, // enum: TICKET, OTHER (mở rộng thêm tùy domain)
@@ -88,4 +88,3 @@ Các event khác (từ REST mark) hiện chỉ lưu DB; nếu cần push thêm t
 - [ ] Dùng `NotificationPublisher` với `userId` hợp lệ.
 - [ ] Gửi `resourceId` thay vì URL; FE tự route.
 - [ ] Thiết lập `dedupeKey` nếu cần chống trùng sự kiện.
-
