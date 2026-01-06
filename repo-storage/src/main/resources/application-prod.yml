@@ -1,0 +1,37 @@
+spring:
+  datasource:
+    url: ${STORAGE_DB_URL}
+    username: ${STORAGE_DB_USERNAME}
+    password: ${STORAGE_DB_PASSWORD}
+    hikari:
+      maximum-pool-size: ${STORAGE_DB_POOL_SIZE:10}
+  jpa:
+    hibernate:
+      ddl-auto: none
+
+server:
+  port: ${STORAGE_PORT:8086}
+
+security:
+  external-jwt:
+    public-key-path: ${JWT_PUBLIC_KEY_PATH}
+
+storage:
+  minio:
+    endpoint: ${MINIO_ENDPOINT}
+    console-endpoint: ${MINIO_CONSOLE_ENDPOINT}
+    access-key: ${MINIO_ACCESS_KEY}
+    secret-key: ${MINIO_SECRET_KEY}
+    bucket: ${MINIO_BUCKET:repo-storage}
+    region: ${MINIO_REGION:}
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: ${EUREKA_DEFAULT_ZONE}
+  instance:
+    prefer-ip-address: true
+    hostname: ${HOSTNAME:localhost}
+    instance-id: ${spring.application.name}:${server.port}
