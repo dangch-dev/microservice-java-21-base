@@ -3,7 +3,7 @@ package pl.co.identity.dto;
 import jakarta.validation.constraints.Min;
 import lombok.Getter;
 import lombok.Setter;
-import pl.co.identity.entity.UserStatus;
+import pl.co.common.security.UserStatus;
 
 @Getter
 @Setter

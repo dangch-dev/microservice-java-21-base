@@ -1,0 +1,58 @@
+spring:
+  sql:
+    init:
+      mode: always
+      data-locations: classpath:init-data.sql
+  datasource:
+    url: jdbc:mysql://localhost:3306/id_mysql_database?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: root
+    password: mysql_root_password
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+    open-in-view: false
+    defer-datasource-initialization: true
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: redis_password
+  kafka:
+    bootstrap-servers: localhost:9092
+
+server:
+  port: 8082
+
+security:
+  external-jwt:
+    public-key-path: file:../secrets/jwt-public.pem
+    private-key-path: file:../secrets/jwt-private.pem
+    access-ttl: PT5M
+    refresh-ttl: P7D
+  internal-jwt:
+    ttl: PT10M
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+  instance:
+    prefer-ip-address: true
+    hostname: localhost
+    instance-id: ${spring.application.name}:${server.port}
+
+internal:
+  api:
+    auth-service: repo-auth
+    token-path: /oauth/token
+    client-id: oRd1gWcf7Sx1z0NHHA1zwSPa
+    client-secret: 4PHWqCA2CtcSjEf6pUpP7D9hVuvCOdRL
+
+logging:
+  level:
+    org.springframework.security: INFO

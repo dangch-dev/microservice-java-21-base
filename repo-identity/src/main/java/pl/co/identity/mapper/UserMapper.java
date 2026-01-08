@@ -3,6 +3,7 @@ package pl.co.identity.mapper;
 import pl.co.identity.dto.AdminUserResponse;
 import pl.co.identity.dto.ProfileResponse;
 import pl.co.identity.entity.Role;
+import pl.co.common.security.UserStatus;
 import pl.co.identity.entity.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -23,8 +24,12 @@ public interface UserMapper {
         return roles == null
                 ? Set.of()
                 : roles.stream()
-                .map(role -> role.getName().name())
+                .map(Role::getName)
                 .collect(Collectors.toSet());
+    }
+
+    default UserStatus toUserStatus(String status) {
+        return status == null ? null : UserStatus.valueOf(status);
     }
 
 }

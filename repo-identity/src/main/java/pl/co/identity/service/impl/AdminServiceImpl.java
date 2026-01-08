@@ -8,9 +8,7 @@ import pl.co.identity.dto.AdminUserFilterRequest;
 import pl.co.identity.dto.AdminUserPageResponse;
 import pl.co.identity.dto.AdminUserResponse;
 import pl.co.identity.entity.Role;
-import pl.co.identity.entity.RoleName;
 import pl.co.identity.entity.User;
-import pl.co.identity.entity.UserStatus;
 import pl.co.identity.mapper.UserMapper;
 import pl.co.identity.repository.RoleRepository;
 import pl.co.identity.repository.UserRepository;
@@ -22,6 +20,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import pl.co.identity.service.AdminService;
+import pl.co.common.security.RoleName;
+import pl.co.common.security.UserStatus;
 
 import java.util.HashSet;
 import java.util.List;
@@ -71,11 +71,11 @@ public class AdminServiceImpl implements AdminService {
         }
         Set<Role> roles = resolveRoles(request.getRoles());
         if (roles.isEmpty()) {
-            Role defaultRole = roleRepository.findByName(RoleName.ROLE_USER)
+            Role defaultRole = roleRepository.findByName(RoleName.ROLE_USER.name())
                     .orElseThrow(() -> new ApiException(ErrorCode.E221, "Role not found data: ROLE_USER"));
             roles.add(defaultRole);
         }
-        UserStatus status = request.getStatus() == null ? UserStatus.ACTIVE : request.getStatus();
+        String status = request.getStatus() == null ? UserStatus.ACTIVE.name() : request.getStatus().name();
         User user = User.builder()
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
@@ -98,7 +98,7 @@ public class AdminServiceImpl implements AdminService {
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "User not found"));
 
         if (request.getStatus() != null) {
-            user.setStatus(request.getStatus());
+            user.setStatus(request.getStatus().name());
         }
 
         if (request.getRoles() != null && !request.getRoles().isEmpty()) {
@@ -146,7 +146,7 @@ public class AdminServiceImpl implements AdminService {
     private AdminUserResponse updateStatus(String userId, UserStatus status) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "User not found"));
-        user.setStatus(status);
+        user.setStatus(status.name());
         User saved = userRepository.save(user);
         return userMapper.toAdmin(saved);
     }
@@ -166,7 +166,7 @@ public class AdminServiceImpl implements AdminService {
                     }
 
                     Role role = new Role();
-                    role.setName(RoleName.valueOf(name));
+                    role.setName(RoleName.valueOf(name).name());
                     return role;
                 })
                 .collect(Collectors.toSet());
@@ -188,7 +188,7 @@ public class AdminServiceImpl implements AdminService {
                 predicates.add(cb.like(cb.lower(root.get("email")), "%" + filter.getEmailContains().toLowerCase() + "%"));
             }
             if (filter.getStatus() != null) {
-                predicates.add(cb.equal(root.get("status"), filter.getStatus()));
+                predicates.add(cb.equal(root.get("status"), filter.getStatus().name()));
             }
             if (filter.getRole() != null && !filter.getRole().isBlank()) {
                 var join = root.join("roles");

@@ -1,6 +1,6 @@
 package pl.co.identity.dto;
 
-import pl.co.identity.entity.UserStatus;
+import pl.co.common.security.UserStatus;
 import lombok.Builder;
 import lombok.Getter;
 

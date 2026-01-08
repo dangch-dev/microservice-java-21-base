@@ -9,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import pl.co.common.exception.ApiException;
 import pl.co.common.exception.ErrorCode;
 import pl.co.common.notification.NotificationAction;
-import pl.co.common.security.AuthPrincipal;
+import pl.co.common.filter.principal.AuthPrincipal;
 import pl.co.identity.dto.TicketCommentRequest;
 import pl.co.identity.dto.TicketCommentResponse;
 import pl.co.identity.dto.TicketCreateRequest;
@@ -52,7 +52,7 @@ public class TicketUserServiceImpl implements TicketUserService {
         Ticket ticket = Ticket.builder()
                 .title(request.getTitle())
                 .description(request.getDescription())
-                .status(TicketStatus.OPEN)
+                .status(TicketStatus.OPEN.name())
                 .createdBy(principal.userId())
                 .assignedTo(null)
                 .build();
@@ -90,7 +90,7 @@ public class TicketUserServiceImpl implements TicketUserService {
     public TicketResponse updateStatus(AuthPrincipal principal, String ticketId, TicketStatusUpdateRequest request) {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new ApiException(ErrorCode.E227, "Ticket not found"));
-        TicketStatus previousStatus = ticket.getStatus();
+        String previousStatus = ticket.getStatus();
         String previousAssignee = ticket.getAssignedTo();
         String newAssigneeName = null;
         // User flow: không cho tự assign qua endpoint này
@@ -103,7 +103,7 @@ public class TicketUserServiceImpl implements TicketUserService {
                     (ticket.getAssignedTo() == null || !principal.userId().equals(ticket.getAssignedTo()))) {
                 throw new ApiException(ErrorCode.E230, "No authority to change status");
             }
-            ticket.setStatus(request.getStatus());
+            ticket.setStatus(request.getStatus().name());
         }
         Ticket saved = ticketRepository.save(ticket);
         notifyAssignmentAndStatus(principal, saved, previousStatus, previousAssignee, newAssigneeName);
@@ -118,10 +118,12 @@ public class TicketUserServiceImpl implements TicketUserService {
         if (!principal.userId().equals(ticket.getCreatedBy())) {
             throw new ApiException(ErrorCode.E230, "Only creator can cancel");
         }
-        if (ticket.getStatus() == TicketStatus.RESOLVED || ticket.getStatus() == TicketStatus.CLOSED || ticket.getStatus() == TicketStatus.CANCELLED) {
+        if (TicketStatus.RESOLVED.name().equals(ticket.getStatus())
+                || TicketStatus.CLOSED.name().equals(ticket.getStatus())
+                || TicketStatus.CANCELLED.name().equals(ticket.getStatus())) {
             throw new ApiException(ErrorCode.E221, "Ticket cannot be cancelled");
         }
-        ticket.setStatus(TicketStatus.CANCELLED);
+        ticket.setStatus(TicketStatus.CANCELLED.name());
         Ticket saved = ticketRepository.save(ticket);
         notifyCancel(principal, saved);
         return ticketMapper.toResponse(saved);
@@ -159,7 +161,7 @@ public class TicketUserServiceImpl implements TicketUserService {
             var predicates = new java.util.ArrayList<jakarta.persistence.criteria.Predicate>();
             predicates.add(cb.equal(root.get("createdBy"), principal.userId()));
             if (filter.getStatus() != null) {
-                predicates.add(cb.equal(root.get("status"), filter.getStatus()));
+                predicates.add(cb.equal(root.get("status"), filter.getStatus().name()));
             }
             return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
         };
@@ -188,7 +190,7 @@ public class TicketUserServiceImpl implements TicketUserService {
                 .build();
     }
 
-    private void notifyAssignmentAndStatus(AuthPrincipal actor, Ticket ticket, TicketStatus previousStatus, String previousAssignee, String assigneeName) {
+    private void notifyAssignmentAndStatus(AuthPrincipal actor, Ticket ticket, String previousStatus, String previousAssignee, String assigneeName) {
         if (ticket.getAssignedTo() != null && !ticket.getAssignedTo().equals(previousAssignee)) {
             String assigneeId = ticket.getAssignedTo();
             String creatorId = ticket.getCreatedBy();
@@ -213,12 +215,12 @@ public class TicketUserServiceImpl implements TicketUserService {
                         "ticket:" + ticket.getId() + ":assigned:" + assigneeId + ":user:" + creatorId);
             }
         }
-        if (previousStatus != ticket.getStatus()) {
+        if (!java.util.Objects.equals(previousStatus, ticket.getStatus())) {
             notifyStatusChange(actor, ticket, previousStatus);
         }
     }
 
-    private void notifyStatusChange(AuthPrincipal actor, Ticket ticket, TicketStatus previousStatus) {
+    private void notifyStatusChange(AuthPrincipal actor, Ticket ticket, String previousStatus) {
         Map<String, Object> payload = baseTicketPayload(ticket, actor.userId());
         payload.put("previousStatus", previousStatus);
         Set<String> targets = new HashSet<>();

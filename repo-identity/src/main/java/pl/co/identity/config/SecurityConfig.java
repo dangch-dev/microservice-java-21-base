@@ -1,6 +1,7 @@
 package pl.co.identity.config;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -13,12 +14,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.filter.CommonsRequestLoggingFilter;
-import pl.co.common.security.BaseJwtFilter;
-import pl.co.common.security.EmailVerifiedFilter;
-import pl.co.common.security.RsaKeyUtil;
+import pl.co.common.filter.BearerTokenAuthenticationFilter;
+import pl.co.common.filter.EmailVerifiedFilter;
+import pl.co.common.util.RsaKeyUtil;
 import pl.co.common.web.RequestContextFilter;
 
-import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.List;
 
@@ -29,30 +29,28 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
-                                                   BaseJwtFilter baseJwtFilter,
+                                                   BearerTokenAuthenticationFilter bearerTokenAuthenticationFilter,
                                                    EmailVerifiedFilter emailVerifiedFilter) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**", "/oauth/**").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(commonRequestContextFilter(), UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(baseJwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(bearerTokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(emailVerifiedFilter, UsernamePasswordAuthenticationFilter.class)
                 .httpBasic(Customizer.withDefaults());
         return http.build();
     }
 
     @Bean
-    public BaseJwtFilter baseJwtFilter(RSAPublicKey jwtPublicKey) {
-        return new BaseJwtFilter(jwtPublicKey,
-                List.of(),               // skip patterns
-                List.of("/auth/**", "/oauth/**"));    // optional auth paths
+    public BearerTokenAuthenticationFilter bearerTokenAuthenticationFilter(RSAPublicKey jwtPublicKey) {
+        return new BearerTokenAuthenticationFilter(jwtPublicKey,
+                List.of());    // optional auth paths
     }
 
     @Bean
     public EmailVerifiedFilter emailVerifiedFilter() {
-        return new EmailVerifiedFilter(List.of("/auth/**", "/oauth/**"));
+        return new EmailVerifiedFilter(List.of());
     }
 
     @Bean
@@ -76,12 +74,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public RSAPublicKey jwtPublicKey(@org.springframework.beans.factory.annotation.Value("${security.jwt.public-key-path}") String publicKeyPath) {
+    public RSAPublicKey jwtPublicKey(@Value("${security.external-jwt.public-key-path}") String publicKeyPath) {
         return RsaKeyUtil.loadPublicKey(publicKeyPath);
-    }
-
-    @Bean
-    public RSAPrivateKey jwtPrivateKey(@org.springframework.beans.factory.annotation.Value("${security.jwt.private-key-path}") String privateKeyPath) {
-        return RsaKeyUtil.loadPrivateKey(privateKeyPath);
     }
 }

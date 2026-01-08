@@ -1,8 +1,6 @@
 package pl.co.identity.entity;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
@@ -47,9 +45,8 @@ public class User extends BaseEntity {
     @Column(length = 255)
     private String address;
 
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private UserStatus status;
+    private String status;
 
     @Column(nullable = false)
     private boolean emailVerified;

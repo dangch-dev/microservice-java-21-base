@@ -2,8 +2,6 @@ package pl.co.identity.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -27,9 +25,8 @@ public class Ticket extends BaseEntity {
     @Column(nullable = false, length = 4000)
     private String description;
 
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
-    private TicketStatus status;
+    private String status;
 
     @Column(nullable = false, length = 26)
     private String createdBy;

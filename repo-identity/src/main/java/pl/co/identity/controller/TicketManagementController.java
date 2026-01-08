@@ -6,7 +6,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import pl.co.common.dto.ApiResponse;
-import pl.co.common.security.AuthPrincipal;
+import pl.co.common.filter.principal.AuthPrincipal;
 import pl.co.identity.dto.TicketCommentRequest;
 import pl.co.identity.dto.TicketCommentResponse;
 import pl.co.identity.dto.TicketFilterRequest;
@@ -21,7 +21,7 @@ import pl.co.identity.service.TicketManagementService;
 @RestController
 @RequestMapping("/management/tickets")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN')")
+@PreAuthorize("hasAnyAuthority(T(pl.co.common.security.RoleName).ROLE_ADMIN.name())")
 public class TicketManagementController {
 
     private final TicketManagementService ticketManagementService;

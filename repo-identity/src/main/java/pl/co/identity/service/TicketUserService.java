@@ -1,6 +1,6 @@
 package pl.co.identity.service;
 
-import pl.co.common.security.AuthPrincipal;
+import pl.co.common.filter.principal.AuthPrincipal;
 import pl.co.identity.dto.TicketCommentRequest;
 import pl.co.identity.dto.TicketCommentResponse;
 import pl.co.identity.dto.TicketCreateRequest;

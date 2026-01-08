@@ -2,7 +2,7 @@ package pl.co.identity.controller;
 
 import org.springframework.web.bind.annotation.*;
 import pl.co.common.dto.ApiResponse;
-import pl.co.common.security.AuthPrincipal;
+import pl.co.common.filter.principal.AuthPrincipal;
 import pl.co.identity.dto.ProfileResponse;
 import pl.co.identity.dto.UpdateProfileRequest;
 import pl.co.identity.service.UserService;

@@ -12,7 +12,7 @@ import pl.co.common.notification.NotificationAction;
 import pl.co.common.notification.NotificationEvent;
 import pl.co.common.notification.NotificationPublisher;
 import pl.co.common.notification.ResourceType;
-import pl.co.common.security.AuthPrincipal;
+import pl.co.common.filter.principal.AuthPrincipal;
 import pl.co.identity.dto.TicketCommentRequest;
 import pl.co.identity.dto.TicketCommentResponse;
 import pl.co.identity.dto.TicketFilterRequest;
@@ -21,7 +21,6 @@ import pl.co.identity.dto.TicketResponse;
 import pl.co.identity.dto.TicketStatusUpdateRequest;
 import pl.co.identity.entity.Ticket;
 import pl.co.identity.entity.TicketComment;
-import pl.co.identity.entity.TicketStatus;
 import pl.co.identity.mapper.TicketMapper;
 import pl.co.identity.repository.TicketCommentRepository;
 import pl.co.identity.repository.TicketRepository;
@@ -77,7 +76,7 @@ public class TicketManagementServiceImpl implements TicketManagementService {
     public TicketResponse updateStatus(AuthPrincipal principal, String ticketId, TicketStatusUpdateRequest request) {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new ApiException(ErrorCode.E227, "Ticket not found"));
-        TicketStatus previousStatus = ticket.getStatus();
+        String previousStatus = ticket.getStatus();
         String previousAssignee = ticket.getAssignedTo();
         String newAssigneeName = null;
 
@@ -88,7 +87,7 @@ public class TicketManagementServiceImpl implements TicketManagementService {
             newAssigneeName = user.getFullName();
         }
         if (request.getStatus() != null) {
-            ticket.setStatus(request.getStatus());
+            ticket.setStatus(request.getStatus().name());
         }
 
         Ticket saved = ticketRepository.save(ticket);
@@ -125,7 +124,7 @@ public class TicketManagementServiceImpl implements TicketManagementService {
         return (root, query, cb) -> {
             var predicates = new java.util.ArrayList<jakarta.persistence.criteria.Predicate>();
             if (filter.getStatus() != null) {
-                predicates.add(cb.equal(root.get("status"), filter.getStatus()));
+                predicates.add(cb.equal(root.get("status"), filter.getStatus().name()));
             }
             return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
         };
@@ -141,7 +140,7 @@ public class TicketManagementServiceImpl implements TicketManagementService {
                 .build();
     }
 
-    private void notifyAssignmentAndStatus(AuthPrincipal actor, Ticket ticket, TicketStatus previousStatus, String previousAssignee, String assigneeName) {
+    private void notifyAssignmentAndStatus(AuthPrincipal actor, Ticket ticket, String previousStatus, String previousAssignee, String assigneeName) {
         if (ticket.getAssignedTo() != null && !ticket.getAssignedTo().equals(previousAssignee)) {
             String assigneeId = ticket.getAssignedTo();
             String creatorId = ticket.getCreatedBy();
@@ -162,12 +161,12 @@ public class TicketManagementServiceImpl implements TicketManagementService {
                         "ticket:" + ticket.getId() + ":assigned:" + assigneeId + ":user:" + creatorId);
             }
         }
-        if (previousStatus != ticket.getStatus()) {
+        if (!java.util.Objects.equals(previousStatus, ticket.getStatus())) {
             notifyStatusChange(actor, ticket, previousStatus);
         }
     }
 
-    private void notifyStatusChange(AuthPrincipal actor, Ticket ticket, TicketStatus previousStatus) {
+    private void notifyStatusChange(AuthPrincipal actor, Ticket ticket, String previousStatus) {
         Map<String, Object> payload = baseTicketPayload(ticket, actor.userId());
         payload.put("previousStatus", previousStatus);
         Set<String> targets = new HashSet<>();
