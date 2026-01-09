@@ -32,12 +32,12 @@ public abstract class BaseEntity {
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
-    @Column(nullable = false)
-    private Instant updatedAt;
-
     @LastModifiedBy
     @Column(length = 26)
     private String updatedBy;
+
+    @Column(nullable = false)
+    private Instant updatedAt;
 
     @Column(nullable = false)
     private boolean deleted;

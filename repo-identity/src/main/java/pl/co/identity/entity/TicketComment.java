@@ -1,6 +1,7 @@
 package pl.co.identity.entity;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -8,7 +9,11 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import pl.co.common.file.FileMeta;
 import pl.co.common.jpa.BaseEntity;
+import pl.co.common.jpa.converter.FileMetaListConverter;
+
+import java.util.List;
 
 @Getter
 @Setter
@@ -27,4 +32,8 @@ public class TicketComment extends BaseEntity {
 
     @Column(nullable = false, length = 2000)
     private String content;
+
+    @Convert(converter = FileMetaListConverter.class)
+    @Column(columnDefinition = "json")
+    private List<FileMeta> files;
 }

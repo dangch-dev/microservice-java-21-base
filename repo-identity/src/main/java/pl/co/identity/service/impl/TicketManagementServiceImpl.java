@@ -104,6 +104,7 @@ public class TicketManagementServiceImpl implements TicketManagementService {
                 .ticketId(ticketId)
                 .authorId(principal.userId())
                 .content(request.getContent())
+                .files(request.getFiles())
                 .build();
         TicketComment saved = ticketCommentRepository.save(comment);
         notifyComment(principal, ticket, saved);
@@ -136,6 +137,7 @@ public class TicketManagementServiceImpl implements TicketManagementService {
                 .ticketId(comment.getTicketId())
                 .authorId(comment.getAuthorId())
                 .content(comment.getContent())
+                .files(comment.getFiles())
                 .createdAt(comment.getCreatedAt())
                 .build();
     }

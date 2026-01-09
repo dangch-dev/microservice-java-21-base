@@ -20,7 +20,6 @@ import pl.co.storage.dto.FileResponse;
 import pl.co.storage.dto.FileUploadRequest;
 import pl.co.storage.entity.File;
 import pl.co.storage.entity.FileStatus;
-import pl.co.storage.entity.OwnerType;
 import pl.co.storage.mapper.FileMapper;
 import pl.co.storage.repository.FileRepository;
 import pl.co.storage.service.FileService;
@@ -30,7 +29,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -55,14 +53,11 @@ public class FileServiceImpl implements FileService {
         }
 
         List<File> files = new ArrayList<>(request.files().size());
-        String ownerId = request.ownerId().trim();
         for (FileUploadRequest file : request.files()) {
             String fileId = UlidGenerator.nextUlid();
-            String objectKey = buildObjectKey(request.ownerType(), ownerId, fileId, file.filename());
+            String objectKey = buildObjectKey(fileId, file.filename());
             File entity = new File();
             entity.setId(fileId);
-            entity.setOwnerType(request.ownerType().name());
-            entity.setOwnerId(ownerId);
             entity.setObjectKey(objectKey);
             entity.setFilename(file.filename());
             entity.setMimeType(file.mimeType());
@@ -98,15 +93,6 @@ public class FileServiceImpl implements FileService {
         file.setStatus(FileStatus.READY.name());
         File saved = fileRepository.save(file);
         return fileMapper.toResponse(saved);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<FileResponse> listByOwner(OwnerType ownerType, String ownerId) {
-        List<File> files = fileRepository
-                .findByOwnerTypeAndOwnerIdAndStatusAndDeletedFalseOrderByCreatedAtAsc(
-                        ownerType.name(), ownerId, FileStatus.READY.name());
-        return fileMapper.toResponseList(files);
     }
 
     @Override
@@ -177,10 +163,9 @@ public class FileServiceImpl implements FileService {
         }
     }
 
-    private String buildObjectKey(OwnerType ownerType, String ownerId, String fileId, String filename) {
-        String safeOwnerId = ownerId == null ? "unknown" : ownerId.trim();
+    private String buildObjectKey(String fileId, String filename) {
         String sanitizedFileName = sanitizeFileName(filename);
-        return ownerType.name().toLowerCase(Locale.ROOT) + "/" + safeOwnerId + "/" + fileId + "/" + sanitizedFileName;
+        return "files/" + fileId + "/" + sanitizedFileName;
     }
 
     private String sanitizeFileName(String filename) {

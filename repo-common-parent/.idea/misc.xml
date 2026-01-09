@@ -12,6 +12,8 @@
         <option value="$PROJECT_DIR$/../repo-identity-api/pom.xml" />
         <option value="$PROJECT_DIR$/../repo-notification/pom.xml" />
         <option value="$PROJECT_DIR$/../repo-realtime/pom.xml" />
+        <option value="$PROJECT_DIR$/../repo-storage/pom.xml" />
+        <option value="$PROJECT_DIR$/../repo-auth/pom.xml" />
       </list>
     </option>
   </component>

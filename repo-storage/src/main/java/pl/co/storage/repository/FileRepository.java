@@ -9,10 +9,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface FileRepository extends JpaRepository<File, String> {
-    List<File> findByOwnerTypeAndOwnerIdAndStatusAndDeletedFalseOrderByCreatedAtAsc(String ownerType,
-                                                                                    String ownerId,
-                                                                                    String status);
-
     List<File> findByIdInAndStatusAndDeletedFalse(Collection<String> ids, String status);
 
     Optional<File> findByIdAndDeletedFalse(String id);

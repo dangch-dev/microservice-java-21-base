@@ -56,3 +56,8 @@ internal:
 logging:
   level:
     org.springframework.security: INFO
+
+storage:
+  kafka:
+    topic: storage.file.commit
+    group: storage-commit

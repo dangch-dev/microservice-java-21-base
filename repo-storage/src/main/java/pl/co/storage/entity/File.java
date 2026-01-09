@@ -17,16 +17,9 @@ import pl.co.common.jpa.BaseEntity;
 @AllArgsConstructor
 @Entity
 @Table(name = "files", indexes = {
-        @Index(name = "idx_file_owner", columnList = "owner_type,owner_id"),
         @Index(name = "uk_file_object_key", columnList = "object_key", unique = true)
 })
 public class File extends BaseEntity {
-
-    @Column(name = "owner_type", length = 64, nullable = false)
-    private String ownerType;
-
-    @Column(name = "owner_id", length = 64, nullable = false)
-    private String ownerId;
 
     @Column(name = "object_key", nullable = false, unique = true, length = 512)
     private String objectKey;

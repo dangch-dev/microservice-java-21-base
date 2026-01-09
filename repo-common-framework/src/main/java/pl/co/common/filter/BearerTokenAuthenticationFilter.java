@@ -1,4 +1,4 @@
-package pl.co.common.security;
+package pl.co.common.filter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -13,40 +13,45 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 import pl.co.common.exception.ApiException;
+import pl.co.common.jwt.JwtVerifier;
+import pl.co.common.jwt.record.JwtPayload;
+import pl.co.common.jwt.record.JwtVerificationOptions;
+import pl.co.common.filter.principal.AuthPrincipal;
+import pl.co.common.security.RoleName;
+import pl.co.common.security.SecurityConstants;
 
 import java.io.IOException;
 import java.security.interfaces.RSAPublicKey;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
- * JWT filter dùng chung:
- * - skip các path cấu hình (không chạy filter).
- * - optional paths: nếu có token hợp lệ thì set Authentication, nếu không có/không hợp lệ thì bỏ qua.
- * - các path còn lại: cố gắng parse token; nếu token hợp lệ thì set Authentication, token sai -> chỉ log và bỏ qua
- *   (quyền truy cập cuối cùng do cấu hình security quyết định).
+ * Common JWT filter:
+ * - All paths are treated as required by default.
+ * - Optional paths suppress warn logs when token is missing/invalid.
+ * Access control is decided by SecurityConfig.
  */
-public class BaseJwtFilter extends OncePerRequestFilter {
+public class BearerTokenAuthenticationFilter extends OncePerRequestFilter {
 
-    private static final Logger log = LoggerFactory.getLogger(BaseJwtFilter.class);
+    private static final Logger log = LoggerFactory.getLogger(BearerTokenAuthenticationFilter.class);
+    private static final List<String> AUDIENCE = List.of(SecurityConstants.AUD_EXTERNAL);
     private final RSAPublicKey publicKey;
-    private final List<String> skipPatterns;
     private final List<String> optionalPatterns;
+    private final JwtVerificationOptions verificationOptions;
     private final AntPathMatcher matcher = new AntPathMatcher();
 
-    public BaseJwtFilter(RSAPublicKey publicKey, List<String> skipPatterns, List<String> optionalPatterns) {
+    public BearerTokenAuthenticationFilter(RSAPublicKey publicKey,
+                                           List<String> optionalPatterns) {
         this.publicKey = publicKey;
-        this.skipPatterns = skipPatterns == null ? Collections.emptyList() : skipPatterns;
         this.optionalPatterns = optionalPatterns == null ? Collections.emptyList() : optionalPatterns;
+        this.verificationOptions = new JwtVerificationOptions(
+                AUDIENCE,
+                SecurityConstants.TYP_ACCESS);
     }
 
-    @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getRequestURI();
-        return matches(path, skipPatterns);
-    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -61,12 +66,18 @@ public class BaseJwtFilter extends OncePerRequestFilter {
 
         String token = header.substring(SecurityConstants.HEADER_BEARER_PREFIX.length()).trim();
         try {
-            JwtUtils.JwtPayload payload = JwtUtils.verify(token, publicKey);
+            JwtPayload payload = JwtVerifier.verify(token, publicKey, verificationOptions);
             AuthPrincipal principal = new AuthPrincipal(payload.userId(), payload.email(), payload.emailVerified(), payload.roles());
+            boolean hasInternalRole = SecurityContextHolder.getContext().getAuthentication() != null
+                    && SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+                    .anyMatch(a -> RoleName.ROLE_INTERNAL.name().equals(a.getAuthority()));
             List<SimpleGrantedAuthority> authorities = payload.roles().stream()
                     .filter(Objects::nonNull)
                     .map(SimpleGrantedAuthority::new)
-                    .collect(Collectors.toList());
+                    .collect(Collectors.toCollection(ArrayList::new));
+            if (hasInternalRole && authorities.stream().noneMatch(a -> RoleName.ROLE_INTERNAL.name().equals(a.getAuthority()))) {
+                authorities.add(new SimpleGrantedAuthority(RoleName.ROLE_INTERNAL.name()));
+            }
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(principal, null, authorities);
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
@@ -75,7 +86,7 @@ public class BaseJwtFilter extends OncePerRequestFilter {
             if (!isOptional) {
                 log.warn("JWT verification failed on path {}: {}", request.getRequestURI(), ex.getMessage());
             }
-            // optional: hoặc token sai -> không set auth, cho qua; access sẽ do Security config quyết định.
+            // Optional paths: invalid token won't set auth; access is decided by SecurityConfig.
         }
         filterChain.doFilter(request, response);
     }
@@ -83,4 +94,5 @@ public class BaseJwtFilter extends OncePerRequestFilter {
     private boolean matches(String path, List<String> patterns) {
         return patterns.stream().anyMatch(p -> matcher.match(p, path) || path.startsWith(p));
     }
+
 }

@@ -3,8 +3,6 @@ package pl.co.storage.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,7 +17,6 @@ import pl.co.common.filter.principal.AuthPrincipal;
 import pl.co.storage.dto.FilePresignRequest;
 import pl.co.storage.dto.FilePresignResponse;
 import pl.co.storage.dto.FileResponse;
-import pl.co.storage.entity.OwnerType;
 import pl.co.storage.service.FileService;
 
 import java.util.List;
@@ -39,16 +36,11 @@ public class FileController {
     }
 
     @GetMapping
-    public ApiResponse<List<FileResponse>> list(@RequestParam(value = "ownerType", required = false) OwnerType ownerType,
-                                                @RequestParam(value = "ownerId", required = false) String ownerId,
-                                                @RequestParam(value = "ids", required = false) List<String> ids) {
-        if (!CollectionUtils.isEmpty(ids)) {
-            return ApiResponse.ok(fileService.listByIds(ids));
+    public ApiResponse<List<FileResponse>> list(@RequestParam(value = "ids", required = false) List<String> ids) {
+        if (ids == null || ids.isEmpty()) {
+            throw new ApiException(ErrorCode.BAD_REQUEST, "ids are required");
         }
-        if (ownerType == null || !StringUtils.hasText(ownerId)) {
-            throw new ApiException(ErrorCode.BAD_REQUEST, "ownerType and ownerId are required when ids are not provided");
-        }
-        return ApiResponse.ok(fileService.listByOwner(ownerType, ownerId));
+        return ApiResponse.ok(fileService.listByIds(ids));
     }
 
     @GetMapping("/{id}")

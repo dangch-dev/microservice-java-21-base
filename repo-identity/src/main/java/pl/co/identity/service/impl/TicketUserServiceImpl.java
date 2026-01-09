@@ -55,6 +55,7 @@ public class TicketUserServiceImpl implements TicketUserService {
                 .status(TicketStatus.OPEN.name())
                 .createdBy(principal.userId())
                 .assignedTo(null)
+                .files(request.getFiles())
                 .build();
         Ticket saved = ticketRepository.save(ticket);
         return ticketMapper.toResponse(saved);
@@ -139,6 +140,7 @@ public class TicketUserServiceImpl implements TicketUserService {
                 .ticketId(ticketId)
                 .authorId(principal.userId())
                 .content(request.getContent())
+                .files(request.getFiles())
                 .build();
         TicketComment saved = ticketCommentRepository.save(comment);
         notifyComment(principal, ticket, saved);
@@ -186,6 +188,7 @@ public class TicketUserServiceImpl implements TicketUserService {
                 .ticketId(comment.getTicketId())
                 .authorId(comment.getAuthorId())
                 .content(comment.getContent())
+                .files(comment.getFiles())
                 .createdAt(comment.getCreatedAt())
                 .build();
     }

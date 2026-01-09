@@ -34,6 +34,7 @@ public enum ErrorCode {
     E230("230", HttpStatus.FORBIDDEN,"No authority"),    // No authority
     E240("240", HttpStatus.FORBIDDEN,"No permission"),    // No permission
     E233("233", HttpStatus.FORBIDDEN,"Email not verified"),   // Email not verified
+    E249("249", HttpStatus.FORBIDDEN,"User is blocked"),   // User is blocked
 
     // Conflict / Duplicate / State
     E220("220", HttpStatus.CONFLICT,"Already registered / duplicate"), // Already registered / duplicate
