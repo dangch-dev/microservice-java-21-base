@@ -43,7 +43,7 @@ public class EmailVerifiedFilter extends OncePerRequestFilter {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() instanceof AuthPrincipal principal) {
             if (!principal.emailVerified()) {
-                log.warn("Email not verified for user {}", principal.email());
+                log.warn("Email not verified for user {}", principal.userId());
                 response.setStatus(HttpStatus.FORBIDDEN.value());
                 response.setContentType("application/json");
                 response.getWriter().write("{\"success\":false,\"errorCode\":\"233\",\"errorMessage\":\"Email not verified\"}");

@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -15,6 +16,8 @@ import jakarta.validation.ConstraintViolationException;
 import pl.co.common.dto.ApiResponse;
 import pl.co.common.exception.ApiException;
 import pl.co.common.exception.ErrorCode;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 
 import java.util.stream.Collectors;
 
@@ -33,20 +36,55 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleValidation(MethodArgumentNotValidException ex) {
+        boolean missingParam = ex.getBindingResult().getAllErrors().stream()
+                .anyMatch(err -> {
+                    String[] codes = err.getCodes();
+                    if (codes == null) {
+                        return false;
+                    }
+                    for (String code : codes) {
+                        if (code != null && (code.contains("NotBlank") || code.contains("NotNull") || code.contains("NotEmpty"))) {
+                            return true;
+                        }
+                    }
+                    return false;
+                });
         String message = ex.getBindingResult().getAllErrors().stream()
                 .map(err -> err instanceof FieldError fe ? fe.getField() + " " + fe.getDefaultMessage() : err.getDefaultMessage())
                 .collect(Collectors.joining("; "));
-        ApiResponse<Void> body = ApiResponse.error(ErrorCode.BAD_REQUEST.code(), message);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+        ErrorCode code = missingParam ? ErrorCode.E243 : ErrorCode.BAD_REQUEST;
+        ApiResponse<Void> body = ApiResponse.error(code.code(), message);
+        return ResponseEntity.status(code.status()).body(body);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ApiResponse<Void>> handleConstraint(ConstraintViolationException ex) {
+        boolean missingParam = ex.getConstraintViolations().stream()
+                .map(ConstraintViolation::getConstraintDescriptor)
+                .map(descriptor -> descriptor.getAnnotation().annotationType().getSimpleName())
+                .anyMatch(name -> "NotBlank".equals(name) || "NotNull".equals(name) || "NotEmpty".equals(name));
         String message = ex.getConstraintViolations().stream()
                 .map(ConstraintViolation::getMessage)
                 .collect(Collectors.joining("; "));
-        ApiResponse<Void> body = ApiResponse.error(ErrorCode.BAD_REQUEST.code(), message);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+        ErrorCode code = missingParam ? ErrorCode.E243 : ErrorCode.BAD_REQUEST;
+        ApiResponse<Void> body = ApiResponse.error(code.code(), message);
+        return ResponseEntity.status(code.status()).body(body);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleNotReadable(HttpMessageNotReadableException ex) {
+        String message = ErrorCode.E202.message();
+        Throwable cause = ex.getMostSpecificCause();
+        if (cause instanceof InvalidFormatException invalidFormat) {
+            String path = invalidFormat.getPath().stream()
+                    .map(JsonMappingException.Reference::getFieldName)
+                    .collect(Collectors.joining("."));
+            if (!path.isBlank()) {
+                message = "Invalid data type: " + path;
+            }
+        }
+        ApiResponse<Void> body = ApiResponse.error(ErrorCode.E202.code(), message);
+        return ResponseEntity.status(ErrorCode.E202.status()).body(body);
     }
 
     @ExceptionHandler(AccessDeniedException.class)

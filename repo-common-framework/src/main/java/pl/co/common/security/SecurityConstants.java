@@ -11,7 +11,6 @@ public final class SecurityConstants {
 
     public static final String CLAIM_USER_ID = "uid";
     public static final String CLAIM_ROLES = "roles";
-    public static final String CLAIM_EMAIL = "email_verified";
     public static final String CLAIM_EMAIL_VERIFIED = "email_verified";
     public static final String CLAIM_TYPE = "typ";
     public static final String CLAIM_PARENT_JTI = "prt";

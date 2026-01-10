@@ -6,14 +6,14 @@ import java.security.Principal;
 import java.util.Collection;
 import java.util.Set;
 
-public record AuthPrincipal(String userId, String email, boolean emailVerified, Set<String> roles)
+public record AuthPrincipal(String userId, boolean emailVerified, Set<String> roles)
         implements Principal, Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
     @Override
     public String getName() {
-        return email != null ? email : userId;
+        return userId;
     }
 
     public boolean hasRole(String role) {

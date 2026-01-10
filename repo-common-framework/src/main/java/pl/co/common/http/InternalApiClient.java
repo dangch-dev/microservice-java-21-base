@@ -56,10 +56,10 @@ public class InternalApiClient {
     private volatile CachedToken cachedToken;
 
     public InternalApiClient(RestTemplate restTemplate,
-                             @Value("${internal.api.auth-service:repo-auth}") String authServiceId,
-                             @Value("${internal.api.token-path:/oauth/token}") String tokenPath,
-                             @Value("${internal.api.client-id:}") String clientId,
-                             @Value("${internal.api.client-secret:}") String clientSecret) {
+                             @Value("${internal.api.auth-service}") String authServiceId,
+                             @Value("${internal.api.token-path}") String tokenPath,
+                             @Value("${internal.api.client-id}") String clientId,
+                             @Value("${internal.api.client-secret}") String clientSecret) {
         this.restTemplate = restTemplate;
         this.authServiceId = authServiceId;
         this.tokenPath = tokenPath;

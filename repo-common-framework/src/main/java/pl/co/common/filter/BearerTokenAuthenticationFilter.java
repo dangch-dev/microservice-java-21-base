@@ -12,7 +12,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
+import pl.co.common.dto.ApiResponse;
 import pl.co.common.exception.ApiException;
+import pl.co.common.exception.ErrorCode;
 import pl.co.common.jwt.JwtVerifier;
 import pl.co.common.jwt.record.JwtPayload;
 import pl.co.common.jwt.record.JwtVerificationOptions;
@@ -67,7 +69,7 @@ public class BearerTokenAuthenticationFilter extends OncePerRequestFilter {
         String token = header.substring(SecurityConstants.HEADER_BEARER_PREFIX.length()).trim();
         try {
             JwtPayload payload = JwtVerifier.verify(token, publicKey, verificationOptions);
-            AuthPrincipal principal = new AuthPrincipal(payload.userId(), payload.email(), payload.emailVerified(), payload.roles());
+            AuthPrincipal principal = new AuthPrincipal(payload.userId(), payload.emailVerified(), payload.roles());
             boolean hasInternalRole = SecurityContextHolder.getContext().getAuthentication() != null
                     && SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
                     .anyMatch(a -> RoleName.ROLE_INTERNAL.name().equals(a.getAuthority()));
@@ -85,6 +87,13 @@ public class BearerTokenAuthenticationFilter extends OncePerRequestFilter {
         } catch (ApiException ex) {
             if (!isOptional) {
                 log.warn("JWT verification failed on path {}: {}", request.getRequestURI(), ex.getMessage());
+                ErrorCode code = ex.getErrorCode() == null ? ErrorCode.UNAUTHORIZED : ex.getErrorCode();
+                response.setStatus(code.status().value());
+                response.setContentType("application/json");
+                ApiResponse<Void> body = ApiResponse.error(code.code(), ex.getMessage());
+                response.getWriter().write("{\"success\":false,\"errorCode\":\"" + body.errorCode()
+                        + "\",\"errorMessage\":\"" + body.errorMessage() + "\"}");
+                return;
             }
             // Optional paths: invalid token won't set auth; access is decided by SecurityConfig.
         }

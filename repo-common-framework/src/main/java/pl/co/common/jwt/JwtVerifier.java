@@ -31,7 +31,7 @@ public final class JwtVerifier {
         }
         JWTClaimsSet claims = getClaims(jwt);
         if (claims.getExpirationTime() != null && claims.getExpirationTime().before(new Date())) {
-            throw new ApiException(ErrorCode.UNAUTHORIZED, "Token expired");
+            throw new ApiException(ErrorCode.E234, "Token expired");
         }
         validateClaims(claims, options);
         return toPayload(claims);
@@ -40,7 +40,6 @@ public final class JwtVerifier {
     private static JwtPayload toPayload(JWTClaimsSet claims) {
         try {
             String userId = claims.getSubject();
-            String email = claims.getStringClaim(SecurityConstants.CLAIM_EMAIL);
             @SuppressWarnings("unchecked")
             Set<String> roles = claims.getStringListClaim(SecurityConstants.CLAIM_ROLES) != null
                     ? Set.copyOf(claims.getStringListClaim(SecurityConstants.CLAIM_ROLES))
@@ -51,7 +50,6 @@ public final class JwtVerifier {
             return new JwtPayload(
                     claims.getJWTID(),
                     userId,
-                    email,
                     roles,
                     emailVerified,
                     type == null ? null : String.valueOf(type),

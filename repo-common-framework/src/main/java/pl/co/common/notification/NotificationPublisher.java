@@ -21,7 +21,7 @@ public class NotificationPublisher {
 
     public NotificationPublisher(KafkaTemplate<String, String> kafkaTemplate,
                                  ObjectMapper objectMapper,
-                                 @Value("${notification.publisher.topic:notification.events}") String topic) {
+                                 @Value("${kafka.topics.notification}") String topic) {
         this.kafkaTemplate = kafkaTemplate;
         this.objectMapper = objectMapper;
         this.topic = topic;

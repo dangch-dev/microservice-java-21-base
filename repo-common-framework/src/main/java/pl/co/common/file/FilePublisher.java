@@ -20,21 +20,30 @@ public class FilePublisher {
 
     public FilePublisher(KafkaTemplate<String, String> kafkaTemplate,
                          ObjectMapper objectMapper,
-                         @Value("${storage.kafka.topic:storage.file.commit}") String topic) {
+                         @Value("${kafka.topics.file}") String topic) {
         this.kafkaTemplate = kafkaTemplate;
         this.objectMapper = objectMapper;
         this.topic = topic;
     }
 
-    public void publish(List<String> fileIds) {
-        if (fileIds == null || fileIds.isEmpty()) {
+    public void publish(List<FileMeta> files) {
+        if (files == null || files.isEmpty()) {
             return;
         }
+        List<String> fileIds = files.stream()
+                .map(FileMeta::fileId)
+                .filter(id -> id != null && !id.isBlank())
+                .toList();
+
+        if (fileIds.isEmpty()) {
+            return;
+        }
+
         try {
             String payload = objectMapper.writeValueAsString(fileIds);
             kafkaTemplate.send(topic, payload);
         } catch (Exception ex) {
-            log.warn("Failed to publish file commit event: {}", ex.getMessage());
+            log.warn("Failed to publish file event: {}", ex.getMessage());
         }
     }
 }
