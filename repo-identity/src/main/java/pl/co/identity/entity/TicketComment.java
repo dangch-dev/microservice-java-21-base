@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import pl.co.common.file.FileMeta;
 import pl.co.common.jpa.BaseEntity;
-import pl.co.common.file.FileMetaListConverter;
+import pl.co.common.file.FileMetaConverter;
 
 import java.util.List;
 
@@ -30,7 +30,7 @@ public class TicketComment extends BaseEntity {
     @Column(nullable = false, length = 2000)
     private String content;
 
-    @Convert(converter = FileMetaListConverter.class)
+    @Convert(converter = FileMetaConverter.class)
     @Column(columnDefinition = "json")
     private List<FileMeta> files;
 }
