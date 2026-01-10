@@ -1,6 +1,5 @@
 package pl.co.identity.dto;
 
-import pl.co.common.security.UserStatus;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
@@ -10,7 +9,7 @@ import java.util.Set;
 @Getter
 @Setter
 public class AdminUpdateUserRequest {
-    private UserStatus status;
+    private String status;
 
     private Set<String> roles;
 

@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import pl.co.common.file.FileMeta;
 import pl.co.common.jpa.BaseEntity;
-import pl.co.common.jpa.converter.FileMetaListConverter;
+import pl.co.common.file.FileMetaListConverter;
 
 import java.util.List;
 
@@ -26,9 +26,6 @@ public class TicketComment extends BaseEntity {
 
     @Column(nullable = false, length = 26)
     private String ticketId;
-
-    @Column(nullable = false, length = 26)
-    private String authorId;
 
     @Column(nullable = false, length = 2000)
     private String content;

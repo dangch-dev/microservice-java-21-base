@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.RestController;
 import pl.co.common.notification.NotificationAction;
 import pl.co.common.notification.NotificationEvent;
 import pl.co.common.notification.NotificationPublisher;
-import pl.co.common.notification.ResourceType;
 
 import java.util.Map;
 
@@ -27,10 +26,9 @@ public class DemoNotificationController {
     public void sendDemo(@PathVariable String userId) {
         NotificationEvent event = new NotificationEvent(
                 userId,
-                NotificationAction.TICKET_ASSIGNED,
+                NotificationAction.TICKET_ASSIGNED.name(),
                 "Demo notification",
                 "This is a demo notification from identity service",
-                ResourceType.OTHER,
                 null,
                 Map.of("source", "identity-demo"),
                 "identity-demo:" + userId

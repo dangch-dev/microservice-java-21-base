@@ -15,7 +15,6 @@ public interface TicketUserService {
     TicketResponse create(AuthPrincipal principal, TicketCreateRequest request);
     TicketPageResponse list(AuthPrincipal principal, TicketFilterRequest filter);
     TicketResponse get(AuthPrincipal principal, String ticketId);
-    TicketResponse updateStatus(AuthPrincipal principal, String ticketId, TicketStatusUpdateRequest request);
     TicketResponse cancel(AuthPrincipal principal, String ticketId);
     TicketCommentResponse addComment(AuthPrincipal principal, String ticketId, TicketCommentRequest request);
     List<TicketCommentResponse> listComments(AuthPrincipal principal, String ticketId);

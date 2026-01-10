@@ -11,6 +11,7 @@ public interface TicketMapper {
 
     @Mapping(target = "createdBy", source = "createdBy")
     @Mapping(target = "assignedTo", source = "assignedTo")
+    @Mapping(target = "files", source = "files")
     TicketResponse toResponse(Ticket ticket);
 
     default TicketStatus toTicketStatus(String status) {

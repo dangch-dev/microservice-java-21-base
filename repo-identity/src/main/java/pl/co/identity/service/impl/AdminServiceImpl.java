@@ -40,7 +40,9 @@ public class AdminServiceImpl implements AdminService {
     @Transactional(readOnly = true)
     @Override
     public AdminUserPageResponse listUsers(AdminUserFilterRequest filter) {
-        PageRequest page = PageRequest.of(filter.getPage(), filter.getSize());
+        int pageValue = filter.getPage() == null ? 0 : filter.getPage();
+        int sizeValue = filter.getSize() == null ? 20 : filter.getSize();
+        PageRequest page = PageRequest.of(Math.max(pageValue, 0), Math.max(sizeValue, 1));
         Specification<User> spec = buildSpec(filter);
         Page<User> result = userRepository.findAll(spec, page);
         List<AdminUserResponse> items = result.getContent().stream()
@@ -75,7 +77,10 @@ public class AdminServiceImpl implements AdminService {
                     .orElseThrow(() -> new ApiException(ErrorCode.E221, "Role not found data: ROLE_USER"));
             roles.add(defaultRole);
         }
-        String status = request.getStatus() == null ? UserStatus.ACTIVE.name() : request.getStatus().name();
+        String status = validateUserStatus(request.getStatus());
+        if (status == null) {
+            throw new ApiException(ErrorCode.E243, "Required parameter missing: status");
+        }
         User user = User.builder()
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
@@ -98,7 +103,10 @@ public class AdminServiceImpl implements AdminService {
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "User not found"));
 
         if (request.getStatus() != null) {
-            user.setStatus(request.getStatus().name());
+            String status = validateUserStatus(request.getStatus());
+            if (status != null) {
+                user.setStatus(status);
+            }
         }
 
         if (request.getRoles() != null && !request.getRoles().isEmpty()) {
@@ -181,14 +189,28 @@ public class AdminServiceImpl implements AdminService {
         }
     }
 
+    private String validateUserStatus(String status) {
+        if (status == null || status.isBlank()) {
+            return null;
+        }
+        try {
+            return UserStatus.valueOf(status).name();
+        } catch (IllegalArgumentException ex) {
+            throw new ApiException(ErrorCode.E204, "Invalid user status: " + status);
+        }
+    }
+
     private Specification<User> buildSpec(AdminUserFilterRequest filter) {
         return (root, query, cb) -> {
             var predicates = new java.util.ArrayList<>();
             if (filter.getEmailContains() != null && !filter.getEmailContains().isBlank()) {
                 predicates.add(cb.like(cb.lower(root.get("email")), "%" + filter.getEmailContains().toLowerCase() + "%"));
             }
-            if (filter.getStatus() != null) {
-                predicates.add(cb.equal(root.get("status"), filter.getStatus().name()));
+            if (filter.getStatus() != null && !filter.getStatus().isBlank()) {
+                String status = validateUserStatus(filter.getStatus());
+                if (status != null) {
+                    predicates.add(cb.equal(root.get("status"), status));
+                }
             }
             if (filter.getRole() != null && !filter.getRole().isBlank()) {
                 var join = root.join("roles");

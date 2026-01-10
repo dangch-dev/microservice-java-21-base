@@ -5,8 +5,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
-import pl.co.common.security.UserStatus;
-
 import java.util.Set;
 
 @Getter
@@ -33,7 +31,7 @@ public class AdminCreateUserRequest {
     @Size(max = 255)
     private String address;
 
-    private UserStatus status;
+    private String status;
 
     private Set<String> roles;
 }

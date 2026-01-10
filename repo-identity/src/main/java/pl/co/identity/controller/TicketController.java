@@ -50,14 +50,6 @@ public class TicketController {
         return ApiResponse.ok(ticketUserService.cancel(principal, ticketId));
     }
 
-    @PatchMapping("/{ticketId}/status")
-    public ApiResponse<TicketResponse> updateStatus(Authentication authentication,
-                                                    @PathVariable String ticketId,
-                                                    @Valid @RequestBody TicketStatusUpdateRequest request) {
-        AuthPrincipal principal = (AuthPrincipal) authentication.getPrincipal();
-        return ApiResponse.ok(ticketUserService.updateStatus(principal, ticketId, request));
-    }
-
     @PostMapping("/{ticketId}/comments")
     public ApiResponse<TicketCommentResponse> addComment(Authentication authentication,
                                                          @PathVariable String ticketId,

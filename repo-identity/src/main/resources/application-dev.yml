@@ -39,11 +39,11 @@ internal:
     client-id: hMLksVQKhU5WsvacK7uIAvmB
     client-secret: pbfWXn0D4MmzzBbcCwRboSbmcT92eyPx
 
+kafka:
+  topics:
+    notification: notification.in-app
+    file: storage.file
+
 logging:
   level:
     org.springframework.security: INFO
-
-storage:
-  kafka:
-    topic: storage.file.commit
-    group: storage-commit
