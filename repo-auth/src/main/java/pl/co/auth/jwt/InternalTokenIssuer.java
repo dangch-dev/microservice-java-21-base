@@ -23,7 +23,7 @@ public class InternalTokenIssuer {
 
     private final RSAPrivateKey jwtPrivateKey;
 
-    @Value("${security.internal-jwt.ttl:PT10M}")
+    @Value("${security.internal-jwt.ttl}")
     private Duration ttl;
 
     public TokenResponse issue(String serviceName) {

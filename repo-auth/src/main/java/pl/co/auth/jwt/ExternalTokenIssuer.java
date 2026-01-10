@@ -24,12 +24,12 @@ public class ExternalTokenIssuer {
 
     private final RSAPrivateKey jwtPrivateKey;
 
-    @Value("${security.external-jwt.access-ttl:PT5M}")
+    @Value("${security.external-jwt.access-ttl}")
     private Duration accessTtl;
-    @Value("${security.external-jwt.refresh-ttl:P7D}")
+    @Value("${security.external-jwt.refresh-ttl}")
     private Duration refreshTtl;
 
-    public String issueAccessToken(String userId, String email, Set<String> roles, boolean emailVerified) {
+    public String issueAccessToken(String userId, Set<String> roles, boolean emailVerified) {
         Instant now = Instant.now();
         JWTClaimsSet.Builder builder = new JWTClaimsSet.Builder()
                 .subject(userId)
@@ -38,7 +38,6 @@ public class ExternalTokenIssuer {
                 .jwtID(UUID.randomUUID().toString())
                 .claim(SecurityConstants.CLAIM_USER_ID, userId)
                 .claim(SecurityConstants.CLAIM_ROLES, roles)
-                .claim(SecurityConstants.CLAIM_EMAIL, email)
                 .claim(SecurityConstants.CLAIM_EMAIL_VERIFIED, emailVerified)
                 .claim(SecurityConstants.CLAIM_TYPE, SecurityConstants.TYP_ACCESS);
         builder.audience(AUDIENCE);

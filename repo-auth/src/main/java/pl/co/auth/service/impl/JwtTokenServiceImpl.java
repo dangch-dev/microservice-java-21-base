@@ -42,7 +42,7 @@ public class JwtTokenServiceImpl implements JwtTokenService {
     public TokenResponse issueExternalTokens(User user) {
         Set<String> roles = extractRoleNames(user);
         String userId = user.getId();
-        String access = externalTokenIssuer.issueAccessToken(userId, user.getEmail(), roles, user.isEmailVerified());
+        String access = externalTokenIssuer.issueAccessToken(userId, roles, user.isEmailVerified());
         String refresh = externalTokenIssuer.issueRefreshToken(userId, null);
         refreshTokenService.store(refresh, userId, null, externalTokenIssuer.refreshTtl());
         return TokenResponse.builder()
@@ -70,7 +70,7 @@ public class JwtTokenServiceImpl implements JwtTokenService {
             throw new ApiException(ErrorCode.E233); // Email not verified
         }
         Set<String> roles = extractRoleNames(user);
-        String access = externalTokenIssuer.issueAccessToken(userId, user.getEmail(), roles, user.isEmailVerified());
+        String access = externalTokenIssuer.issueAccessToken(userId, roles, user.isEmailVerified());
         String rotated = externalTokenIssuer.issueRefreshToken(userId, payload.jti());
 
         refreshTokenService.revokeById(payload.jti());
