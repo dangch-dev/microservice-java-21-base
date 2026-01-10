@@ -19,10 +19,9 @@
   <div class="card">
     <h2>1) Keys / Secrets to configure</h2>
     <ul>
-      <li><b>JWT HS256 secret</b>: <code>security.jwt.secret</code> (same for gateway & identity).</li>
-      <li><b>JWT issuer</b>: <code>security.jwt.issuer</code> (default <code>repo-identity</code>).</li>
-      <li><b>Access TTL</b>: <code>security.jwt.access-ttl</code> (default 5m).</li>
-      <li><b>Refresh TTL</b>: <code>security.jwt.refresh-ttl</code> (default 7d).</li>
+      <li><b>JWT HS256 secret</b>: <code>security.external-jwt.secret</code> (same for gateway & identity).</li>
+      <li><b>Access TTL</b>: <code>security.external-jwt.access-ttl</code> (default 5m).</li>
+      <li><b>Refresh TTL</b>: <code>security.external-jwt.refresh-ttl</code> (default 7d).</li>
       <li><b>Redis</b>: host/port/password for refresh tokens + email/password reset tokens.</li>
       <li><b>MySQL</b>: URL, username, password for user & role tables.</li>
       <li><b>Eureka</b>: <code>eureka.client.service-url.defaultZone</code> (gateway + identity register here).</li>

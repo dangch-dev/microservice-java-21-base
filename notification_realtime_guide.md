@@ -1,21 +1,20 @@
 ## Hướng dẫn Notification & Realtime (Phương án A)
 
 ### Kiến trúc tổng quát
-- **Producer services** (vd: repo-identity, tương lai order/chat/...): bắn `NotificationEvent` bằng `NotificationPublisher` (Kafka, topic mặc định `notification.events`, key = `userId`).
+- **Producer services** (vd: repo-identity, tương lai order/chat/...): bắn `NotificationEvent` bằng `NotificationPublisher` (Kafka, topic mặc định `notification.in-app`, key = `userId`).
 - **repo-notification** (consumer group `notification-service`): nhận Kafka, lưu DB, cung cấp REST API list/unread/mark.
 - **repo-realtime** (consumer group `realtime-noti`): nhận Kafka, đẩy WebSocket/STOMP tới browser. Không qua Redis.
-- **common-framework**: chứa contract `NotificationEvent`, `ResourceType`, `NotificationPublisher` để mọi service tái dùng.
+- **common-framework**: chứa contract `NotificationEvent`, `NotificationPublisher` để mọi service tái dùng.
 
-Luồng: Service phát sinh sự kiện → Kafka `notification.events` → repo-notification lưu + trả REST → repo-realtime push WS `/user/queue/notifications`. FE có fallback HTTP (list/unread/mark) và realtime WS song song.
+Luồng: Service phát sinh sự kiện → Kafka `notification.in-app` → repo-notification lưu + trả REST → repo-realtime push WS `/user/queue/notifications`. FE có fallback HTTP (list/unread/mark) và realtime WS song song.
 
 ### Contract NotificationEvent
 ```java
 public record NotificationEvent(
     String userId,           // bắt buộc, key Kafka, định tuyến WS
-    String action,           // e.g. "ticket.assigned"
+    String action,           // e.g. NotificationAction.TICKET_ASSIGNED.name()
     String title,            // tiêu đề ngắn
     String message,          // mô tả ngắn
-    ResourceType resourceType, // enum: TICKET, OTHER (mở rộng thêm tùy domain)
     String resourceId,       // id tài nguyên (FE tự build URL/route)
     Map<String, Object> payload, // dữ liệu phụ (JSON)
     String dedupeKey         // khóa khử trùng lặp; null nếu không cần
@@ -26,7 +25,7 @@ public record NotificationEvent(
 
 ### Cách publish từ service bất kỳ
 1. **Thêm dependency** `repo-common-framework` (đã share từ parent).
-2. **Cấu hình Kafka** (bootstrap servers, topic nếu muốn đổi): `notification.publisher.topic`.
+2. **Cấu hình Kafka** (bootstrap servers, topic nếu muốn đổi): `kafka.topics.notification`.
 3. **Inject và gọi**:
 ```java
 @Service
@@ -37,10 +36,9 @@ public class SampleService {
     public void notifyUser(String userId, String ticketId) {
         NotificationEvent event = new NotificationEvent(
             userId,
-            "ticket.assigned",
-            "Ticket assigned",
-            "Ticket ABC assigned to you",
-            ResourceType.TICKET,
+            NotificationAction.TICKET_ASSIGNED.name(),
+            NotificationAction.TICKET_ASSIGNED.title(),
+            NotificationAction.TICKET_ASSIGNED.message(ticketId, "you"),
             ticketId,
             Map.of("ticketId", ticketId),
             "ticket:" + ticketId + ":assigned:" + userId
@@ -78,7 +76,7 @@ Các event khác (từ REST mark) hiện chỉ lưu DB; nếu cần push thêm t
 - FE: kết nối WS để nhận realtime, đồng thời dùng REST để load lịch sử / fallback khi offline.
 
 ### Cấu hình mặc định (có thể override)
-- Topic: `notification.events`
+- Topic: `notification.in-app`
 - Kafka group: `notification-service` (repo-notification), `realtime-noti` (repo-realtime)
 - Ports: repo-notification `8083`, repo-realtime `8084`
 

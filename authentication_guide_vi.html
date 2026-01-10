@@ -19,10 +19,9 @@
   <div class="card">
     <h2>1) Khóa / Secret cần cấu hình</h2>
     <ul>
-      <li><b>JWT HS256 secret</b>: <code>security.jwt.secret</code> (dùng chung gateway & identity).</li>
-      <li><b>JWT issuer</b>: <code>security.jwt.issuer</code> (mặc định <code>repo-identity</code>).</li>
-      <li><b>Access TTL</b>: <code>security.jwt.access-ttl</code> (mặc định 5 phút).</li>
-      <li><b>Refresh TTL</b>: <code>security.jwt.refresh-ttl</code> (mặc định 7 ngày).</li>
+      <li><b>JWT HS256 secret</b>: <code>security.external-jwt.secret</code> (dùng chung gateway & identity).</li>
+      <li><b>Access TTL</b>: <code>security.external-jwt.access-ttl</code> (mặc định 5 phút).</li>
+      <li><b>Refresh TTL</b>: <code>security.external-jwt.refresh-ttl</code> (mặc định 7 ngày).</li>
       <li><b>Redis</b>: host/port/password cho refresh token + token xác minh email / đặt lại mật khẩu.</li>
       <li><b>MySQL</b>: URL, username, password cho bảng user & role.</li>
       <li><b>Eureka</b>: <code>eureka.client.service-url.defaultZone</code> (gateway & identity đăng ký ở đây).</li>
