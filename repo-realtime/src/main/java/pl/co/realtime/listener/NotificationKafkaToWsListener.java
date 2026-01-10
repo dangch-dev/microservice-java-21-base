@@ -19,7 +19,7 @@ public class NotificationKafkaToWsListener {
     private final NotificationService notificationService;
     private final ObjectMapper objectMapper;
 
-    @KafkaListener(topics = "${notification.kafka.topic:notification.events}", groupId = "${notification.kafka.group:realtime-noti}")
+    @KafkaListener(topics = "${kafka.topics.notification}", groupId = "${notification.kafka.group}")
     public void onMessage(String message) {
         try {
             NotificationEvent event = objectMapper.readValue(message, NotificationEvent.class);
