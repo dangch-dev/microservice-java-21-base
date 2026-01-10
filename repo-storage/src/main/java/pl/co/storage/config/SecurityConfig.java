@@ -34,7 +34,6 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/internal/**").authenticated()
                         .anyRequest().authenticated())
                 .addFilterBefore(commonRequestContextFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(internalJwtFilter, UsernamePasswordAuthenticationFilter.class)
@@ -47,19 +46,19 @@ public class SecurityConfig {
     @Bean
     public BearerTokenAuthenticationFilter bearerTokenAuthenticationFilter(RSAPublicKey jwtPublicKey) {
         return new BearerTokenAuthenticationFilter(jwtPublicKey,
-                List.of("/internal/**"));
+                List.of());
     }
 
     @Bean
     public EmailVerifiedFilter emailVerifiedFilter() {
-        return new EmailVerifiedFilter(List.of("/internal/**"));
+        return new EmailVerifiedFilter(List.of());
     }
 
     @Bean
     public InternalJwtFilter internalJwtFilter(RSAPublicKey jwtPublicKey) {
         return new InternalJwtFilter(
                 jwtPublicKey,
-                List.of("/internal/**"));
+                List.of());
     }
 
     @Bean

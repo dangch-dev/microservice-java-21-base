@@ -1,28 +1,6 @@
 spring:
   profiles:
-    active: ${SPRING_PROFILES_ACTIVE:dev}
+    active: ${PROFILES_ACTIVE:dev}
   application:
     name: repo-storage
-  jpa:
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.MySQL8Dialect
-    open-in-view: false
-    defer-datasource-initialization: false
-  cache:
-    type: simple
 
-security:
-  external-jwt:
-  internal-jwt:
-
-storage:
-  presign-ttl: PT15M
-  pending-ttl: PT1H
-  cleanup-cron: "0 0 * * * *"
-  delete-object-on-soft-delete: false
-
-logging:
-  level:
-    org.springframework.security: INFO
-    io.minio: WARN

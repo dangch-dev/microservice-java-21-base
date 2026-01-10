@@ -13,7 +13,7 @@ public class PendingFileCleanupJob {
 
     private final FileService fileService;
 
-    @Scheduled(cron = "${storage.cleanup-cron:0 0 * * * *}")
+    @Scheduled(cron = "${storage.cleanup-cron}")
     public void cleanup() {
         try {
             fileService.cleanupPending();

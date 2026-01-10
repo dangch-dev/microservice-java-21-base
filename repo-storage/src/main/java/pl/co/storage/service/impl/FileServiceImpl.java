@@ -1,32 +1,27 @@
 package pl.co.storage.service.impl;
 
-import io.minio.GetPresignedObjectUrlArgs;
-import io.minio.MinioClient;
-import io.minio.RemoveObjectArgs;
-import io.minio.StatObjectArgs;
-import io.minio.StatObjectResponse;
+import io.minio.*;
 import io.minio.http.Method;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import pl.co.common.exception.ApiException;
 import pl.co.common.exception.ErrorCode;
 import pl.co.common.util.UlidGenerator;
 import pl.co.storage.config.StorageProperties;
-import pl.co.storage.dto.FilePresignRequest;
-import pl.co.storage.dto.FilePresignResponse;
+import pl.co.storage.dto.FileDownload;
 import pl.co.storage.dto.FileResponse;
-import pl.co.storage.dto.FileUploadRequest;
 import pl.co.storage.entity.File;
 import pl.co.storage.entity.FileStatus;
 import pl.co.storage.mapper.FileMapper;
 import pl.co.storage.repository.FileRepository;
 import pl.co.storage.service.FileService;
 
+import java.io.InputStream;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -47,30 +42,64 @@ public class FileServiceImpl implements FileService {
 
     @Override
     @Transactional
-    public List<FilePresignResponse> presign(FilePresignRequest request, String createdBy) {
-        if (request.files() == null || request.files().isEmpty()) {
-            throw new ApiException(ErrorCode.E219, "No files to presign");
+    public FileResponse upload(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new ApiException(ErrorCode.E243, "File is required");
+        }
+        String fileId = UlidGenerator.nextUlid();
+        String originalName = file.getOriginalFilename();
+        String objectKey = buildObjectKey(fileId, originalName);
+        String mimeType = file.getContentType();
+
+        try (InputStream inputStream = file.getInputStream()) {
+            minioClient.putObject(PutObjectArgs.builder()
+                    .bucket(storageProperties.getMinio().getBucket())
+                    .object(objectKey)
+                    .stream(inputStream, file.getSize(), -1)
+                    .contentType(mimeType)
+                    .build());
+        } catch (Exception ex) {
+            log.error("Failed to upload object {}: {}", objectKey, ex.getMessage());
+            throw new ApiException(ErrorCode.E281, "Unable to upload file", ex);
         }
 
-        List<File> files = new ArrayList<>(request.files().size());
-        for (FileUploadRequest file : request.files()) {
-            String fileId = UlidGenerator.nextUlid();
-            String objectKey = buildObjectKey(fileId, file.filename());
-            File entity = new File();
-            entity.setId(fileId);
-            entity.setObjectKey(objectKey);
-            entity.setFilename(file.filename());
-            entity.setMimeType(file.mimeType());
-            entity.setSizeBytes(file.sizeBytes());
-            entity.setStatus(FileStatus.PENDING.name());
-            files.add(entity);
+        File entity = new File();
+        entity.setId(fileId);
+        entity.setObjectKey(objectKey);
+        entity.setFilename(originalName == null || originalName.isBlank() ? "file" : originalName);
+        entity.setMimeType(mimeType == null ? "application/octet-stream" : mimeType);
+        entity.setSizeBytes(file.getSize());
+        entity.setStatus(FileStatus.PENDING.name());
+        File saved = fileRepository.save(entity);
+        return fileMapper.toResponse(saved);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public FileDownload download(String fileId) {
+        File file = fileRepository.findByIdAndDeletedFalse(fileId)
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "File not found"));
+
+        Optional<StatObjectResponse> statResponse = statObject(file);
+        if (statResponse.isEmpty()) {
+            throw new ApiException(ErrorCode.E227, "File object not found");
         }
 
-        List<File> saved = fileRepository.saveAll(files);
-        return saved.stream()
-                .map(file -> new FilePresignResponse(file.getId(), file.getObjectKey(),
-                        generatePresignedPutUrl(file.getObjectKey(), file.getMimeType())))
-                .toList();
+        try {
+            InputStream stream = minioClient.getObject(GetObjectArgs.builder()
+                    .bucket(storageProperties.getMinio().getBucket())
+                    .object(file.getObjectKey())
+                    .build());
+            StatObjectResponse stat = statResponse.get();
+            return new FileDownload(
+                    stream,
+                    file.getFilename(),
+                    file.getMimeType(),
+                    stat.size());
+        } catch (Exception ex) {
+            log.error("Failed to get object {}: {}", file.getObjectKey(), ex.getMessage());
+            throw new ApiException(ErrorCode.E281, "Unable to download file", ex);
+        }
     }
 
     @Override
@@ -78,9 +107,6 @@ public class FileServiceImpl implements FileService {
     public FileResponse commit(String fileId) {
         File file = fileRepository.findByIdAndDeletedFalse(fileId)
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "File not found"));
-        if (FileStatus.DELETED.name().equals(file.getStatus())) {
-            throw new ApiException(ErrorCode.NOT_FOUND, "File deleted");
-        }
 
         Optional<StatObjectResponse> statResponse = statObject(file);
         if (statResponse.isEmpty()) {
@@ -94,17 +120,6 @@ public class FileServiceImpl implements FileService {
         File saved = fileRepository.save(file);
         return fileMapper.toResponse(saved);
     }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<FileResponse> listByIds(List<String> ids) {
-        if (ids == null || ids.isEmpty()) {
-            return Collections.emptyList();
-        }
-        List<File> files = fileRepository.findByIdInAndStatusAndDeletedFalse(ids, FileStatus.READY.name());
-        return fileMapper.toResponseList(files);
-    }
-
 
     @Override
     @Transactional
@@ -121,22 +136,6 @@ public class FileServiceImpl implements FileService {
             }
         });
         fileRepository.deleteAll(expired);
-    }
-
-    private String generatePresignedPutUrl(String objectKey, String mimeType) {
-        try {
-            long ttlSeconds = Math.min(storageProperties.getPresignTtl().toSeconds(), MAX_PRESIGN_SECONDS);
-            return minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder()
-                    .bucket(storageProperties.getMinio().getBucket())
-                    .object(objectKey)
-                    .method(Method.PUT)
-                    .expiry((int) ttlSeconds, TimeUnit.SECONDS)
-                    .extraQueryParams(mimeType != null ? Map.of("Content-Type", mimeType) : Collections.emptyMap())
-                    .build());
-        } catch (Exception ex) {
-            log.error("Failed to create presigned URL for object {}: {}", objectKey, ex.getMessage());
-            throw new ApiException(ErrorCode.E281, "Unable to create presign URL", ex);
-        }
     }
 
     private Optional<StatObjectResponse> statObject(File file) {

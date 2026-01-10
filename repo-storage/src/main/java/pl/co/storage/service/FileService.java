@@ -1,17 +1,16 @@
 package pl.co.storage.service;
 
-import pl.co.storage.dto.FilePresignRequest;
-import pl.co.storage.dto.FilePresignResponse;
+import org.springframework.web.multipart.MultipartFile;
+import pl.co.storage.dto.FileDownload;
 import pl.co.storage.dto.FileResponse;
 
-import java.util.List;
-
 public interface FileService {
-    List<FilePresignResponse> presign(FilePresignRequest request, String createdBy);
+
+    FileResponse upload(MultipartFile file);
+
+    FileDownload download(String fileId);
 
     FileResponse commit(String fileId);
-
-    List<FileResponse> listByIds(List<String> ids);
 
     void cleanupPending();
 }

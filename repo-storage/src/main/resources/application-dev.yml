@@ -8,6 +8,15 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+    open-in-view: false
+    defer-datasource-initialization: false
+  cache:
+    type: simple
+  kafka:
+    bootstrap-servers: localhost:9092
 
 server:
   port: 8086
@@ -16,7 +25,16 @@ security:
   external-jwt:
     public-key-path: file:../secrets/jwt-public.pem
 
+kafka:
+  topics:
+    notification: notification.in-app
+    file: storage.file
+
 storage:
+  presign-ttl: PT15M
+  pending-ttl: PT1H
+  cleanup-cron: "0 0 * * * *"
+  delete-object-on-soft-delete: false
   minio:
     endpoint: http://localhost:9000
     console-endpoint: http://localhost:9001
@@ -42,3 +60,9 @@ internal:
     token-path: /oauth/token
     client-id: cav1G2AuXQ7fonsdcI5g7kko
     client-secret: 6NxtVO2l9WYZ6uMfhRwT4dsl9q8fmSXN
+
+
+logging:
+  level:
+    org.springframework.security: INFO
+    io.minio: WARN

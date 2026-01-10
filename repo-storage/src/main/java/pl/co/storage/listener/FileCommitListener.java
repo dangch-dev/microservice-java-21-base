@@ -22,10 +22,7 @@ public class FileCommitListener {
     private final ObjectMapper objectMapper;
     private final FileService fileService;
 
-    @KafkaListener(
-            topics = "${storage.kafka.topic:storage.file.commit}",
-            groupId = "${storage.kafka.group:storage-commit}"
-    )
+    @KafkaListener(topics = "${kafka.topics.file}")
     public void onMessage(String message) {
         if (message == null || message.isBlank()) {
             return;
