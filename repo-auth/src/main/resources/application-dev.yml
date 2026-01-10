@@ -30,7 +30,7 @@ security:
   external-jwt:
     public-key-path: file:../secrets/jwt-public.pem
     private-key-path: file:../secrets/jwt-private.pem
-    access-ttl: PT5M
+    access-ttl: PT60M
     refresh-ttl: P7D
   internal-jwt:
     ttl: PT10M
@@ -53,11 +53,11 @@ internal:
     client-id: oRd1gWcf7Sx1z0NHHA1zwSPa
     client-secret: 4PHWqCA2CtcSjEf6pUpP7D9hVuvCOdRL
 
+kafka:
+  topics:
+    notification: notification.in-app
+    file: storage.file
+
 logging:
   level:
     org.springframework.security: INFO
-
-storage:
-  kafka:
-    topic: storage.file.commit
-    group: storage-commit

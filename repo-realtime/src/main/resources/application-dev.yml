@@ -1,0 +1,55 @@
+spring:
+  autoconfigure:
+    exclude:
+      # Database Off
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: realtime-noti
+      auto-offset-reset: latest
+
+server:
+  port: 8084
+
+security:
+  external-jwt:
+    public-key-path: file:../secrets/jwt-public.pem
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+  instance:
+    prefer-ip-address: true
+    hostname: localhost
+    instance-id: ${spring.application.name}:${server.port}
+
+internal:
+  api:
+    auth-service: repo-auth
+    token-path: /oauth/token
+    client-id: HgdLhl5jxabqSmvGmazt3tLX
+    client-secret: DDm8amT7IAScZgnsx0bTeIjWm37NTep0
+
+notification:
+  kafka:
+    group: realtime-noti
+
+kafka:
+  topics:
+    notification: notification.in-app
+    file: storage.file
+
+logging:
+  level:
+    org.springframework:
+      cloud.gateway: INFO
+      web.reactive:
+        socket:
+          server: DEBUG
+      messaging: DEBUG
+    web.reactive.socket: DEBUG

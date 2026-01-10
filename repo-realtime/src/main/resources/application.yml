@@ -1,48 +1,6 @@
 spring:
+  profiles:
+    active: ${PROFILES_ACTIVE:dev}
   application:
     name: repo-realtime
-  autoconfigure:
-    exclude:
-      # Database Off
-      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
-      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
-  kafka:
-    bootstrap-servers: localhost:9092
-    consumer:
-      group-id: realtime-noti
-      auto-offset-reset: latest
 
-server:
-  port: 8084
-
-security:
-  jwt:
-    public-key-path: file:../secrets/jwt-public.pem
-    issuer: repo-identity-api
-
-eureka:
-  instance:
-    prefer-ip-address: true
-    hostname: localhost
-    instance-id: ${spring.application.name}:${server.port}
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka
-
-#logging:
-#  level:
-#    org.springframework.security: INFO
-logging:
-  level:
-    org.springframework:
-      cloud.gateway: INFO
-      web.reactive:
-        socket:
-          server: DEBUG
-      messaging: DEBUG
-    web.reactive.socket: DEBUG
-
-
-notification:
-  kafka:
-    topic: notification.events
