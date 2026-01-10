@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.security.core.Authentication;
 import pl.co.common.dto.ApiResponse;
-import pl.co.common.security.AuthPrincipal;
+import pl.co.common.filter.principal.AuthPrincipal;
 import pl.co.notification.dto.NotificationPageResponse;
 import pl.co.notification.dto.NotificationResponse;
 import pl.co.notification.service.NotificationService;
@@ -24,8 +24,8 @@ public class NotificationController {
 
     @GetMapping
     public ApiResponse<NotificationPageResponse> list(Authentication authentication,
-                                                      @RequestParam(defaultValue = "0") @Min(0) int page,
-                                                      @RequestParam(defaultValue = "20") @Min(1) int size) {
+                                                      @RequestParam(defaultValue = "0") @Min(0) Integer page,
+                                                      @RequestParam(defaultValue = "20") @Min(1) Integer size) {
         AuthPrincipal principal = (AuthPrincipal) authentication.getPrincipal();
         String userId = principal.userId();
         return ApiResponse.ok(notificationService.list(userId, page, size));

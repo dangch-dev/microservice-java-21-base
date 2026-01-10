@@ -42,9 +42,6 @@ public class Notification extends BaseEntity {
     private String message;
 
     @Column(length = 80)
-    private String resourceType;
-
-    @Column(length = 80)
     private String resourceId;
 
     @Column(columnDefinition = "text")
