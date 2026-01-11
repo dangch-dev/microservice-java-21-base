@@ -1,5 +1,7 @@
 package pl.co.auth.controller;
 
+import pl.co.auth.service.PasswordResetService;
+import pl.co.auth.service.RefreshTokenService;
 import pl.co.common.dto.ApiResponse;
 import pl.co.auth.dto.TokenResponse;
 import pl.co.auth.dto.LoginRequest;
@@ -22,6 +24,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class AuthController {
 
     private final AuthService authService;
+    private final PasswordResetService passwordResetService;
+    private final RefreshTokenService refreshTokenService;
 
     @PostMapping("/signup")
     public ApiResponse<TokenResponse> signup(@Valid @RequestBody SignupRequest request) {
@@ -40,26 +44,26 @@ public class AuthController {
 
     @PostMapping("/logout")
     public ApiResponse<Void> logout(@Valid @RequestBody RefreshTokenRequest request) {
-        authService.logout(request.getRefreshToken());
+        refreshTokenService.revokeToken(request.getRefreshToken());
         return ApiResponse.ok(null);
     }
 
     // Forgot password
     @PostMapping("/forgot-password")
     public ApiResponse<String> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
-        String token = authService.requestPasswordReset(request.getEmail());
+        String token = passwordResetService.requestReset(request.getEmail());
         return ApiResponse.ok(token);
     }
 
     @PostMapping("/reset-password")
     public ApiResponse<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
-        authService.resetPassword(request.getToken(), request.getNewPassword());
+        passwordResetService.resetPassword(request.getToken(), request.getNewPassword());
         return ApiResponse.ok(null);
     }
 
     @GetMapping("/reset-password/validate")
     public ApiResponse<Void> validateResetToken(@RequestParam("token") String token) {
-        authService.validateResetToken(token);
+        passwordResetService.validate(token);
         return ApiResponse.ok(null);
     }
 

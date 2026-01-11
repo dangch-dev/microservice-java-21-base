@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -93,10 +94,28 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
     }
 
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
+        ApiResponse<Void> body = ApiResponse.error(ErrorCode.METHOD_NOT_ALLOW.code(), ex.getMessage());
+        return ResponseEntity.status(ErrorCode.METHOD_NOT_ALLOW.status()).body(body);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGeneric(Exception ex) {
+        if (isNotFoundException(ex)) {
+            ApiResponse<Void> body = ApiResponse.error(ErrorCode.NOT_FOUND.code(), ErrorCode.NOT_FOUND.message());
+            return ResponseEntity.status(ErrorCode.NOT_FOUND.status()).body(body);
+        }
         log.error("Unhandled exception", ex);
         ApiResponse<Void> body = ApiResponse.error(ErrorCode.INTERNAL_ERROR.code(), "Internal server error");
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
+    }
+
+
+
+    private boolean isNotFoundException(Exception ex) {
+        String name = ex.getClass().getName();
+        return "org.springframework.web.servlet.NoHandlerFoundException".equals(name)
+                || "org.springframework.web.servlet.resource.NoResourceFoundException".equals(name);
     }
 }

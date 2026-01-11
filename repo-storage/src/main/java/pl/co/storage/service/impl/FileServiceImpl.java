@@ -1,7 +1,6 @@
 package pl.co.storage.service.impl;
 
 import io.minio.*;
-import io.minio.http.Method;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,11 +21,8 @@ import pl.co.storage.service.FileService;
 import java.io.InputStream;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -104,7 +100,7 @@ public class FileServiceImpl implements FileService {
 
     @Override
     @Transactional
-    public FileResponse commit(String fileId) {
+    public void commit(String fileId) {
         File file = fileRepository.findByIdAndDeletedFalse(fileId)
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "File not found"));
 
@@ -118,7 +114,7 @@ public class FileServiceImpl implements FileService {
         }
         file.setStatus(FileStatus.READY.name());
         File saved = fileRepository.save(file);
-        return fileMapper.toResponse(saved);
+        fileMapper.toResponse(saved);
     }
 
     @Override

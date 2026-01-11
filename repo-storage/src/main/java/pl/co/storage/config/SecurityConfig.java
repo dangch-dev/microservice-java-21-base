@@ -28,17 +28,14 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
-                                                   BearerTokenAuthenticationFilter bearerTokenAuthenticationFilter,
-                                                   InternalJwtFilter internalJwtFilter,
-                                                   EmailVerifiedFilter emailVerifiedFilter) throws Exception {
+                                                   BearerTokenAuthenticationFilter bearerTokenAuthenticationFilter) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/file/**").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(commonRequestContextFilter(), UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(internalJwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(bearerTokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(emailVerifiedFilter, UsernamePasswordAuthenticationFilter.class)
                 .httpBasic(Customizer.withDefaults());
         return http.build();
     }
@@ -46,19 +43,7 @@ public class SecurityConfig {
     @Bean
     public BearerTokenAuthenticationFilter bearerTokenAuthenticationFilter(RSAPublicKey jwtPublicKey) {
         return new BearerTokenAuthenticationFilter(jwtPublicKey,
-                List.of());
-    }
-
-    @Bean
-    public EmailVerifiedFilter emailVerifiedFilter() {
-        return new EmailVerifiedFilter(List.of());
-    }
-
-    @Bean
-    public InternalJwtFilter internalJwtFilter(RSAPublicKey jwtPublicKey) {
-        return new InternalJwtFilter(
-                jwtPublicKey,
-                List.of());
+                List.of("/file/**"));
     }
 
     @Bean

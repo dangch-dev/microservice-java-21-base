@@ -57,7 +57,7 @@ public class JwtTokenServiceImpl implements JwtTokenService {
         JwtPayload payload = JwtVerifier.verify(refreshToken, jwtPublicKey, externalTokenIssuer.refreshVerificationOptions());
         RefreshToken stored = refreshTokenService.validate(refreshToken);
         if (!Objects.equals(stored.getParentJti(), payload.parentJti())) {
-            throw new ApiException(ErrorCode.UNAUTHORIZED, "Invalid refresh token chain");
+            throw new ApiException(ErrorCode.E248, "Invalid refreshToken");
         }
 
         String userId = payload.userId();

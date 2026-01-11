@@ -13,16 +13,16 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-public class FileCommitListener {
+public class FileListener {
 
-    private static final Logger log = LoggerFactory.getLogger(FileCommitListener.class);
+    private static final Logger log = LoggerFactory.getLogger(FileListener.class);
     private static final TypeReference<List<String>> LIST_TYPE = new TypeReference<>() {
     };
 
     private final ObjectMapper objectMapper;
     private final FileService fileService;
 
-    @KafkaListener(topics = "${kafka.topics.file}")
+    @KafkaListener(topics = "${kafka.topics.file}", groupId = "${spring.kafka.consumer.group-id}")
     public void onMessage(String message) {
         if (message == null || message.isBlank()) {
             return;

@@ -41,17 +41,17 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     @Override
     public RefreshToken validate(String token) {
         RefreshToken stored = repository.findByToken(token)
-                .orElseThrow(() -> new ApiException(ErrorCode.UNAUTHORIZED, "Refresh token not found"));
+                .orElseThrow(() -> new ApiException(ErrorCode.E248, "Invalid refreshToken"));
         if (stored.isRevoked()) {
-            throw new ApiException(ErrorCode.UNAUTHORIZED, "Refresh token revoked");
+            throw new ApiException(ErrorCode.E248, "Invalid refreshToken");
         }
         if (stored.getExpiresAt().isBefore(Instant.now())) {
-            throw new ApiException(ErrorCode.UNAUTHORIZED, "Refresh token expired");
+            throw new ApiException(ErrorCode.E248, "Invalid refreshToken");
         }
         if (stored.getParentJti() != null) {
             repository.findById(stored.getParentJti()).ifPresent(parent -> {
                 if (!parent.isRevoked()) {
-                    throw new ApiException(ErrorCode.UNAUTHORIZED, "Invalid refresh token chain");
+                    throw new ApiException(ErrorCode.E248, "Invalid refreshToken");
                 }
             });
         }
@@ -84,7 +84,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
                     claims.getJWTID(),
                     claims.getExpirationTime().toInstant());
         } catch (ParseException e) {
-            throw new ApiException(ErrorCode.UNAUTHORIZED, "Invalid refresh token", e);
+            throw new ApiException(ErrorCode.E248, "Invalid refreshToken", e);
         }
     }
 

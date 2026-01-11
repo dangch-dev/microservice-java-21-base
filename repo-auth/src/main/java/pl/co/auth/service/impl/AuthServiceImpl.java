@@ -25,8 +25,6 @@ public class AuthServiceImpl implements AuthService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenService jwtTokenService;
-    private final RefreshTokenService refreshTokenService;
-    private final PasswordResetService passwordResetService;
     private final EmailVerificationService emailVerificationService;
 
     @Transactional
@@ -73,26 +71,6 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public TokenResponse refresh(String refreshToken) {
         return jwtTokenService.refreshTokens(refreshToken);
-    }
-
-    @Override
-    public void logout(String refreshToken) {
-        refreshTokenService.revokeToken(refreshToken);
-    }
-
-    @Override
-    public String requestPasswordReset(String email) {
-        return passwordResetService.requestReset(email);
-    }
-
-    @Override
-    public void resetPassword(String token, String newPassword) {
-        passwordResetService.resetPassword(token, newPassword);
-    }
-
-    @Override
-    public void validateResetToken(String token) {
-        passwordResetService.validate(token);
     }
 
     @Override

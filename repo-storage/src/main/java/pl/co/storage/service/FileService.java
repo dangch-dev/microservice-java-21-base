@@ -10,7 +10,7 @@ public interface FileService {
 
     FileDownload download(String fileId);
 
-    FileResponse commit(String fileId);
+    void commit(String fileId);
 
     void cleanupPending();
 }
