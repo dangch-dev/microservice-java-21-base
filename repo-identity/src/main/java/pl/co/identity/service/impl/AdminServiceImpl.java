@@ -1,0 +1,209 @@
+package pl.co.identity.service.impl;
+
+import pl.co.common.exception.ApiException;
+import pl.co.common.exception.ErrorCode;
+import pl.co.identity.dto.AdminCreateUserRequest;
+import pl.co.identity.dto.AdminUpdateUserRequest;
+import pl.co.identity.dto.AdminUserFilterRequest;
+import pl.co.identity.dto.AdminUserPageResponse;
+import pl.co.identity.dto.AdminUserResponse;
+import pl.co.identity.entity.Role;
+import pl.co.identity.entity.User;
+import pl.co.identity.mapper.UserMapper;
+import pl.co.identity.repository.RoleRepository;
+import pl.co.identity.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
+import pl.co.identity.service.AdminService;
+import pl.co.common.security.RoleName;
+import pl.co.common.security.UserStatus;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class AdminServiceImpl implements AdminService {
+
+    private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
+    private final UserMapper userMapper;
+    private final PasswordEncoder passwordEncoder;
+
+    @Transactional(readOnly = true)
+    @Override
+    public AdminUserPageResponse listUsers(AdminUserFilterRequest filter) {
+        int pageValue = filter.getPage() == null ? 0 : filter.getPage();
+        int sizeValue = filter.getSize() == null ? 20 : filter.getSize();
+        PageRequest page = PageRequest.of(Math.max(pageValue, 0), Math.max(sizeValue, 1));
+        Specification<User> spec = buildSpec(filter);
+        Page<User> result = userRepository.findAll(spec, page);
+        List<AdminUserResponse> items = result.getContent().stream()
+                .map(userMapper::toAdmin)
+                .toList();
+        return AdminUserPageResponse.builder()
+                .items(items)
+                .totalElements(result.getTotalElements())
+                .totalPages(result.getTotalPages())
+                .page(result.getNumber())
+                .size(result.getSize())
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public AdminUserResponse getUser(String userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "User not found"));
+        return userMapper.toAdmin(user);
+    }
+
+    @Transactional
+    @Override
+    public AdminUserResponse createUser(AdminCreateUserRequest request) {
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new ApiException(ErrorCode.CONFLICT, "Email already in use");
+        }
+        Set<Role> roles = resolveRolesById(request.getRoleIds());
+        if (roles.isEmpty()) {
+            Role defaultRole = roleRepository.findByName(RoleName.ROLE_USER.name())
+                    .orElseThrow(() -> new ApiException(ErrorCode.E221, "Role not found data: ROLE_USER"));
+            roles.add(defaultRole);
+        }
+        String status = validateUserStatus(request.getStatus());
+        if (status == null) {
+            throw new ApiException(ErrorCode.E243, "Required parameter missing: status");
+        }
+        User user = User.builder()
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .fullName(request.getFullName())
+                .phoneNumber(request.getPhoneNumber())
+                .avatarUrl(request.getAvatarUrl())
+                .address(request.getAddress())
+                .status(status)
+                .emailVerified(true)
+                .roles(roles)
+                .build();
+        User saved = userRepository.save(user);
+        return userMapper.toAdmin(saved);
+    }
+
+    @Transactional
+    @Override
+    public AdminUserResponse updateUser(String userId, AdminUpdateUserRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "User not found"));
+
+        if (request.getStatus() != null) {
+            String status = validateUserStatus(request.getStatus());
+            if (status != null) {
+                user.setStatus(status);
+            }
+        }
+
+        if (request.getRoleIds() != null && !request.getRoleIds().isEmpty()) {
+            user.setRoles(resolveRolesById(request.getRoleIds()));
+        }
+
+        if (request.getFullName() != null) {
+            user.setFullName(request.getFullName());
+        }
+        if (request.getPhoneNumber() != null) {
+            user.setPhoneNumber(request.getPhoneNumber());
+        }
+        if (request.getAvatarUrl() != null) {
+            user.setAvatarUrl(request.getAvatarUrl());
+        }
+        if (request.getAddress() != null) {
+            user.setAddress(request.getAddress());
+        }
+
+        User saved = userRepository.save(user);
+        return userMapper.toAdmin(saved);
+    }
+
+    @Transactional
+    @Override
+    public void deleteUser(String userId) {
+        if (!userRepository.existsById(userId)) {
+            throw new ApiException(ErrorCode.NOT_FOUND, "User not found");
+        }
+        userRepository.deleteById(userId);
+    }
+
+    @Transactional
+    @Override
+    public AdminUserResponse activateUser(String userId) {
+        return updateStatus(userId, UserStatus.ACTIVE);
+    }
+
+    @Transactional
+    @Override
+    public AdminUserResponse blockUser(String userId) {
+        return updateStatus(userId, UserStatus.BLOCKED);
+    }
+
+    private AdminUserResponse updateStatus(String userId, UserStatus status) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "User not found"));
+        user.setStatus(status.name());
+        User saved = userRepository.save(user);
+        return userMapper.toAdmin(saved);
+    }
+
+    private Set<Role> resolveRolesById(Set<String> roleIds) {
+        if (roleIds == null || roleIds.isEmpty()) {
+            return new HashSet<>();
+        }
+        List<Role> roles = roleRepository.findAllById(roleIds);
+        if (roles.size() != roleIds.size()) {
+            Set<String> found = roles.stream().map(Role::getId).collect(Collectors.toSet());
+            String missing = roleIds.stream()
+                    .filter(id -> !found.contains(id))
+                    .findFirst()
+                    .orElse("unknown");
+            throw new ApiException(ErrorCode.E221, "Role not found data: " + missing);
+        }
+        return new HashSet<>(roles);
+    }
+
+    private String validateUserStatus(String status) {
+        if (status == null || status.isBlank()) {
+            return null;
+        }
+        try {
+            return UserStatus.valueOf(status).name();
+        } catch (IllegalArgumentException ex) {
+            throw new ApiException(ErrorCode.E204, "Invalid user status: " + status);
+        }
+    }
+
+    private Specification<User> buildSpec(AdminUserFilterRequest filter) {
+        return (root, query, cb) -> {
+            var predicates = new java.util.ArrayList<>();
+            if (filter.getEmailContains() != null && !filter.getEmailContains().isBlank()) {
+                predicates.add(cb.like(cb.lower(root.get("email")), "%" + filter.getEmailContains().toLowerCase() + "%"));
+            }
+            if (filter.getStatus() != null && !filter.getStatus().isBlank()) {
+                String status = validateUserStatus(filter.getStatus());
+                if (status != null) {
+                    predicates.add(cb.equal(root.get("status"), status));
+                }
+            }
+            if (filter.getRole() != null && !filter.getRole().isBlank()) {
+                var join = root.join("roles");
+                predicates.add(cb.equal(join.get("name"), filter.getRole()));
+                query.distinct(true);
+            }
+            return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
+        };
+    }
+}

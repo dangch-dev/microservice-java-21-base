@@ -1,0 +1,27 @@
+package pl.co.identity.dto;
+
+import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.util.Set;
+
+@Getter
+@Setter
+public class AdminUpdateUserRequest {
+    private String status;
+
+    private Set<String> roleIds;
+
+    @Size(max = 120)
+    private String fullName;
+
+    @Size(max = 30)
+    private String phoneNumber;
+
+    @Size(max = 255)
+    private String avatarUrl;
+
+    @Size(max = 255)
+    private String address;
+}

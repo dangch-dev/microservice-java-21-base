@@ -1,30 +1,39 @@
 package pl.co.realtime.config;
 
-import org.springframework.context.annotation.Bean;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import pl.co.realtime.security.JwtAuthenticationFilter;
+import pl.co.common.util.RsaKeyUtil;
+import pl.co.common.web.AccessDeniedHandler;
 
+import java.security.interfaces.RSAPublicKey;
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
-
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                                   AuthenticationEntryPoint restAuthenticationEntryPoint,
+                                                   AccessDeniedHandler restAccessDeniedHandler) throws Exception {
         http.csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(restAuthenticationEntryPoint)
+                        .accessDeniedHandler(restAccessDeniedHandler))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/ws/**").permitAll()
-                        .anyRequest().authenticated())
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                        .anyRequest().permitAll())
                 .httpBasic(Customizer.withDefaults());
         return http.build();
+    }
+
+    @Bean
+    public RSAPublicKey jwtPublicKey(@Value("${security.external-jwt.public-key-path}") String publicKeyPath) {
+        return RsaKeyUtil.loadPublicKey(publicKeyPath);
     }
 }

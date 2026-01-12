@@ -1,0 +1,71 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/storage_mysql_database?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: root
+    password: mysql_root_password
+    hikari:
+      maximum-pool-size: 10
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+    open-in-view: false
+    defer-datasource-initialization: false
+  cache:
+    type: simple
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: storage-file
+
+server:
+  port: 8086
+
+security:
+  external-jwt:
+    public-key-path: file:../secrets/jwt-public.pem
+
+kafka:
+  topics:
+    notification: notification.in-app
+    file: storage.file
+    mail: notification.mail
+
+storage:
+  presign-ttl: PT15M
+  pending-ttl: PT1H
+  cleanup-cron: "0 0 * * * *"
+  delete-object-on-soft-delete: false
+  minio:
+    endpoint: http://localhost:9000
+    console-endpoint: http://localhost:9001
+    access-key: app-user
+    secret-key: app-user-secret
+    bucket: repo-storage
+    region:
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+  instance:
+    prefer-ip-address: true
+    hostname: localhost
+    instance-id: ${spring.application.name}:${server.port}
+
+internal:
+  api:
+    auth-service: repo-auth
+    token-path: /oauth/token
+    client-id: cav1G2AuXQ7fonsdcI5g7kko
+    client-secret: 6NxtVO2l9WYZ6uMfhRwT4dsl9q8fmSXN
+
+
+logging:
+  level:
+    org.springframework.security: INFO
+    io.minio: WARN

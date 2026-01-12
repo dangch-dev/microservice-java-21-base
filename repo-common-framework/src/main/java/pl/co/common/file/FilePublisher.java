@@ -1,0 +1,49 @@
+package pl.co.common.file;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
+
+@Component
+public class FilePublisher {
+
+    private static final Logger log = LoggerFactory.getLogger(FilePublisher.class);
+
+    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final ObjectMapper objectMapper;
+    private final String topic;
+
+    public FilePublisher(KafkaTemplate<String, String> kafkaTemplate,
+                         ObjectMapper objectMapper,
+                         @Value("${kafka.topics.file}") String topic) {
+        this.kafkaTemplate = kafkaTemplate;
+        this.objectMapper = objectMapper;
+        this.topic = topic;
+    }
+
+    public void publish(List<FileMeta> files) {
+        if (files == null || files.isEmpty()) {
+            return;
+        }
+        List<String> fileIds = files.stream()
+                .map(FileMeta::fileId)
+                .filter(id -> id != null && !id.isBlank())
+                .toList();
+
+        if (fileIds.isEmpty()) {
+            return;
+        }
+
+        try {
+            String payload = objectMapper.writeValueAsString(fileIds);
+            kafkaTemplate.send(topic, payload);
+        } catch (Exception ex) {
+            log.warn("Failed to publish file event: {}", ex.getMessage());
+        }
+    }
+}

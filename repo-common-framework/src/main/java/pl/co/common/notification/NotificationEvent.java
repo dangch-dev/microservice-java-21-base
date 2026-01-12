@@ -7,10 +7,9 @@ import java.util.Map;
  */
 public record NotificationEvent(
         String userId,
-        String topic,
+        String action,
         String title,
         String message,
-        ResourceType resourceType,
         String resourceId,
         Map<String, Object> payload,
         String dedupeKey
