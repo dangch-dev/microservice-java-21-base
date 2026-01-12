@@ -33,5 +33,5 @@ public class AdminCreateUserRequest {
 
     private String status;
 
-    private Set<String> roles;
+    private Set<String> roleIds;
 }

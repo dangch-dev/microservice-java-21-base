@@ -71,7 +71,7 @@ public class AdminServiceImpl implements AdminService {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new ApiException(ErrorCode.CONFLICT, "Email already in use");
         }
-        Set<Role> roles = resolveRoles(request.getRoles());
+        Set<Role> roles = resolveRolesById(request.getRoleIds());
         if (roles.isEmpty()) {
             Role defaultRole = roleRepository.findByName(RoleName.ROLE_USER.name())
                     .orElseThrow(() -> new ApiException(ErrorCode.E221, "Role not found data: ROLE_USER"));
@@ -109,8 +109,8 @@ public class AdminServiceImpl implements AdminService {
             }
         }
 
-        if (request.getRoles() != null && !request.getRoles().isEmpty()) {
-            user.setRoles(resolveRoles(request.getRoles()));
+        if (request.getRoleIds() != null && !request.getRoleIds().isEmpty()) {
+            user.setRoles(resolveRolesById(request.getRoleIds()));
         }
 
         if (request.getFullName() != null) {
@@ -159,34 +159,20 @@ public class AdminServiceImpl implements AdminService {
         return userMapper.toAdmin(saved);
     }
 
-    private Set<Role> resolveRoles(Set<String> names) {
-        if (names == null || names.isEmpty()) {
+    private Set<Role> resolveRolesById(Set<String> roleIds) {
+        if (roleIds == null || roleIds.isEmpty()) {
             return new HashSet<>();
         }
-
-        return names.stream()
-                .map(name -> {
-                    if (!isValidRoleName(name)) {
-                        throw new ApiException(
-                                ErrorCode.E221,
-                                "Role not found data: " + name
-                        );
-                    }
-
-                    Role role = new Role();
-                    role.setName(RoleName.valueOf(name).name());
-                    return role;
-                })
-                .collect(Collectors.toSet());
-    }
-
-    private boolean isValidRoleName(String name) {
-        try {
-            RoleName.valueOf(name);
-            return true;
-        } catch (IllegalArgumentException ex) {
-            return false;
+        List<Role> roles = roleRepository.findAllById(roleIds);
+        if (roles.size() != roleIds.size()) {
+            Set<String> found = roles.stream().map(Role::getId).collect(Collectors.toSet());
+            String missing = roleIds.stream()
+                    .filter(id -> !found.contains(id))
+                    .findFirst()
+                    .orElse("unknown");
+            throw new ApiException(ErrorCode.E221, "Role not found data: " + missing);
         }
+        return new HashSet<>(roles);
     }
 
     private String validateUserStatus(String status) {

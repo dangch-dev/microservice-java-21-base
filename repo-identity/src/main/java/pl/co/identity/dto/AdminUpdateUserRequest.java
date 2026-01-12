@@ -11,7 +11,7 @@ import java.util.Set;
 public class AdminUpdateUserRequest {
     private String status;
 
-    private Set<String> roles;
+    private Set<String> roleIds;
 
     @Size(max = 120)
     private String fullName;
