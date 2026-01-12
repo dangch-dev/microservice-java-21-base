@@ -54,9 +54,9 @@
     <h2>4) Auth flow (happy path)</h2>
     <ol>
       <li><b>Signup</b>: POST <code>/auth/signup</code> → returns tokens + emailVerified=false.</li>
-      <li><b>Request email verification</b>: POST <code>/auth/verify-email/request</code> with email.</li>
-      <li><b>Verify email</b>: POST <code>/auth/verify-email</code> with token → emailVerified=true and returns access/refresh tokens (no re-login needed).</li>
-      <li><b>Login</b>: POST <code>/auth/login</code> → access/refresh tokens (use when not using verify-email response tokens or for later sessions).</li>
+      <li><b>Request email OTP</b>: POST <code>/auth/email/otp/send</code> (requires auth, uses email from token).</li>
+      <li><b>Verify email OTP</b>: POST <code>/auth/email/otp/verify</code> with otp → emailVerified=true and returns access/refresh tokens.</li>
+      <li><b>Login</b>: POST <code>/auth/login</code> → access/refresh tokens (after email verification).</li>
       <li><b>Refresh</b>: POST <code>/auth/refresh</code> with refresh token.</li>
       <li><b>Logout</b>: POST <code>/auth/logout</code> with refresh token.</li>
     </ol>
@@ -94,11 +94,11 @@
 <pre>POST http://localhost:8080/api/id/auth/signup
 { "email":"user@local", "password":"Admin@123", "fullName":"User Local" }
 
-POST http://localhost:8080/api/id/auth/verify-email/request
-{ "email":"user@local" }
+POST http://localhost:8080/api/auth/email/otp/send
+(no body)
 
-POST http://localhost:8080/api/id/auth/verify-email
-{ "token":"&lt;emailVerifyToken&gt;" }
+POST http://localhost:8080/api/auth/email/otp/verify
+{ "otp":"&lt;otp&gt;" }
 
 POST http://localhost:8080/api/id/auth/login
 { "email":"user@local", "password":"Admin@123" }

@@ -74,3 +74,4 @@ kafka:
   topics:
     notification: notification.in-app
     file: storage.file
+    mail: notification.mail

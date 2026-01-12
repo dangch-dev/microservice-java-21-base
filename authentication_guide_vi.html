@@ -54,9 +54,9 @@
     <h2>4) Luồng xác thực (happy path)</h2>
     <ol>
       <li><b>Signup</b>: POST <code>/auth/signup</code> → trả token, <code>emailVerified=false</code>.</li>
-      <li><b>Yêu cầu xác minh email</b>: POST <code>/auth/verify-email/request</code> với email.</li>
-      <li><b>Xác minh email</b>: POST <code>/auth/verify-email</code> với token → <code>emailVerified=true</code> và trả về access/refresh token (không cần đăng nhập lại).</li>
-      <li><b>Login</b>: POST <code>/auth/login</code> → access/refresh token (dùng khi không lấy token từ bước verify-email hoặc cho lần đăng nhập sau).</li>
+      <li><b>Yêu cầu OTP email</b>: POST <code>/auth/email/otp/send</code> (cần đăng nhập, dùng email từ token).</li>
+      <li><b>Xác minh OTP email</b>: POST <code>/auth/email/otp/verify</code> với otp → <code>emailVerified=true</code> và trả về access/refresh token.</li>
+      <li><b>Login</b>: POST <code>/auth/login</code> → access/refresh token (sau khi đã xác minh email).</li>
       <li><b>Refresh</b>: POST <code>/auth/refresh</code> với refresh token.</li>
       <li><b>Logout</b>: POST <code>/auth/logout</code> với refresh token.</li>
     </ol>
@@ -94,11 +94,11 @@
 <pre>POST http://localhost:8080/api/id/auth/signup
 { "email":"user@local", "password":"Admin@123", "fullName":"User Local" }
 
-POST http://localhost:8080/api/id/auth/verify-email/request
-{ "email":"user@local" }
+POST http://localhost:8080/api/auth/email/otp/send
+(no body)
 
-POST http://localhost:8080/api/id/auth/verify-email
-{ "token":"&lt;emailVerifyToken&gt;" }
+POST http://localhost:8080/api/auth/email/otp/verify
+{ "otp":"&lt;otp&gt;" }
 
 POST http://localhost:8080/api/id/auth/login
 { "email":"user@local", "password":"Admin@123" }

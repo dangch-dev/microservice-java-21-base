@@ -10,14 +10,14 @@ import lombok.Setter;
 @Setter
 public class SignupRequest {
     @Email(message = "Input Parameter Error. Invalid data format. (email)")
-    @NotBlank(message = "Required parameter is missing value. (email)")
+    @NotBlank
     private String email;
 
-    @NotBlank(message = "Required parameter is missing value. (password)")
+    @NotBlank
     @Size(min = 8, max = 100, message = "Input Parameter Error. Invalid data length. (password)")
     private String password;
 
-    @NotBlank(message = "Required parameter is missing value. (fullName)")
+    @NotBlank
     @Size(max = 120, message = "Input Parameter Error. Invalid data length. (fullName)")
     private String fullName;
 

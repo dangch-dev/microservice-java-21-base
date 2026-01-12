@@ -14,9 +14,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.filter.CommonsRequestLoggingFilter;
+import pl.co.common.filter.BearerTokenAuthenticationFilter;
 import pl.co.common.util.RsaKeyUtil;
+import pl.co.common.web.AccessDeniedHandler;
+import pl.co.common.web.AuthenticationEntryPoint;
 import pl.co.common.web.RequestContextFilter;
 
+import java.util.List;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 
@@ -26,15 +30,36 @@ import java.security.interfaces.RSAPublicKey;
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                                   AuthenticationEntryPoint restAuthenticationEntryPoint,
+                                                   AccessDeniedHandler restAccessDeniedHandler,
+                                                   BearerTokenAuthenticationFilter bearerTokenAuthenticationFilter) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(restAuthenticationEntryPoint)
+                        .accessDeniedHandler(restAccessDeniedHandler))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/**").permitAll()
-                        .anyRequest().authenticated())
+                        .requestMatchers("/email/**").authenticated()
+                        .requestMatchers("/signup", "/login", "/refresh", "/logout").permitAll()
+                        .requestMatchers("/password/**", "/oauth/**").permitAll()
+                        .anyRequest().permitAll())
                 .addFilterBefore(commonRequestContextFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(bearerTokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .httpBasic(Customizer.withDefaults());
         return http.build();
+    }
+
+    @Bean
+    public BearerTokenAuthenticationFilter bearerTokenAuthenticationFilter(RSAPublicKey jwtPublicKey) {
+        return new BearerTokenAuthenticationFilter(jwtPublicKey, List.of(
+                "/signup",
+                "/login",
+                "/refresh",
+                "/logout",
+                "/password/**",
+                "/oauth/**"
+        ));
     }
 
     @Bean

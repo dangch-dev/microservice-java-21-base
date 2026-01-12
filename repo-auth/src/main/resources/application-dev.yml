@@ -57,7 +57,13 @@ kafka:
   topics:
     notification: notification.in-app
     file: storage.file
+    mail: notification.mail
 
 logging:
   level:
     org.springframework.security: INFO
+
+app:
+  frontend:
+    reset-password-url: http://localhost:5173/
+

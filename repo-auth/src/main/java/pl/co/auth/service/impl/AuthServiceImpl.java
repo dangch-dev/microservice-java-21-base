@@ -47,8 +47,9 @@ public class AuthServiceImpl implements AuthService {
                 .build();
         user.getRoles().add(userRole);
         User saved = userRepository.save(user);
-        // generate verification token (for demo return via response header)
-        emailVerificationService.createToken(saved);
+
+        // TODO: Send mail verify OTP
+
         return jwtTokenService.issueExternalTokens(saved);
     }
 
@@ -62,9 +63,6 @@ public class AuthServiceImpl implements AuthService {
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new ApiException(ErrorCode.E239);
         }
-        if (!user.isEmailVerified()) {
-            throw new ApiException(ErrorCode.E233);
-        }
         return jwtTokenService.issueExternalTokens(user);
     }
 
@@ -73,17 +71,5 @@ public class AuthServiceImpl implements AuthService {
         return jwtTokenService.refreshTokens(refreshToken);
     }
 
-    @Override
-    public String requestEmailVerification(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ApiException(ErrorCode.E238));
-        return emailVerificationService.createToken(user);
-    }
-
-    @Override
-    public TokenResponse verifyEmail(String token) {
-        User user = emailVerificationService.verify(token);
-        return jwtTokenService.issueExternalTokens(user);
-    }
 }
 

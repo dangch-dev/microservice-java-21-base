@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 public class ForgotPasswordRequest {
     @Email(message = "Input Parameter Error. Invalid data format. (email)")
-    @NotBlank(message = "Required parameter is missing value. (email)")
+    @NotBlank
     private String email;
 }
 

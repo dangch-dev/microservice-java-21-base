@@ -2,7 +2,7 @@ package pl.co.auth.service;
 
 public interface PasswordResetService {
     String requestReset(String email);
-    void validate(String tokenValue);
+    pl.co.auth.dto.ResetPasswordValidateResponse validate(String tokenValue);
     void resetPassword(String tokenValue, String newPassword);
 }
 

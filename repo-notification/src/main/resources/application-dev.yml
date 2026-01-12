@@ -27,6 +27,10 @@ notification:
   kafka:
     group: notification-service
 
+sendgrid:
+  api-key: ${SENDGRID_API_KEY}
+  from: ${SENDGRID_FROM}
+
 eureka:
   client:
     register-with-eureka: true
@@ -53,3 +57,4 @@ kafka:
   topics:
     notification: notification.in-app
     file: storage.file
+    mail: notification.mail

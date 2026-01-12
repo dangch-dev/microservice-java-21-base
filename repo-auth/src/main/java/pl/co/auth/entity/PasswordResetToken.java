@@ -32,8 +32,6 @@ public class PasswordResetToken implements Serializable {
 
     private Instant expiresAt;
 
-    private boolean used;
-
     @TimeToLive
     private Long ttlSeconds;
 }

@@ -18,23 +18,21 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@RedisHash("email_verification_token")
-public class EmailVerificationToken implements Serializable {
+@RedisHash("email_verification_otp")
+public class EmailVerificationOTP implements Serializable {
 
     @Id
     private String id;
 
     @Indexed
-    private String token;
-
-    @Indexed
     private String userId;
+
+    private String otpHash;
 
     private Instant expiresAt;
 
-    private boolean used;
+    private int attempts;
 
     @TimeToLive
     private Long ttlSeconds;
 }
-

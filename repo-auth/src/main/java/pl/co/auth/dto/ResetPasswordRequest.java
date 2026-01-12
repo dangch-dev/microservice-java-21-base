@@ -8,10 +8,10 @@ import lombok.Setter;
 @Getter
 @Setter
 public class ResetPasswordRequest {
-    @NotBlank(message = "Required parameter is missing value. (token)")
+    @NotBlank
     private String token;
 
-    @NotBlank(message = "Required parameter is missing value. (password)")
+    @NotBlank
     @Size(min = 8, max = 100, message = "Input Parameter Error. Invalid data length. (password)")
     private String newPassword;
 }

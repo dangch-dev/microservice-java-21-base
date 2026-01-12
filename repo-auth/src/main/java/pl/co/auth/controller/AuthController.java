@@ -9,7 +9,6 @@ import pl.co.auth.dto.RefreshTokenRequest;
 import pl.co.auth.dto.SignupRequest;
 import pl.co.auth.dto.ForgotPasswordRequest;
 import pl.co.auth.dto.ResetPasswordRequest;
-import pl.co.auth.dto.VerifyEmailRequest;
 import pl.co.auth.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +23,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class AuthController {
 
     private final AuthService authService;
-    private final PasswordResetService passwordResetService;
     private final RefreshTokenService refreshTokenService;
 
     @PostMapping("/signup")
@@ -46,37 +44,6 @@ public class AuthController {
     public ApiResponse<Void> logout(@Valid @RequestBody RefreshTokenRequest request) {
         refreshTokenService.revokeToken(request.getRefreshToken());
         return ApiResponse.ok(null);
-    }
-
-    // Forgot password
-    @PostMapping("/forgot-password")
-    public ApiResponse<String> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
-        String token = passwordResetService.requestReset(request.getEmail());
-        return ApiResponse.ok(token);
-    }
-
-    @PostMapping("/reset-password")
-    public ApiResponse<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
-        passwordResetService.resetPassword(request.getToken(), request.getNewPassword());
-        return ApiResponse.ok(null);
-    }
-
-    @GetMapping("/reset-password/validate")
-    public ApiResponse<Void> validateResetToken(@RequestParam("token") String token) {
-        passwordResetService.validate(token);
-        return ApiResponse.ok(null);
-    }
-
-    // Verify Email
-    @PostMapping("/verify-email/request")
-    public ApiResponse<String> requestVerifyEmail(@Valid @RequestBody ForgotPasswordRequest request) {
-        String token = authService.requestEmailVerification(request.getEmail());
-        return ApiResponse.ok(token);
-    }
-
-    @PostMapping("/verify-email")
-    public ApiResponse<TokenResponse> verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
-        return ApiResponse.ok(authService.verifyEmail(request.getToken()));
     }
 }
 

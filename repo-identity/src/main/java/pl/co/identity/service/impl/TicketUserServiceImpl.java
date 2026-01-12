@@ -105,7 +105,6 @@ public class TicketUserServiceImpl implements TicketUserService {
         }
         ticket.setStatus(TicketStatus.CANCELLED.name());
         Ticket saved = ticketRepository.save(ticket);
-        notifyCancel(principal, saved);
         return ticketMapper.toResponse(saved);
     }
 
@@ -121,8 +120,22 @@ public class TicketUserServiceImpl implements TicketUserService {
                 .files(request.getFiles())
                 .build();
         TicketComment saved = ticketCommentRepository.save(comment);
+        //Publish file
         filePublisher.publish(request.getFiles());
-        notifyComment(principal, ticket, saved);
+        // Notification
+        Map<String, Object> payload = baseTicketPayload(ticket);
+        payload.put("commentId", comment.getId());
+        payload.put("comment", comment.getContent());
+
+        notificationPublisher.publish(new NotificationEvent(
+                principal.userId(),
+                NotificationAction.TICKET_COMMENT_ADDED.name(),
+                NotificationAction.TICKET_COMMENT_ADDED.title(),
+                NotificationAction.TICKET_COMMENT_ADDED.message(ticket.getTitle()),
+                ticket.getId(),
+                payload,
+                "ticket:" + ticket.getId() + ":comment:" + comment.getId() + ":user:" + principal.userId()
+        ));
         return toCommentResponse(saved);
     }
 
@@ -203,62 +216,10 @@ public class TicketUserServiceImpl implements TicketUserService {
                 .build();
     }
 
-    private void notifyCancel(AuthPrincipal actor, Ticket ticket) {
-        if (ticket.getAssignedTo() == null) {
-            return;
-        }
-        Map<String, Object> payload = baseTicketPayload(ticket, actor.userId());
-        String target = ticket.getAssignedTo();
-        if (target == null || target.isBlank() || target.equals(actor.userId())) {
-            return;
-        }
-        notificationPublisher.publish(new NotificationEvent(
-                target,
-                NotificationAction.TICKET_STATUS_UPDATED.name(),
-                NotificationAction.TICKET_STATUS_UPDATED.title(),
-                NotificationAction.TICKET_STATUS_UPDATED.message(ticket.getTitle(), "cancelled"),
-                ticket.getId(),
-                payload,
-                "ticket:" + ticket.getId() + ":cancelled:user:" + target
-        ));
-    }
-
-    private void notifyComment(AuthPrincipal actor, Ticket ticket, TicketComment comment) {
-        Set<String> targets = new HashSet<>();
-        if (!actor.userId().equals(ticket.getCreatedBy())) {
-            targets.add(ticket.getCreatedBy());
-        }
-        if (ticket.getAssignedTo() != null && !actor.userId().equals(ticket.getAssignedTo())) {
-            targets.add(ticket.getAssignedTo());
-        }
-        if (targets.isEmpty()) {
-            return;
-        }
-        Map<String, Object> payload = baseTicketPayload(ticket, actor.userId());
-        payload.put("commentId", comment.getId());
-        payload.put("comment", comment.getContent());
-        for (String target : targets) {
-            if (target == null || target.isBlank() || target.equals(actor.userId())) {
-                continue;
-            }
-            notificationPublisher.publish(new NotificationEvent(
-                    target,
-                    NotificationAction.TICKET_COMMENT_ADDED.name(),
-                    NotificationAction.TICKET_COMMENT_ADDED.title(),
-                    NotificationAction.TICKET_COMMENT_ADDED.message(ticket.getTitle()),
-                    ticket.getId(),
-                    payload,
-                    "ticket:" + ticket.getId() + ":comment:" + comment.getId() + ":user:" + target
-            ));
-        }
-    }
-
-    private Map<String, Object> baseTicketPayload(Ticket ticket, String actorId) {
+    private Map<String, Object> baseTicketPayload(Ticket ticket) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("ticketId", ticket.getId());
         payload.put("status", ticket.getStatus());
-        payload.put("assignedTo", ticket.getAssignedTo());
-        payload.put("actorId", actorId);
         payload.put("title", ticket.getTitle());
         return payload;
     }

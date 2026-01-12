@@ -7,8 +7,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import pl.co.common.util.RsaKeyUtil;
+import pl.co.common.web.AccessDeniedHandler;
 
 import java.security.interfaces.RSAPublicKey;
 @Configuration
@@ -16,9 +18,14 @@ import java.security.interfaces.RSAPublicKey;
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                                   AuthenticationEntryPoint restAuthenticationEntryPoint,
+                                                   AccessDeniedHandler restAccessDeniedHandler) throws Exception {
         http.csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(restAuthenticationEntryPoint)
+                        .accessDeniedHandler(restAccessDeniedHandler))
                 .authorizeHttpRequests(auth -> auth
                         .anyRequest().permitAll())
                 .httpBasic(Customizer.withDefaults());

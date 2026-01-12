@@ -8,6 +8,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -98,6 +99,16 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
         ApiResponse<Void> body = ApiResponse.error(ErrorCode.METHOD_NOT_ALLOW.code(), ex.getMessage());
         return ResponseEntity.status(ErrorCode.METHOD_NOT_ALLOW.status()).body(body);
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMissingParam(MissingServletRequestParameterException ex) {
+        String name = ex.getParameterName();
+        String message = name == null || name.isBlank()
+                ? ErrorCode.E243.message()
+                : "Required parameter missing: " + name;
+        ApiResponse<Void> body = ApiResponse.error(ErrorCode.E243.code(), message);
+        return ResponseEntity.status(ErrorCode.E243.status()).body(body);
     }
 
     @ExceptionHandler(Exception.class)

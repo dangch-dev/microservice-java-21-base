@@ -16,6 +16,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.filter.CommonsRequestLoggingFilter;
 import pl.co.common.filter.BearerTokenAuthenticationFilter;
 import pl.co.common.filter.EmailVerifiedFilter;
+import pl.co.common.web.AccessDeniedHandler;
+import pl.co.common.web.AuthenticationEntryPoint;
 import pl.co.common.util.RsaKeyUtil;
 import pl.co.common.web.RequestContextFilter;
 
@@ -30,9 +32,14 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
                                                    BearerTokenAuthenticationFilter bearerTokenAuthenticationFilter,
-                                                   EmailVerifiedFilter emailVerifiedFilter) throws Exception {
+                                                   EmailVerifiedFilter emailVerifiedFilter,
+                                                   AuthenticationEntryPoint authenticationEntryPoint,
+                                                   AccessDeniedHandler accessDeniedHandler) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler))
                 .authorizeHttpRequests(auth -> auth
                         .anyRequest().authenticated())
                 .addFilterBefore(commonRequestContextFilter(), UsernamePasswordAuthenticationFilter.class)

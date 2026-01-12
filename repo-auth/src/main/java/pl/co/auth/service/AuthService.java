@@ -8,7 +8,5 @@ public interface AuthService {
     TokenResponse signup(SignupRequest request);
     TokenResponse login(LoginRequest request);
     TokenResponse refresh(String refreshToken);
-    String requestEmailVerification(String email);
-    TokenResponse verifyEmail(String token);
 }
 

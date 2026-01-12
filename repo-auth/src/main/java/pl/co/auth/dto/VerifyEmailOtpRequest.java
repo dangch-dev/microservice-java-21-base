@@ -6,8 +6,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class VerifyEmailRequest {
-    @NotBlank(message = "Required parameter is missing value. (token)")
-    private String token;
+public class VerifyEmailOtpRequest {
+    @NotBlank
+    private String otp;
 }
-

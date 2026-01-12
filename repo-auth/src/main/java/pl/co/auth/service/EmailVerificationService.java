@@ -1,9 +1,8 @@
 package pl.co.auth.service;
 
-import pl.co.auth.entity.User;
+import pl.co.auth.dto.TokenResponse;
 
 public interface EmailVerificationService {
-    String createToken(User user);
-    User verify(String tokenValue);
+    void sendOtp(String userId);
+    TokenResponse verifyOtp(String userId, String otp);
 }
-
