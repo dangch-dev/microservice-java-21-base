@@ -32,6 +32,11 @@ eureka:
     hostname: localhost
     instance-id: ${spring.application.name}:${server.port}
 
+logging:
+  level:
+    org.springframework.security: INFO
+
+# Required declarations (But it doesn't need to have value.)
 internal:
   api:
     auth-service: repo-auth
@@ -44,7 +49,3 @@ kafka:
     notification: notification.in-app
     file: storage.file
     mail: notification.mail
-
-logging:
-  level:
-    org.springframework.security: INFO

@@ -7,7 +7,7 @@ spring:
   kafka:
     bootstrap-servers: localhost:9092
     consumer:
-      group-id: realtime-noti
+      group-id: realtime-service
       auto-offset-reset: latest
 
 server:
@@ -28,23 +28,6 @@ eureka:
     hostname: localhost
     instance-id: ${spring.application.name}:${server.port}
 
-internal:
-  api:
-    auth-service: repo-auth
-    token-path: /oauth/token
-    client-id: HgdLhl5jxabqSmvGmazt3tLX
-    client-secret: DDm8amT7IAScZgnsx0bTeIjWm37NTep0
-
-notification:
-  kafka:
-    group: realtime-noti
-
-kafka:
-  topics:
-    notification: notification.in-app
-    file: storage.file
-    mail: notification.mail
-
 logging:
   level:
     org.springframework:
@@ -54,3 +37,17 @@ logging:
           server: DEBUG
       messaging: DEBUG
     web.reactive.socket: DEBUG
+
+# Required declarations (But it doesn't need to have value.)
+internal:
+  api:
+    auth-service: repo-auth
+    token-path: /oauth/token
+    client-id: HgdLhl5jxabqSmvGmazt3tLX
+    client-secret: DDm8amT7IAScZgnsx0bTeIjWm37NTep0
+
+kafka:
+  topics:
+    notification: notification.in-app
+    file: storage.file
+    mail: notification.mail

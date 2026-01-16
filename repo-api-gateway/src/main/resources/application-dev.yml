@@ -11,6 +11,12 @@ spring:
         locator:
           enabled: true
       routes:
+        - id: exam
+          uri: lb://REPO-EXAM
+          predicates:
+            - Path=${config.api-prefix}/exam/**
+          filters:
+            - StripPrefix=${config.strip-prefix}
         - id: auth
           uri: lb://REPO-AUTH
           predicates:
@@ -69,9 +75,3 @@ logging:
           server: DEBUG
       messaging: DEBUG
     web.reactive.socket: DEBUG
-
-kafka:
-  topics:
-    notification: notification.in-app
-    file: storage.file
-    mail: notification.mail

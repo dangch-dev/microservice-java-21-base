@@ -46,19 +46,6 @@ eureka:
     hostname: localhost
     instance-id: ${spring.application.name}:${server.port}
 
-internal:
-  api:
-    auth-service: repo-auth
-    token-path: /oauth/token
-    client-id: oRd1gWcf7Sx1z0NHHA1zwSPa
-    client-secret: 4PHWqCA2CtcSjEf6pUpP7D9hVuvCOdRL
-
-kafka:
-  topics:
-    notification: notification.in-app
-    file: storage.file
-    mail: notification.mail
-
 logging:
   level:
     org.springframework.security: INFO
@@ -67,3 +54,16 @@ app:
   frontend:
     reset-password-url: http://localhost:5173/
 
+# Required declarations (But it doesn't need to have value.)
+internal:
+  api:
+    auth-service: repo-auth
+    token-path: /oauth/token
+    client-id:
+    client-secret:
+
+kafka:
+  topics:
+    notification: notification.in-app
+    file: storage.file
+    mail: notification.mail
