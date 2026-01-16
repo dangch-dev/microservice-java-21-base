@@ -128,7 +128,7 @@ public class InternalApiClient {
                 || body.data().accessToken().isBlank()) {
             throw new ApiException(ErrorCode.E305, "Unable to obtain internal token");
         }
-        long ttlSeconds = Math.max(body.data().expiresInSeconds(), 1L);
+        long ttlSeconds = Math.max(body.data().acssessExpireIn(), 1L);
         return new CachedToken(body.data().accessToken(), Instant.now().plusSeconds(ttlSeconds));
     }
 
@@ -190,7 +190,7 @@ public class InternalApiClient {
         }
     }
 
-    private record InternalTokenResponse(String accessToken, String refreshToken, long expiresInSeconds) {
+    private record InternalTokenResponse(String accessToken, long acssessExpireIn) {
     }
 
     private void applyUserAuthorization(HttpHeaders headers) {

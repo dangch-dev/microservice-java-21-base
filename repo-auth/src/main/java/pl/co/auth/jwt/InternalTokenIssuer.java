@@ -38,7 +38,7 @@ public class InternalTokenIssuer {
 
         return TokenResponse.builder()
                 .accessToken(token)
-                .expiresInSeconds(ttl.toSeconds())
+                .acssessExpireIn(ttl.toSeconds())
                 .build();
     }
 }
