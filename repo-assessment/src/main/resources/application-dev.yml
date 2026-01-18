@@ -1,6 +1,10 @@
 spring:
+  sql:
+    init:
+      mode: always
+      data-locations: classpath:init-data.sql
   datasource:
-    url: jdbc:mysql://localhost:3306/exam_mysql_database?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    url: jdbc:mysql://localhost:3306/assessment_mysql_database?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: root
     password: mysql_root_password
     hikari:
@@ -12,7 +16,7 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
     open-in-view: false
-    defer-datasource-initialization: false
+    defer-datasource-initialization: true
   cache:
     type: simple
 

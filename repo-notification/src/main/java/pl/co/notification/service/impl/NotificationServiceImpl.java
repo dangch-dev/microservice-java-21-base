@@ -54,11 +54,13 @@ public class NotificationServiceImpl implements NotificationService {
 
         String dedupeKey = null;
         if (request.dedupeKey() != null) {
-            String trimmed = request.dedupeKey().trim();
-            if (trimmed.isEmpty()) {
+            String normalized = request.dedupeKey();
+            if (normalized.isBlank()) {
                 return;
             }
-            dedupeKey = trimmed.length() > MAX_DEDUPE_LENGTH ? trimmed.substring(0, MAX_DEDUPE_LENGTH) : trimmed;
+            dedupeKey = normalized.length() > MAX_DEDUPE_LENGTH
+                    ? normalized.substring(0, MAX_DEDUPE_LENGTH)
+                    : normalized;
         }
 
 

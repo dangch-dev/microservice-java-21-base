@@ -11,10 +11,10 @@ spring:
         locator:
           enabled: true
       routes:
-        - id: exam
-          uri: lb://REPO-EXAM
+        - id: assessment
+          uri: lb://REPO-ASSESSMENT
           predicates:
-            - Path=${config.api-prefix}/exam/**
+            - Path=${config.api-prefix}/assessment/**
           filters:
             - StripPrefix=${config.strip-prefix}
         - id: auth

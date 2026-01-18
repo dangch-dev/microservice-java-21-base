@@ -19,7 +19,7 @@ public class NotificationKafkaToWsListener {
     private final NotificationService notificationService;
     private final ObjectMapper objectMapper;
 
-    @KafkaListener(topics = "${kafka.topics.notification}", groupId = "${notification.kafka.group}")
+    @KafkaListener(topics = "${kafka.topics.notification}", groupId = "${spring.kafka.consumer.group-id}")
     public void onMessage(String message) {
         try {
             NotificationEvent event = objectMapper.readValue(message, NotificationEvent.class);
