@@ -12,6 +12,8 @@ import java.util.Set;
 public interface ExamVersionQuestionRepository extends JpaRepository<ExamVersionQuestion, String> {
     List<ExamVersionQuestion> findByExamVersionIdAndDeletedFalseOrderByQuestionOrderAsc(String examVersionId);
 
+    boolean existsByExamVersionIdAndDeletedFalse(String examVersionId);
+
     @Query("""
             SELECT COALESCE(MAX(evq.questionOrder), 0)
               FROM ExamVersionQuestion evq

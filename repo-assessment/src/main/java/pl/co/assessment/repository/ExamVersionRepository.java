@@ -13,6 +13,8 @@ public interface ExamVersionRepository extends JpaRepository<ExamVersion, String
 
     Optional<ExamVersion> findByIdAndExamIdAndDeletedFalse(String id, String examId);
 
+    Optional<ExamVersion> findByIdAndDeletedFalse(String id);
+
     @Query("select coalesce(max(ev.version), 0) from ExamVersion ev where ev.examId = :examId and ev.deleted = false")
     Integer findMaxVersionByExamIdAndDeletedFalse(@Param("examId") String examId);
 

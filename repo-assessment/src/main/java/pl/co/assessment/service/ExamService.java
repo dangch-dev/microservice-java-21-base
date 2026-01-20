@@ -16,4 +16,6 @@ public interface ExamService {
     void saveDraft(String examId, ExamDraftSaveRequest request);
 
     void discardDraft(String examId);
+
+    void publishDraft(String examId);
 }

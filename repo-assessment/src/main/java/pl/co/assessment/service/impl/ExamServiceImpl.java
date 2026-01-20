@@ -181,8 +181,6 @@ public class ExamServiceImpl implements ExamService {
 
         // Build response
         // Build metadata from editorVersion
-        String mode = editorVersion.getStatus() == null ? null : editorVersion.getStatus().toLowerCase();
-
         ExamEditorMetadata metadata = new ExamEditorMetadata(
                 editorVersion.getName(),
                 editorVersion.getDescription(),
@@ -206,7 +204,7 @@ public class ExamServiceImpl implements ExamService {
         }
 
         return new ExamEditorResponse(
-                mode,
+                editorVersion.getStatus(),
                 editorVersion.getId(),
                 metadata,
                 questions
@@ -512,5 +510,42 @@ public class ExamServiceImpl implements ExamService {
         examRepository.save(exam);
     }
 
+    @Override
+    @Transactional
+    public void publishDraft(String examId) {
+        Exam exam = examRepository.findByIdAndDeletedFalseForUpdate(examId)
+                .orElseThrow(() -> new ApiException(ErrorCode.E227, ErrorCode.E227.message("Exam not found")));
 
+        String draftId = exam.getDraftExamVersionId();
+        if (draftId == null || draftId.isBlank()) {
+            throw new ApiException(ErrorCode.E221, ErrorCode.E221.message("No draft to publish"));
+        }
+
+        ExamVersion draft = examVersionRepository.findByIdAndExamIdAndDeletedFalse(draftId, exam.getId())
+                .orElseThrow(() -> new ApiException(ErrorCode.E221,
+                        ErrorCode.E221.message("Draft exam version does not exist")));
+        if (!ExamVersionStatus.DRAFT.name().equalsIgnoreCase(draft.getStatus())) {
+            throw new ApiException(ErrorCode.E221,
+                    ErrorCode.E221.message("Draft exam version does not exist"));
+        }
+        if (!examVersionQuestionRepository.existsByExamVersionIdAndDeletedFalse(draftId)) {
+            throw new ApiException(ErrorCode.E221, ErrorCode.E221.message("Draft must have at least 1 question"));
+        }
+
+        String oldPublishedId = exam.getPublishedExamVersionId();
+        if (oldPublishedId != null && !oldPublishedId.isBlank() && !oldPublishedId.equals(draftId)) {
+            examVersionRepository.findByIdAndExamIdAndDeletedFalse(oldPublishedId, exam.getId())
+                    .ifPresent(oldPublished -> {
+                        oldPublished.setStatus(ExamVersionStatus.ARCHIVED.name());
+                        examVersionRepository.save(oldPublished);
+                    });
+        }
+
+        draft.setStatus(ExamVersionStatus.PUBLISHED.name());
+        examVersionRepository.save(draft);
+
+        exam.setPublishedExamVersionId(draftId);
+        exam.setDraftExamVersionId(null);
+        examRepository.save(exam);
+    }
 }

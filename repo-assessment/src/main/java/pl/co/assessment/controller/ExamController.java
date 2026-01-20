@@ -50,4 +50,10 @@ public class ExamController {
         examService.discardDraft(examId);
         return ApiResponse.ok(null);
     }
+
+    @PostMapping("/{examId}/draft/publish")
+    public ApiResponse<Void> publishDraft(@PathVariable("examId") String examId) {
+        examService.publishDraft(examId);
+        return ApiResponse.ok(null);
+    }
 }
