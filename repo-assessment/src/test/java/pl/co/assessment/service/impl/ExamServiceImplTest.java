@@ -7,12 +7,12 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import pl.co.assessment.dto.ExamDraftChangeRequest;
-import pl.co.assessment.dto.ExamDraftChangeType;
 import pl.co.assessment.dto.ExamDraftMetadataRequest;
 import pl.co.assessment.dto.ExamDraftSaveRequest;
 import pl.co.assessment.entity.Exam;
 import pl.co.assessment.entity.ExamVersion;
 import pl.co.assessment.entity.ExamVersionQuestion;
+import pl.co.assessment.entity.QuestionVersion;
 import pl.co.assessment.entity.json.GradingRules;
 import pl.co.assessment.entity.json.QuestionContent;
 import pl.co.assessment.repository.ExamRepository;
@@ -20,6 +20,8 @@ import pl.co.assessment.repository.ExamVersionQuestionRepository;
 import pl.co.assessment.repository.ExamVersionRepository;
 import pl.co.assessment.repository.QuestionRepository;
 import pl.co.assessment.repository.QuestionVersionRepository;
+import pl.co.assessment.service.QuestionService;
+import pl.co.assessment.service.impl.QuestionServiceImpl;
 import pl.co.common.exception.ApiException;
 import pl.co.common.exception.ErrorCode;
 
@@ -29,13 +31,14 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -53,17 +56,22 @@ class ExamServiceImplTest {
     @Mock
     private QuestionVersionRepository questionVersionRepository;
 
+    private QuestionService questionService;
     private ExamServiceImpl examService;
 
     @BeforeEach
     void setUp() {
+        questionService = new QuestionServiceImpl();
         examService = new ExamServiceImpl(
                 examRepository,
                 examVersionRepository,
                 examVersionQuestionRepository,
                 questionRepository,
-                questionVersionRepository
+                questionVersionRepository,
+                questionService
         );
+        lenient().when(questionVersionRepository.save(any(QuestionVersion.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
     }
 
     @Test
@@ -78,7 +86,7 @@ class ExamServiceImplTest {
 
     @Test
     void saveDraft_throws_when_exam_not_found() {
-        ExamDraftSaveRequest request = saveRequest(change("q1", 1, "SINGLE_CHOICE", ExamDraftChangeType.ADD,
+        ExamDraftSaveRequest request = saveRequest(change("q1", 1, "SINGLE_CHOICE", false,
                 contentWithOptions(), rulesWithChoice()));
         when(examRepository.findByIdAndDeletedFalseForUpdate("exam-1")).thenReturn(Optional.empty());
 
@@ -95,7 +103,7 @@ class ExamServiceImplTest {
 
         ApiException ex = assertThrows(ApiException.class,
                 () -> examService.saveDraft("exam-1", saveRequest(change("q1", 1, "SINGLE_CHOICE",
-                        ExamDraftChangeType.ADD, contentWithOptions(), rulesWithChoice()))));
+                        false, contentWithOptions(), rulesWithChoice()))));
 
         assertEquals(ErrorCode.E420, ex.getErrorCode());
     }
@@ -108,7 +116,7 @@ class ExamServiceImplTest {
 
         ApiException ex = assertThrows(ApiException.class,
                 () -> examService.saveDraft("exam-1", saveRequest(change("q1", 1, "SINGLE_CHOICE",
-                        ExamDraftChangeType.ADD, contentWithOptions(), rulesWithChoice()))));
+                        false, contentWithOptions(), rulesWithChoice()))));
 
         assertEquals(ErrorCode.E420, ex.getErrorCode());
     }
@@ -123,7 +131,7 @@ class ExamServiceImplTest {
 
         ApiException ex = assertThrows(ApiException.class,
                 () -> examService.saveDraft("exam-1", saveRequest(change("q1", 1, "SINGLE_CHOICE",
-                        ExamDraftChangeType.ADD, contentWithOptions(), rulesWithChoice()))));
+                        false, contentWithOptions(), rulesWithChoice()))));
 
         assertEquals(ErrorCode.E420, ex.getErrorCode());
     }
@@ -140,7 +148,7 @@ class ExamServiceImplTest {
 
         ApiException ex = assertThrows(ApiException.class,
                 () -> examService.saveDraft("exam-1", saveRequest(change("q2", 1, "SINGLE_CHOICE",
-                        ExamDraftChangeType.DELETE, contentWithOptions(), rulesWithChoice()))));
+                        true, contentWithOptions(), rulesWithChoice()))));
 
         assertEquals(ErrorCode.E221, ex.getErrorCode());
         assertTrue(ex.getMessage().contains("questionId: q2"));
@@ -158,28 +166,10 @@ class ExamServiceImplTest {
 
         ApiException ex = assertThrows(ApiException.class,
                 () -> examService.saveDraft("exam-1", saveRequest(change("q2", 1, "SINGLE_CHOICE",
-                        ExamDraftChangeType.ADD, contentWithOptions(), rulesWithChoice()))));
+                        false, contentWithOptions(), rulesWithChoice()))));
 
         assertEquals(ErrorCode.E220, ex.getErrorCode());
-        assertTrue(ex.getMessage().contains("questionId: q2"));
-    }
-
-    @Test
-    void saveDraft_throws_when_add_duplicate_question_id() {
-        Exam exam = examWithDraft("draft-1");
-        ExamVersion draft = draftVersion("exam-1", "draft");
-        when(examRepository.findByIdAndDeletedFalseForUpdate("exam-1")).thenReturn(Optional.of(exam));
-        when(examVersionRepository.findByIdAndExamIdAndDeletedFalse("draft-1", "exam-1"))
-                .thenReturn(Optional.of(draft));
-        when(examVersionQuestionRepository.findByExamVersionIdAndDeletedFalseOrderByQuestionOrderAsc("draft-1"))
-                .thenReturn(List.of(mapping("evq-1", "draft-1", "q1", "qv-1", 1)));
-
-        ApiException ex = assertThrows(ApiException.class,
-                () -> examService.saveDraft("exam-1", saveRequest(change("q1", 2, "SINGLE_CHOICE",
-                        ExamDraftChangeType.ADD, contentWithOptions(), rulesWithChoice()))));
-
-        assertEquals(ErrorCode.E220, ex.getErrorCode());
-        assertTrue(ex.getMessage().contains("questionId: q1"));
+        assertTrue(ex.getMessage().contains("questionOrder"));
     }
 
     @Test
@@ -194,7 +184,7 @@ class ExamServiceImplTest {
 
         ApiException ex = assertThrows(ApiException.class,
                 () -> examService.saveDraft("exam-1", saveRequest(change("q1", 1, "INVALID",
-                        ExamDraftChangeType.ADD, contentWithOptions(), rulesWithChoice()))));
+                        false, contentWithOptions(), rulesWithChoice()))));
 
         assertEquals(ErrorCode.E221, ex.getErrorCode());
         assertTrue(ex.getMessage().contains("questionId: q1"));
@@ -213,7 +203,7 @@ class ExamServiceImplTest {
         QuestionContent content = new QuestionContent();
         ApiException ex = assertThrows(ApiException.class,
                 () -> examService.saveDraft("exam-1", saveRequest(change("q1", 1, "SINGLE_CHOICE",
-                        ExamDraftChangeType.ADD, content, rulesWithChoice()))));
+                        false, content, rulesWithChoice()))));
 
         assertEquals(ErrorCode.E204, ex.getErrorCode());
         assertTrue(ex.getMessage().contains("questionId: q1"));
@@ -232,7 +222,7 @@ class ExamServiceImplTest {
         GradingRules rules = new GradingRules();
         ApiException ex = assertThrows(ApiException.class,
                 () -> examService.saveDraft("exam-1", saveRequest(change("q1", 1, "SINGLE_CHOICE",
-                        ExamDraftChangeType.ADD, contentWithOptions(), rules))));
+                        false, contentWithOptions(), rules))));
 
         assertEquals(ErrorCode.E204, ex.getErrorCode());
         assertTrue(ex.getMessage().contains("questionId: q1"));
@@ -255,7 +245,7 @@ class ExamServiceImplTest {
 
         ApiException ex = assertThrows(ApiException.class,
                 () -> examService.saveDraft("exam-1", saveRequest(change("q1", 1, "SINGLE_CHOICE",
-                        ExamDraftChangeType.ADD, contentWithOptions(), rules))));
+                        false, contentWithOptions(), rules))));
 
         assertEquals(ErrorCode.E204, ex.getErrorCode());
         assertTrue(ex.getMessage().contains("questionId: q1"));
@@ -278,7 +268,7 @@ class ExamServiceImplTest {
 
         ApiException ex = assertThrows(ApiException.class,
                 () -> examService.saveDraft("exam-1", saveRequest(change("q1", 1, "MULTIPLE_CHOICE",
-                        ExamDraftChangeType.ADD, contentWithOptions(), rules))));
+                        false, contentWithOptions(), rules))));
 
         assertEquals(ErrorCode.E204, ex.getErrorCode());
         assertTrue(ex.getMessage().contains("questionId: q1"));
@@ -296,7 +286,7 @@ class ExamServiceImplTest {
 
         ApiException ex = assertThrows(ApiException.class,
                 () -> examService.saveDraft("exam-1", saveRequest(change("q1", 1, "SHORT_TEXT",
-                        ExamDraftChangeType.ADD, new QuestionContent(), new GradingRules()))));
+                        false, new QuestionContent(), new GradingRules()))));
 
         assertEquals(ErrorCode.E204, ex.getErrorCode());
         assertTrue(ex.getMessage().contains("questionId: q1"));
@@ -314,7 +304,7 @@ class ExamServiceImplTest {
 
         ApiException ex = assertThrows(ApiException.class,
                 () -> examService.saveDraft("exam-1", saveRequest(change("q1", 1, "MATCHING",
-                        ExamDraftChangeType.ADD, new QuestionContent(), new GradingRules()))));
+                        false, new QuestionContent(), new GradingRules()))));
 
         assertEquals(ErrorCode.E204, ex.getErrorCode());
         assertTrue(ex.getMessage().contains("questionId: q1"));
@@ -335,7 +325,7 @@ class ExamServiceImplTest {
 
         ApiException ex = assertThrows(ApiException.class,
                 () -> examService.saveDraft("exam-1", saveRequest(change("q1", 1, "MATCHING",
-                        ExamDraftChangeType.ADD, content, rules))));
+                        false, content, rules))));
 
         assertEquals(ErrorCode.E204, ex.getErrorCode());
         assertTrue(ex.getMessage().contains("questionId: q1"));
@@ -353,7 +343,7 @@ class ExamServiceImplTest {
 
         ApiException ex = assertThrows(ApiException.class,
                 () -> examService.saveDraft("exam-1", saveRequest(change("q1", 1, "FILL_BLANKS",
-                        ExamDraftChangeType.ADD, new QuestionContent(), new GradingRules()))));
+                        false, new QuestionContent(), new GradingRules()))));
 
         assertEquals(ErrorCode.E204, ex.getErrorCode());
         assertTrue(ex.getMessage().contains("questionId: q1"));
@@ -374,27 +364,9 @@ class ExamServiceImplTest {
 
         ApiException ex = assertThrows(ApiException.class,
                 () -> examService.saveDraft("exam-1", saveRequest(change("q1", 1, "FILL_BLANKS",
-                        ExamDraftChangeType.ADD, content, rules))));
+                        false, content, rules))));
 
         assertEquals(ErrorCode.E204, ex.getErrorCode());
-        assertTrue(ex.getMessage().contains("questionId: q1"));
-    }
-
-    @Test
-    void saveDraft_throws_when_edit_question_missing() {
-        Exam exam = examWithDraft("draft-1");
-        ExamVersion draft = draftVersion("exam-1", "draft");
-        when(examRepository.findByIdAndDeletedFalseForUpdate("exam-1")).thenReturn(Optional.of(exam));
-        when(examVersionRepository.findByIdAndExamIdAndDeletedFalse("draft-1", "exam-1"))
-                .thenReturn(Optional.of(draft));
-        when(examVersionQuestionRepository.findByExamVersionIdAndDeletedFalseOrderByQuestionOrderAsc("draft-1"))
-                .thenReturn(List.of());
-
-        ApiException ex = assertThrows(ApiException.class,
-                () -> examService.saveDraft("exam-1", saveRequest(change("q1", 1, "SINGLE_CHOICE",
-                        ExamDraftChangeType.EDIT_CONTENT, contentWithOptions(), rulesWithChoice()))));
-
-        assertEquals(ErrorCode.E221, ex.getErrorCode());
         assertTrue(ex.getMessage().contains("questionId: q1"));
     }
 
@@ -410,32 +382,14 @@ class ExamServiceImplTest {
 
         ApiException ex = assertThrows(ApiException.class,
                 () -> examService.saveDraft("exam-1", saveRequest(change("q1", 1, "INVALID",
-                        ExamDraftChangeType.EDIT_CONTENT, contentWithOptions(), rulesWithChoice()))));
+                        false, contentWithOptions(), rulesWithChoice()))));
 
         assertEquals(ErrorCode.E221, ex.getErrorCode());
         assertTrue(ex.getMessage().contains("questionId: q1"));
     }
 
     @Test
-    void saveDraft_throws_when_reorder_question_missing() {
-        Exam exam = examWithDraft("draft-1");
-        ExamVersion draft = draftVersion("exam-1", "draft");
-        when(examRepository.findByIdAndDeletedFalseForUpdate("exam-1")).thenReturn(Optional.of(exam));
-        when(examVersionRepository.findByIdAndExamIdAndDeletedFalse("draft-1", "exam-1"))
-                .thenReturn(Optional.of(draft));
-        when(examVersionQuestionRepository.findByExamVersionIdAndDeletedFalseOrderByQuestionOrderAsc("draft-1"))
-                .thenReturn(List.of(mapping("evq-1", "draft-1", "q1", "qv-1", 1)));
-
-        ApiException ex = assertThrows(ApiException.class,
-                () -> examService.saveDraft("exam-1", saveRequest(change("q2", 2, "SINGLE_CHOICE",
-                        ExamDraftChangeType.REORDER, contentWithOptions(), rulesWithChoice()))));
-
-        assertEquals(ErrorCode.E221, ex.getErrorCode());
-        assertTrue(ex.getMessage().contains("questionId: q2"));
-    }
-
-    @Test
-    void saveDraft_throws_when_reorder_order_collides_with_existing() {
+    void saveDraft_throws_when_EDIT_order_collides_with_existing() {
         Exam exam = examWithDraft("draft-1");
         ExamVersion draft = draftVersion("exam-1", "draft");
         when(examRepository.findByIdAndDeletedFalseForUpdate("exam-1")).thenReturn(Optional.of(exam));
@@ -448,19 +402,19 @@ class ExamServiceImplTest {
                 ));
 
         ExamDraftChangeRequest change1 = change("q1", 2, "SINGLE_CHOICE",
-                ExamDraftChangeType.REORDER, contentWithOptions(), rulesWithChoice());
+                false, contentWithOptions(), rulesWithChoice());
         ExamDraftSaveRequest request = new ExamDraftSaveRequest();
-        request.setChanges(List.of(change1));
+        request.setQuestionChanges(List.of(change1));
 
         ApiException ex = assertThrows(ApiException.class,
                 () -> examService.saveDraft("exam-1", request));
 
         assertEquals(ErrorCode.E220, ex.getErrorCode());
-        assertTrue(ex.getMessage().contains("questionId: q1"));
+        assertTrue(ex.getMessage().contains("questionOrder"));
     }
 
     @Test
-    void saveDraft_throws_when_reorder_duplicate_question_id() {
+    void saveDraft_throws_when_EDIT_duplicate_question_id() {
         Exam exam = examWithDraft("draft-1");
         ExamVersion draft = draftVersion("exam-1", "draft");
         when(examRepository.findByIdAndDeletedFalseForUpdate("exam-1")).thenReturn(Optional.of(exam));
@@ -470,11 +424,11 @@ class ExamServiceImplTest {
                 .thenReturn(List.of(mapping("evq-1", "draft-1", "q1", "qv-1", 1)));
 
         ExamDraftChangeRequest change1 = change("q1", 2, "SINGLE_CHOICE",
-                ExamDraftChangeType.REORDER, contentWithOptions(), rulesWithChoice());
+                false, contentWithOptions(), rulesWithChoice());
         ExamDraftChangeRequest change2 = change("q1", 3, "SINGLE_CHOICE",
-                ExamDraftChangeType.REORDER, contentWithOptions(), rulesWithChoice());
+                false, contentWithOptions(), rulesWithChoice());
         ExamDraftSaveRequest request = new ExamDraftSaveRequest();
-        request.setChanges(List.of(change1, change2));
+        request.setQuestionChanges(List.of(change1, change2));
 
         ApiException ex = assertThrows(ApiException.class,
                 () -> examService.saveDraft("exam-1", request));
@@ -484,7 +438,7 @@ class ExamServiceImplTest {
     }
 
     @Test
-    void saveDraft_throws_when_reorder_duplicate_order() {
+    void saveDraft_throws_when_EDIT_duplicate_order() {
         Exam exam = examWithDraft("draft-1");
         ExamVersion draft = draftVersion("exam-1", "draft");
         when(examRepository.findByIdAndDeletedFalseForUpdate("exam-1")).thenReturn(Optional.of(exam));
@@ -497,17 +451,90 @@ class ExamServiceImplTest {
                 ));
 
         ExamDraftChangeRequest change1 = change("q1", 3, "SINGLE_CHOICE",
-                ExamDraftChangeType.REORDER, contentWithOptions(), rulesWithChoice());
+                false, contentWithOptions(), rulesWithChoice());
         ExamDraftChangeRequest change2 = change("q2", 3, "SINGLE_CHOICE",
-                ExamDraftChangeType.REORDER, contentWithOptions(), rulesWithChoice());
+                false, contentWithOptions(), rulesWithChoice());
         ExamDraftSaveRequest request = new ExamDraftSaveRequest();
-        request.setChanges(List.of(change1, change2));
+        request.setQuestionChanges(List.of(change1, change2));
 
         ApiException ex = assertThrows(ApiException.class,
                 () -> examService.saveDraft("exam-1", request));
 
         assertEquals(ErrorCode.E220, ex.getErrorCode());
-        assertTrue(ex.getMessage().contains("questionId: q2"));
+        assertTrue(ex.getMessage().contains("questionOrder"));
+    }
+
+    @Test
+    void saveDraft_throws_when_order_not_continuous_after_delete() {
+        Exam exam = examWithDraft("draft-1");
+        ExamVersion draft = draftVersion("exam-1", "draft");
+        when(examRepository.findByIdAndDeletedFalseForUpdate("exam-1")).thenReturn(Optional.of(exam));
+        when(examVersionRepository.findByIdAndExamIdAndDeletedFalse("draft-1", "exam-1"))
+                .thenReturn(Optional.of(draft));
+        when(examVersionQuestionRepository.findByExamVersionIdAndDeletedFalseOrderByQuestionOrderAsc("draft-1"))
+                .thenReturn(List.of(
+                        mapping("evq-1", "draft-1", "q1", "qv-1", 1),
+                        mapping("evq-2", "draft-1", "q2", "qv-2", 2)
+                ));
+
+        ExamDraftSaveRequest request = saveRequest(change("q1", 1, "SINGLE_CHOICE",
+                true, contentWithOptions(), rulesWithChoice()));
+
+        ApiException ex = assertThrows(ApiException.class,
+                () -> examService.saveDraft("exam-1", request));
+
+        assertEquals(ErrorCode.E221, ex.getErrorCode());
+    }
+
+    @Test
+    void saveDraft_updates_EDIT_orders_in_single_request() {
+        Exam exam = examWithDraft("draft-1");
+        ExamVersion draft = draftVersion("exam-1", "draft");
+        when(examRepository.findByIdAndDeletedFalseForUpdate("exam-1")).thenReturn(Optional.of(exam));
+        when(examVersionRepository.findByIdAndExamIdAndDeletedFalse("draft-1", "exam-1"))
+                .thenReturn(Optional.of(draft));
+        ExamVersionQuestion q1 = mapping("evq-1", "draft-1", "q1", "qv-1", 1);
+        ExamVersionQuestion q2 = mapping("evq-2", "draft-1", "q2", "qv-2", 2);
+        when(examVersionQuestionRepository.findByExamVersionIdAndDeletedFalseOrderByQuestionOrderAsc("draft-1"))
+                .thenReturn(List.of(q1, q2));
+
+        ExamDraftChangeRequest edit1 = change("q1", 2, "SINGLE_CHOICE",
+                false, contentWithOptions(), rulesWithChoice());
+        ExamDraftChangeRequest edit2 = change("q2", 1, "SINGLE_CHOICE",
+                false, contentWithOptions(), rulesWithChoice());
+        ExamDraftSaveRequest request = new ExamDraftSaveRequest();
+        request.setQuestionChanges(List.of(edit1, edit2));
+
+        examService.saveDraft("exam-1", request);
+
+        ArgumentCaptor<Iterable<ExamVersionQuestion>> captor = ArgumentCaptor.forClass(Iterable.class);
+        verify(examVersionQuestionRepository).saveAll(captor.capture());
+        assertNotNull(captor.getValue());
+    }
+
+    @Test
+    void saveDraft_updates_REORDER_ONLY_orders_without_new_version() {
+        Exam exam = examWithDraft("draft-1");
+        ExamVersion draft = draftVersion("exam-1", "draft");
+        when(examRepository.findByIdAndDeletedFalseForUpdate("exam-1")).thenReturn(Optional.of(exam));
+        when(examVersionRepository.findByIdAndExamIdAndDeletedFalse("draft-1", "exam-1"))
+                .thenReturn(Optional.of(draft));
+        ExamVersionQuestion q1 = mapping("evq-1", "draft-1", "q1", "qv-1", 1);
+        ExamVersionQuestion q2 = mapping("evq-2", "draft-1", "q2", "qv-2", 2);
+        when(examVersionQuestionRepository.findByExamVersionIdAndDeletedFalseOrderByQuestionOrderAsc("draft-1"))
+                .thenReturn(List.of(q1, q2));
+
+        ExamDraftChangeRequest reorder1 = reorderOnlyChange("q1", 2);
+        ExamDraftChangeRequest reorder2 = reorderOnlyChange("q2", 1);
+        ExamDraftSaveRequest request = new ExamDraftSaveRequest();
+        request.setQuestionChanges(List.of(reorder1, reorder2));
+
+        examService.saveDraft("exam-1", request);
+
+        assertEquals(2, q1.getQuestionOrder());
+        assertEquals(1, q2.getQuestionOrder());
+        verify(questionVersionRepository, never()).save(any());
+        verify(examVersionQuestionRepository).saveAll(any());
     }
 
     @Test
@@ -532,7 +559,7 @@ class ExamServiceImplTest {
 
         ApiException ex = assertThrows(ApiException.class,
                 () -> examService.saveDraft("exam-1", saveRequest(change("q1", 1, "ESSAY",
-                        ExamDraftChangeType.ADD, contentWithOptions(), rules))));
+                        false, contentWithOptions(), rules))));
 
         assertEquals(ErrorCode.E204, ex.getErrorCode());
         assertTrue(ex.getMessage().contains("questionId: q1"));
@@ -568,7 +595,7 @@ class ExamServiceImplTest {
     }
 
     @Test
-    void saveDraft_updates_reorder_and_persists_changes() {
+    void saveDraft_updates_EDIT_and_persists_changes() {
         Exam exam = examWithDraft("draft-1");
         ExamVersion draft = draftVersion("exam-1", "draft");
         when(examRepository.findByIdAndDeletedFalseForUpdate("exam-1")).thenReturn(Optional.of(exam));
@@ -577,19 +604,82 @@ class ExamServiceImplTest {
         ExamVersionQuestion q1 = mapping("evq-1", "draft-1", "q1", "qv-1", 1);
         when(examVersionQuestionRepository.findByExamVersionIdAndDeletedFalseOrderByQuestionOrderAsc("draft-1"))
                 .thenReturn(List.of(q1));
-        when(examVersionQuestionRepository.bumpQuestionOrder(anyString(), anySet(), anyInt()))
-                .thenReturn(1);
 
-        ExamDraftChangeRequest reorder = change("q1", 2, "SINGLE_CHOICE",
-                ExamDraftChangeType.REORDER, contentWithOptions(), rulesWithChoice());
+        ExamDraftChangeRequest EDIT = change("q1", 1, "SINGLE_CHOICE",
+                false, contentWithOptions(), rulesWithChoice());
         ExamDraftSaveRequest request = new ExamDraftSaveRequest();
-        request.setChanges(List.of(reorder));
+        request.setQuestionChanges(List.of(EDIT));
 
         examService.saveDraft("exam-1", request);
 
         ArgumentCaptor<Iterable<ExamVersionQuestion>> captor = ArgumentCaptor.forClass(Iterable.class);
         verify(examVersionQuestionRepository).saveAll(captor.capture());
         assertNotNull(captor.getValue());
+    }
+
+    @Test
+    void discardDraft_throws_when_exam_not_found() {
+        when(examRepository.findByIdAndDeletedFalseForUpdate("exam-1")).thenReturn(Optional.empty());
+
+        ApiException ex = assertThrows(ApiException.class,
+                () -> examService.discardDraft("exam-1"));
+
+        assertEquals(ErrorCode.E227, ex.getErrorCode());
+    }
+
+    @Test
+    void discardDraft_returns_when_draft_missing() {
+        Exam exam = examWithDraft(null);
+        when(examRepository.findByIdAndDeletedFalseForUpdate("exam-1")).thenReturn(Optional.of(exam));
+
+        examService.discardDraft("exam-1");
+
+        verify(examVersionRepository, never()).findByIdAndExamIdAndDeletedFalse(anyString(), anyString());
+        verify(examVersionRepository, never()).save(any());
+        verify(examRepository, never()).save(any());
+        assertNull(exam.getDraftExamVersionId());
+    }
+
+    @Test
+    void discardDraft_throws_when_draft_not_found() {
+        Exam exam = examWithDraft("draft-1");
+        when(examRepository.findByIdAndDeletedFalseForUpdate("exam-1")).thenReturn(Optional.of(exam));
+        when(examVersionRepository.findByIdAndExamIdAndDeletedFalse("draft-1", "exam-1")).thenReturn(Optional.empty());
+
+        ApiException ex = assertThrows(ApiException.class,
+                () -> examService.discardDraft("exam-1"));
+
+        assertEquals(ErrorCode.E420, ex.getErrorCode());
+    }
+
+    @Test
+    void discardDraft_throws_when_draft_status_invalid() {
+        Exam exam = examWithDraft("draft-1");
+        ExamVersion draft = draftVersion("exam-1", "published");
+        when(examRepository.findByIdAndDeletedFalseForUpdate("exam-1")).thenReturn(Optional.of(exam));
+        when(examVersionRepository.findByIdAndExamIdAndDeletedFalse("draft-1", "exam-1"))
+                .thenReturn(Optional.of(draft));
+
+        ApiException ex = assertThrows(ApiException.class,
+                () -> examService.discardDraft("exam-1"));
+
+        assertEquals(ErrorCode.E420, ex.getErrorCode());
+    }
+
+    @Test
+    void discardDraft_soft_deletes_and_clears_pointer() {
+        Exam exam = examWithDraft("draft-1");
+        ExamVersion draft = draftVersion("exam-1", "draft");
+        when(examRepository.findByIdAndDeletedFalseForUpdate("exam-1")).thenReturn(Optional.of(exam));
+        when(examVersionRepository.findByIdAndExamIdAndDeletedFalse("draft-1", "exam-1"))
+                .thenReturn(Optional.of(draft));
+
+        examService.discardDraft("exam-1");
+
+        assertTrue(draft.isDeleted());
+        assertNull(exam.getDraftExamVersionId());
+        verify(examVersionRepository).save(draft);
+        verify(examRepository).save(exam);
     }
 
     private Exam examWithDraft(String draftId) {
@@ -622,21 +712,29 @@ class ExamServiceImplTest {
 
     private ExamDraftSaveRequest saveRequest(ExamDraftChangeRequest change) {
         ExamDraftSaveRequest request = new ExamDraftSaveRequest();
-        request.setChanges(List.of(change));
+        request.setQuestionChanges(List.of(change));
         return request;
     }
 
     private ExamDraftChangeRequest change(String questionId, int order, String type,
-                                          ExamDraftChangeType changeType,
+                                          boolean deleted,
                                           QuestionContent content,
                                           GradingRules rules) {
         ExamDraftChangeRequest change = new ExamDraftChangeRequest();
         change.setQuestionId(questionId);
         change.setQuestionOrder(order);
         change.setType(type);
-        change.setChangeTypes(List.of(changeType));
+        change.setDeleted(deleted);
         change.setQuestionContent(content);
         change.setGradingRules(rules);
+        return change;
+    }
+
+    private ExamDraftChangeRequest reorderOnlyChange(String questionId, int order) {
+        ExamDraftChangeRequest change = new ExamDraftChangeRequest();
+        change.setQuestionId(questionId);
+        change.setQuestionOrder(order);
+        change.setDeleted(false);
         return change;
     }
 

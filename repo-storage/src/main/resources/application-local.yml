@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:mysql://dangch-mysql:53306/storage_mysql_database?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    url: jdbc:mysql://localhost:3306/storage_mysql_database?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: root
     password: mysql_root_password
     hikari:
@@ -16,12 +16,12 @@ spring:
   cache:
     type: simple
   kafka:
-    bootstrap-servers: dangch-kafka:59092
+    bootstrap-servers: localhost:9092
     consumer:
       group-id: storage-file
 
 server:
-  port: 58086
+  port: 8086
 
 security:
   external-jwt:
@@ -32,10 +32,10 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: http://dangch-eureka:58761/eureka
+      defaultZone: http://localhost:8761/eureka
   instance:
     prefer-ip-address: true
-    hostname: dangch-storage
+    hostname: localhost
     instance-id: ${spring.application.name}:${server.port}
 
 storage:
@@ -44,8 +44,8 @@ storage:
   cleanup-cron: "0 0 * * * *"
   delete-object-on-soft-delete: false
   minio:
-    endpoint: http://dangch-minio:59000
-    console-endpoint: http://dangch-minio:59001
+    endpoint: http://localhost:9000
+    console-endpoint: http://localhost:9001
     access-key: app-user
     secret-key: app-user-secret
     bucket: repo-storage
@@ -69,4 +69,3 @@ kafka:
     notification: notification.in-app
     file: storage.file
     mail: notification.mail
-

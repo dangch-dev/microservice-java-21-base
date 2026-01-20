@@ -1,14 +1,8 @@
 spring:
-  sql:
-    init:
-      mode: always
-      data-locations: classpath:init-data.sql
   datasource:
-    url: jdbc:mysql://dangch-mysql:53306/assessment_mysql_database?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    url: jdbc:mysql://localhost:3306/notification_mysql_database?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: root
     password: mysql_root_password
-    hikari:
-      maximum-pool-size: 10
   jpa:
     hibernate:
       ddl-auto: update
@@ -16,40 +10,52 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
     open-in-view: false
-    defer-datasource-initialization: true
-  cache:
-    type: simple
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: notification-service
+      auto-offset-reset: latest
 
 server:
-  port: 58087
+  port: 8083
 
 security:
   external-jwt:
     public-key-path: file:../secrets/jwt-public.pem
+
+notification:
+  kafka:
+    group: notification-service
 
 eureka:
   client:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: http://dangch-eureka:58761/eureka
+      defaultZone: http://localhost:8761/eureka
   instance:
     prefer-ip-address: true
-    hostname: dangch-assessment
+    hostname: localhost
     instance-id: ${spring.application.name}:${server.port}
+
+sendgrid:
+  api-key: 
+  from:
+
+logging:
+  level:
+    org.springframework.security: INFO
 
 # Required declarations (But it doesn't need to have value.)
 internal:
   api:
     auth-service: repo-auth
     token-path: /oauth/token
-    client-id: oRd1gWcf7Sx1z0NHHA1zwSPa
-    client-secret: 4PHWqCA2CtcSjEf6pUpP7D9hVuvCOdRL
+    client-id: 1YdPn9oQ6GktbMOy6fENEU59
+    client-secret: ZugYznmLAWbGIJvmf0ikH2ymy9p4MdN0
 
 kafka:
   topics:
     notification: notification.in-app
     file: storage.file
     mail: notification.mail
-
-

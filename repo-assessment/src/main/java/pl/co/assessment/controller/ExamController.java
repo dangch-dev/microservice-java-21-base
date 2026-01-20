@@ -44,4 +44,10 @@ public class ExamController {
         examService.saveDraft(examId, request);
         return ApiResponse.ok(null);
     }
+
+    @PostMapping("/{examId}/draft/discard")
+    public ApiResponse<Void> discardDraft(@PathVariable("examId") String examId) {
+        examService.discardDraft(examId);
+        return ApiResponse.ok(null);
+    }
 }

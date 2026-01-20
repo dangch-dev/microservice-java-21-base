@@ -1,0 +1,4 @@
+FROM minio/minio:latest
+
+EXPOSE 59000
+EXPOSE 59001

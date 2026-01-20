@@ -14,4 +14,6 @@ public interface ExamService {
     ExamEditorResponse requestEdit(String examId);
 
     void saveDraft(String examId, ExamDraftSaveRequest request);
+
+    void discardDraft(String examId);
 }

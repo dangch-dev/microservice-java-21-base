@@ -12,7 +12,7 @@ spring:
       - org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration
 
 server:
-  port: 58761
+  port: 8761
 
 eureka:
   client:
@@ -27,5 +27,3 @@ kafka:
     file: storage.file
     notification: notification.in-app
     mail: notification.mail
-
-

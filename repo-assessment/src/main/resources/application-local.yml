@@ -4,7 +4,7 @@ spring:
       mode: always
       data-locations: classpath:init-data.sql
   datasource:
-    url: jdbc:mysql://dangch-mysql:53306/assessment_mysql_database?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    url: jdbc:mysql://localhost:3306/assessment_mysql_database?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: root
     password: mysql_root_password
     hikari:
@@ -21,7 +21,7 @@ spring:
     type: simple
 
 server:
-  port: 58087
+  port: 8087
 
 security:
   external-jwt:
@@ -32,10 +32,10 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: http://dangch-eureka:58761/eureka
+      defaultZone: http://localhost:8761/eureka
   instance:
     prefer-ip-address: true
-    hostname: dangch-assessment
+    hostname: localhost
     instance-id: ${spring.application.name}:${server.port}
 
 # Required declarations (But it doesn't need to have value.)
@@ -51,5 +51,3 @@ kafka:
     notification: notification.in-app
     file: storage.file
     mail: notification.mail
-
-

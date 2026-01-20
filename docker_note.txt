@@ -1,0 +1,9 @@
+docker build -f docker/parent.Dockerfile -t dangch-parent .
+docker build -f docker/framework.Dockerfile -t dangch-framework .
+docker compose build
+docker compose up -d
+
+docker compose build api-gateway
+docker compose up -d api-gateway
+
+docker ps | grep -i dangch

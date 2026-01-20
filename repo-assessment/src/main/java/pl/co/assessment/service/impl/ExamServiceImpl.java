@@ -8,8 +8,6 @@ import org.springframework.transaction.annotation.Transactional;
 import pl.co.assessment.dto.ExamCreateRequest;
 import pl.co.assessment.dto.ExamCreateResponse;
 import pl.co.assessment.dto.ExamDraftChangeRequest;
-import pl.co.assessment.dto.ExamDraftChangeType;
-import pl.co.assessment.dto.ExamDraftMetadataRequest;
 import pl.co.assessment.dto.ExamDraftSaveRequest;
 import pl.co.assessment.dto.ExamEditorMetadata;
 import pl.co.assessment.dto.ExamEditorQuestion;
@@ -21,10 +19,7 @@ import pl.co.assessment.entity.ExamVersion;
 import pl.co.assessment.entity.ExamVersionStatus;
 import pl.co.assessment.entity.ExamVersionQuestion;
 import pl.co.assessment.entity.Question;
-import pl.co.assessment.entity.QuestionType;
 import pl.co.assessment.entity.QuestionVersion;
-import pl.co.assessment.entity.json.GradingRules;
-import pl.co.assessment.entity.json.QuestionContent;
 import pl.co.assessment.repository.ExamEditorQuestionRow;
 import pl.co.assessment.repository.ExamListRow;
 import pl.co.assessment.repository.ExamRepository;
@@ -33,16 +28,14 @@ import pl.co.assessment.repository.ExamVersionRepository;
 import pl.co.assessment.repository.QuestionRepository;
 import pl.co.assessment.repository.QuestionVersionRepository;
 import pl.co.assessment.service.ExamService;
+import pl.co.assessment.service.QuestionService;
 import pl.co.common.exception.ApiException;
 import pl.co.common.exception.ErrorCode;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -50,13 +43,12 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class ExamServiceImpl implements ExamService {
 
-    private static final int SCHEMA_VERSION = 1;
-
     private final ExamRepository examRepository;
     private final ExamVersionRepository examVersionRepository;
     private final ExamVersionQuestionRepository examVersionQuestionRepository;
     private final QuestionRepository questionRepository;
     private final QuestionVersionRepository questionVersionRepository;
+    private final QuestionService questionService;
 
     @Override
     @Transactional
@@ -226,7 +218,7 @@ public class ExamServiceImpl implements ExamService {
     public void saveDraft(String examId, ExamDraftSaveRequest request) {
         // Check Change
         boolean hasMetadata = request.getMetadata() != null;
-        boolean hasChanges = request.getChanges() != null && !request.getChanges().isEmpty();
+        boolean hasChanges = request.getQuestionChanges() != null && !request.getQuestionChanges().isEmpty();
         if (!hasMetadata && !hasChanges) {
             throw new ApiException(ErrorCode.E221, ErrorCode.E221.message("metadata or changes is required"));
         }
@@ -242,10 +234,10 @@ public class ExamServiceImpl implements ExamService {
                     ErrorCode.E420.message("Draft exam version does not exist"));
         }
 
-        ExamVersion draft = examVersionRepository.findByIdAndExamIdAndDeletedFalse(draftId, exam.getId())
+        ExamVersion draftExam = examVersionRepository.findByIdAndExamIdAndDeletedFalse(draftId, exam.getId())
                 .orElseThrow(() -> new ApiException(ErrorCode.E420,
                         ErrorCode.E420.message("Draft exam version does not exist")));
-        if (!ExamVersionStatus.DRAFT.name().equalsIgnoreCase(draft.getStatus())) {
+        if (!ExamVersionStatus.DRAFT.name().equalsIgnoreCase(draftExam.getStatus())) {
             throw new ApiException(ErrorCode.E420,
                     ErrorCode.E420.message("Draft exam version does not exist"));
         }
@@ -253,7 +245,7 @@ public class ExamServiceImpl implements ExamService {
         // Load active question mappings for draft
         Map<String, ExamVersionQuestion> mapQuestionByQuestionId = new HashMap<>();
         Set<Integer> usedOrders = new HashSet<>();
-        List<ExamVersionQuestion> activeMappings =
+        List<ExamVersionQuestion> activeMappings = //active mapping
                 examVersionQuestionRepository.findByExamVersionIdAndDeletedFalseOrderByQuestionOrderAsc(draftId);
         for (ExamVersionQuestion item : activeMappings) {
             mapQuestionByQuestionId.put(item.getQuestionId(), item);
@@ -264,378 +256,261 @@ public class ExamServiceImpl implements ExamService {
         List<ExamDraftChangeRequest> deleteChanges = new ArrayList<>();
         List<ExamDraftChangeRequest> addChanges = new ArrayList<>();
         List<ExamDraftChangeRequest> editChanges = new ArrayList<>();
-        List<ExamDraftChangeRequest> reorderChanges = new ArrayList<>();
+        List<ExamDraftChangeRequest> reorderOnlyChanges = new ArrayList<>();
 
         if (hasChanges) {
-            for (ExamDraftChangeRequest change : request.getChanges()) {
-                EnumSet<ExamDraftChangeType> types = EnumSet.copyOf(change.getChangeTypes());
-                if (types.contains(ExamDraftChangeType.DELETE)) {
-                    deleteChanges.add(change);
+            Set<String> seenQuestionIds = new HashSet<>();
+            for (ExamDraftChangeRequest questionChange : request.getQuestionChanges()) {
+                String questionId = questionChange.getQuestionId();
+                if (!seenQuestionIds.add(questionId)) {
+                    throw new ApiException(ErrorCode.E220,
+                            ErrorCode.E220.message("Duplicate questionId, questionId: " + questionId));
                 }
-                if (types.contains(ExamDraftChangeType.ADD)) {
-                    addChanges.add(change);
+                if (Boolean.TRUE.equals(questionChange.getDeleted())) {
+                    deleteChanges.add(questionChange);
+                    continue;
                 }
-                if (types.contains(ExamDraftChangeType.EDIT_CONTENT)) {
-                    editChanges.add(change);
+                Integer order = questionChange.getQuestionOrder();
+                if (order == null || order <= 0) {
+                    throw new ApiException(ErrorCode.E221,
+                            ErrorCode.E221.message("Invalid questionOrder, questionId: " + questionId));
                 }
-                if (types.contains(ExamDraftChangeType.REORDER)) {
-                    reorderChanges.add(change);
+                boolean hasType = questionChange.getType() != null && !questionChange.getType().isBlank();
+                boolean hasContent = questionChange.getQuestionContent() != null;
+                boolean hasRules = questionChange.getGradingRules() != null;
+                boolean hasPayload = hasType || hasContent || hasRules;
+                if (mapQuestionByQuestionId.containsKey(questionId)) {
+                    if (hasPayload) {
+                        if (!(hasType && hasContent && hasRules)) {
+                            throw new ApiException(ErrorCode.E221,
+                                    ErrorCode.E221.message("type, questionContent, gradingRules are required, questionId: " + questionId));
+                        }
+                        editChanges.add(questionChange);
+                    } else {
+                        reorderOnlyChanges.add(questionChange);
+                    }
+                } else {
+                    if (!(hasType && hasContent && hasRules)) {
+                        throw new ApiException(ErrorCode.E221,
+                                ErrorCode.E221.message("type, questionContent, gradingRules are required, questionId: " + questionId));
+                    }
+                    addChanges.add(questionChange);
                 }
             }
         }
 
         // Apply changes to draft questions
-        Map<String, ExamVersionQuestion> mapQuestionUpdatedById = new HashMap<>();
+        Map<String, ExamVersionQuestion> deleteUpdatedById = new HashMap<>();
         // Apply DELETE: soft-delete requested mappings
         if (!deleteChanges.isEmpty()) {
+            Integer maxOrder = examVersionQuestionRepository.findMaxQuestionOrderByExamVersionId(draftId);
+            int deleteOrderBase = maxOrder == null ? 0 : maxOrder;
+            int deleteOrderOffset = 1;
             for (ExamDraftChangeRequest change : deleteChanges) {
                 String questionId = change.getQuestionId();
                 ExamVersionQuestion target = mapQuestionByQuestionId.get(questionId);
                 if (target == null) {
                     throw new ApiException(ErrorCode.E221, ErrorCode.E221.message("Invalid questionId, questionId: " + questionId));
                 }
+                int oldOrder = target.getQuestionOrder();
+                target.setQuestionOrder(deleteOrderBase + deleteOrderOffset);
+                deleteOrderOffset++;
                 target.setDeleted(true);
-                mapQuestionUpdatedById.put(target.getId(), target);
+                deleteUpdatedById.put(target.getId(), target);
                 mapQuestionByQuestionId.remove(questionId);
-                usedOrders.remove(target.getQuestionOrder());
+                usedOrders.remove(oldOrder);
             }
         }
-
-        // Apply ADD: create Question + QuestionVersion v1 + mapping
-        if (!addChanges.isEmpty()) {
-            for (ExamDraftChangeRequest change : addChanges) {
-                String questionId = change.getQuestionId();
-                Integer order = change.getQuestionOrder();
-                if (usedOrders.contains(order)) {
-                    throw new ApiException(ErrorCode.E220,
-                            ErrorCode.E220.message("Duplicate questionOrder: " + order + ", questionId: " + questionId));
-                }
-                if (mapQuestionByQuestionId.containsKey(questionId)) {
-                    throw new ApiException(ErrorCode.E220,
-                            ErrorCode.E220.message("Duplicate questionId, questionId: " + questionId));
-                }
-                String type = normalizeQuestionType(change.getType(), questionId);
-                validateQuestionPayloadByType(change, type);
-                normalizeQuestionPayload(change, type);
-
-                Question question = new Question();
-                question.setId(questionId);
-                questionRepository.save(question);
-                QuestionVersion questionVersion = QuestionVersion.builder()
-                        .questionId(question.getId())
-                        .version(1)
-                        .type(type)
-                        .questionContent(change.getQuestionContent())
-                        .gradingRules(change.getGradingRules())
-                        .build();
-                QuestionVersion savedQuestionVersion = questionVersionRepository.save(questionVersion);
-
-                ExamVersionQuestion mapping = ExamVersionQuestion.builder()
-                        .examVersionId(draftId)
-                        .questionId(question.getId())
-                        .questionVersionId(savedQuestionVersion.getId())
-                        .questionOrder(order)
-                        .build();
-                ExamVersionQuestion savedMapping = examVersionQuestionRepository.save(mapping);
-
-                usedOrders.add(order);
-                mapQuestionByQuestionId.put(question.getId(), savedMapping);
-            }
+        if (!deleteUpdatedById.isEmpty()) {
+            examVersionQuestionRepository.saveAll(deleteUpdatedById.values());
+            examVersionQuestionRepository.flush();
         }
 
-        // Apply EDIT_CONTENT: create new QuestionVersion and update mapping
-        if (!editChanges.isEmpty()) {
-            for (ExamDraftChangeRequest change : editChanges) {
-                String questionId = change.getQuestionId();
-                ExamVersionQuestion target = mapQuestionByQuestionId.get(questionId);
-                if (target == null) {
-                    throw new ApiException(ErrorCode.E221, ErrorCode.E221.message("Invalid questionId, questionId: " + questionId));
-                }
-                String type = normalizeQuestionType(change.getType(), questionId);
-                validateQuestionPayloadByType(change, type);
-                normalizeQuestionPayload(change, type);
-                int nextVersion = questionVersionRepository.findMaxVersionByQuestionIdAndDeletedFalse(questionId) + 1;
-                QuestionVersion questionVersion = QuestionVersion.builder()
-                        .questionId(questionId)
-                        .version(nextVersion)
-                        .type(type)
-                        .questionContent(change.getQuestionContent())
-                        .gradingRules(change.getGradingRules())
-                        .build();
-                QuestionVersion savedQuestionVersion = questionVersionRepository.save(questionVersion);
-                target.setQuestionVersionId(savedQuestionVersion.getId());
-                mapQuestionUpdatedById.put(target.getId(), target);
-            }
-        }
+        if (hasChanges) {
+            Map<String, Integer> finalOrders = new HashMap<>();
+            Set<Integer> seenOrders = new HashSet<>();
 
-        // Apply REORDER: bump orders, then set final order values
-        if (!reorderChanges.isEmpty()) {
-            Map<String, Integer> reorderMap = new HashMap<>();
-            Set<Integer> availableOrders = new HashSet<>(usedOrders);
-            for (ExamDraftChangeRequest change : reorderChanges) {
-                String questionId = change.getQuestionId();
-                ExamVersionQuestion target = mapQuestionByQuestionId.get(questionId);
-                if (target == null) {
-                    throw new ApiException(ErrorCode.E221, ErrorCode.E221.message("Invalid questionId, questionId: " + questionId));
-                }
-                availableOrders.remove(target.getQuestionOrder());
+            for (ExamVersionQuestion mapping : mapQuestionByQuestionId.values()) {
+                finalOrders.put(mapping.getQuestionId(), mapping.getQuestionOrder());
             }
-            for (ExamDraftChangeRequest change : reorderChanges) {
-                String questionId = change.getQuestionId();
-                Integer order = change.getQuestionOrder();
-                if (reorderMap.containsKey(questionId)) {
+
+            if (!editChanges.isEmpty()) {
+                for (ExamDraftChangeRequest change : editChanges) {
+                    String questionId = change.getQuestionId();
+                    ExamVersionQuestion target = mapQuestionByQuestionId.get(questionId);
+                    if (target == null) {
+                        throw new ApiException(ErrorCode.E221,
+                                ErrorCode.E221.message("Invalid questionId, questionId: " + questionId));
+                    }
+                    finalOrders.put(questionId, change.getQuestionOrder());
+                }
+            }
+
+            if (!reorderOnlyChanges.isEmpty()) {
+                for (ExamDraftChangeRequest change : reorderOnlyChanges) {
+                    String questionId = change.getQuestionId();
+                    ExamVersionQuestion target = mapQuestionByQuestionId.get(questionId);
+                    if (target == null) {
+                        throw new ApiException(ErrorCode.E221,
+                                ErrorCode.E221.message("Invalid questionId, questionId: " + questionId));
+                    }
+                    finalOrders.put(questionId, change.getQuestionOrder());
+                }
+            }
+
+            if (!addChanges.isEmpty()) {
+                for (ExamDraftChangeRequest change : addChanges) {
+                    String questionId = change.getQuestionId();
+                    if (mapQuestionByQuestionId.containsKey(questionId)) {
+                        throw new ApiException(ErrorCode.E220,
+                                ErrorCode.E220.message("Duplicate questionId, questionId: " + questionId));
+                    }
+                    finalOrders.put(questionId, change.getQuestionOrder());
+                }
+            }
+
+            for (Map.Entry<String, Integer> entry : finalOrders.entrySet()) {
+                Integer order = entry.getValue();
+                if (!seenOrders.add(order)) {
                     throw new ApiException(ErrorCode.E220,
-                            ErrorCode.E220.message("Duplicate questionId, questionId: " + questionId));
+                            ErrorCode.E220.message("Duplicate questionOrder: " + order + ", questionId: " + entry.getKey()));
                 }
-                if (availableOrders.contains(order)) {
-                    throw new ApiException(ErrorCode.E220,
-                            ErrorCode.E220.message("Duplicate questionOrder: " + order + ", questionId: " + questionId));
-                }
-                reorderMap.put(questionId, order);
-                availableOrders.add(order);
             }
 
-            examVersionQuestionRepository.bumpQuestionOrder(draftId, reorderMap.keySet(), 1000000);
-            for (Map.Entry<String, Integer> entry : reorderMap.entrySet()) {
-                ExamVersionQuestion target = mapQuestionByQuestionId.get(entry.getKey());
-                target.setQuestionOrder(entry.getValue());
-                mapQuestionUpdatedById.put(target.getId(), target);
+            int finalCount = finalOrders.size();
+            for (int i = 1; i <= finalCount; i++) {
+                if (!seenOrders.contains(i)) {
+                    throw new ApiException(ErrorCode.E221,
+                            ErrorCode.E221.message("questionOrder must be continuous from 1..N"));
+                }
             }
-        }
 
-        if (!mapQuestionUpdatedById.isEmpty()) {
-            examVersionQuestionRepository.saveAll(mapQuestionUpdatedById.values());
+            Map<String, Integer> editNewOrders = new HashMap<>();
+            Set<String> reorderQuestionIds = new HashSet<>();
+            for (ExamVersionQuestion mapping : mapQuestionByQuestionId.values()) {
+                Integer desiredOrder = finalOrders.get(mapping.getQuestionId());
+                if (desiredOrder != null && !desiredOrder.equals(mapping.getQuestionOrder())) {
+                    editNewOrders.put(mapping.getQuestionId(), desiredOrder);
+                    reorderQuestionIds.add(mapping.getQuestionId());
+                }
+            }
+
+            if (!reorderQuestionIds.isEmpty()) {
+                examVersionQuestionRepository.bumpQuestionOrder(draftId, reorderQuestionIds, 1000000);
+                examVersionQuestionRepository.flush();
+            }
+
+            Map<String, ExamVersionQuestion> mapQuestionUpdatedById = new HashMap<>();
+            if (!reorderQuestionIds.isEmpty()) {
+                for (String questionId : reorderQuestionIds) {
+                    ExamVersionQuestion target = mapQuestionByQuestionId.get(questionId);
+                    if (target == null) {
+                        throw new ApiException(ErrorCode.E221,
+                                ErrorCode.E221.message("Invalid questionId, questionId: " + questionId));
+                    }
+                    Integer newOrder = editNewOrders.get(questionId);
+                    if (newOrder != null) {
+                        target.setQuestionOrder(newOrder);
+                        mapQuestionUpdatedById.put(target.getId(), target);
+                    }
+                }
+            }
+
+            // Apply ADD: create Question + QuestionVersion v1 + mapping
+            if (!addChanges.isEmpty()) {
+                for (ExamDraftChangeRequest change : addChanges) {
+                    String questionId = change.getQuestionId();
+                    Integer order = finalOrders.get(questionId);
+                    String type = questionService.normalizeQuestionType(change.getType(), questionId);
+                    questionService.processQuestionPayload(change, type);
+
+                    Question question = new Question();
+                    question.setId(questionId);
+                    questionRepository.save(question);
+                    QuestionVersion questionVersion = QuestionVersion.builder()
+                            .questionId(question.getId())
+                            .version(1)
+                            .type(type)
+                            .questionContent(change.getQuestionContent())
+                            .gradingRules(change.getGradingRules())
+                            .build();
+                    QuestionVersion savedQuestionVersion = questionVersionRepository.save(questionVersion);
+
+                    ExamVersionQuestion mapping = ExamVersionQuestion.builder()
+                            .examVersionId(draftId)
+                            .questionId(question.getId())
+                            .questionVersionId(savedQuestionVersion.getId())
+                            .questionOrder(order)
+                            .build();
+                    ExamVersionQuestion savedMapping = examVersionQuestionRepository.save(mapping);
+
+                    mapQuestionByQuestionId.put(question.getId(), savedMapping);
+                }
+            }
+
+            // Apply EDIT: create new QuestionVersion and update mapping/order
+            if (!editChanges.isEmpty()) {
+                for (ExamDraftChangeRequest change : editChanges) {
+                    String questionId = change.getQuestionId();
+                    ExamVersionQuestion target = mapQuestionByQuestionId.get(questionId);
+                    String type = questionService.normalizeQuestionType(change.getType(), questionId);
+                    questionService.processQuestionPayload(change, type);
+                    int nextVersion = questionVersionRepository.findMaxVersionByQuestionIdAndDeletedFalse(questionId) + 1;
+                    QuestionVersion questionVersion = QuestionVersion.builder()
+                            .questionId(questionId)
+                            .version(nextVersion)
+                            .type(type)
+                            .questionContent(change.getQuestionContent())
+                            .gradingRules(change.getGradingRules())
+                            .build();
+                    QuestionVersion savedQuestionVersion = questionVersionRepository.save(questionVersion);
+                    target.setQuestionVersionId(savedQuestionVersion.getId());
+                    mapQuestionUpdatedById.put(target.getId(), target);
+                }
+            }
+
+            if (!mapQuestionUpdatedById.isEmpty()) {
+                examVersionQuestionRepository.saveAll(mapQuestionUpdatedById.values());
+            }
         }
 
         // Apply metadata updates to draft
         if (hasMetadata) {
             var metadata = request.getMetadata();
-            draft.setName(metadata.getName());
-            draft.setShuffleQuestions(metadata.getShuffleQuestions());
-            draft.setShuffleOptions(metadata.getShuffleOptions());
-            draft.setDescription(metadata.getDescription());
-            draft.setDurationMinutes(metadata.getDurationMinutes());
-            examVersionRepository.save(draft);
+            draftExam.setName(metadata.getName());
+            draftExam.setShuffleQuestions(metadata.getShuffleQuestions());
+            draftExam.setShuffleOptions(metadata.getShuffleOptions());
+            draftExam.setDescription(metadata.getDescription());
+            draftExam.setDurationMinutes(metadata.getDurationMinutes());
+            examVersionRepository.save(draftExam);
         }
     }
 
-    private void normalizeQuestionPayload(ExamDraftChangeRequest change, String normalizedType) {
-        QuestionContent content = change.getQuestionContent();
-        if (content != null) {
-            content.setSchemaVersion(SCHEMA_VERSION);
-        }
-        GradingRules rules = change.getGradingRules();
-        if (rules == null) {
+    @Override
+    @Transactional
+    public void discardDraft(String examId) {
+        Exam exam = examRepository.findByIdAndDeletedFalseForUpdate(examId)
+                .orElseThrow(() -> new ApiException(ErrorCode.E227, ErrorCode.E227.message("Exam not found")));
+
+        String draftId = exam.getDraftExamVersionId();
+        if (draftId == null || draftId.isBlank()) {
             return;
         }
-        rules.setSchemaVersion(SCHEMA_VERSION);
-        if (!QuestionType.ESSAY.name().equalsIgnoreCase(normalizedType)
-                && !QuestionType.FILE_UPLOAD.name().equalsIgnoreCase(normalizedType)) {
-            rules.setManual(null);
-            return;
+
+        ExamVersion draft = examVersionRepository.findByIdAndExamIdAndDeletedFalse(draftId, exam.getId())
+                .orElseThrow(() -> new ApiException(ErrorCode.E420,
+                        ErrorCode.E420.message("Draft exam version does not exist")));
+        if (!ExamVersionStatus.DRAFT.name().equalsIgnoreCase(draft.getStatus())) {
+            throw new ApiException(ErrorCode.E420,
+                    ErrorCode.E420.message("Draft exam version does not exist"));
         }
-        GradingRules.Manual manual = rules.getManual();
-        if (manual == null) {
-            return;
-        }
-        if (manual.getAutoMode() == null) {
-            manual.setAutoMode(Boolean.FALSE);
-        }
-        List<GradingRules.RubricItem> rubric = manual.getRubric();
-        if (rubric == null || rubric.isEmpty()) {
-            return;
-        }
-        BigDecimal maxPoints = rules.getMaxPoints();
-        if (maxPoints == null) {
-            return;
-        }
-        BigDecimal total = BigDecimal.ZERO;
-        for (GradingRules.RubricItem item : rubric) {
-            if (item != null && item.getMaxPoints() != null) {
-                total = total.add(item.getMaxPoints());
-            }
-        }
-        if (total.compareTo(maxPoints) > 0) {
-            throw new ApiException(ErrorCode.E204,
-                    ErrorCode.E204.message("Manual rubric maxPoints exceeds gradingRules.maxPoints, questionId: " + change.getQuestionId()));
-        }
+
+        draft.setDeleted(true);
+        examVersionRepository.save(draft);
+
+        exam.setDraftExamVersionId(null);
+        examRepository.save(exam);
     }
 
-    private void validateQuestionPayloadByType(ExamDraftChangeRequest change, String normalizedType) {
-        String questionId = change.getQuestionId();
-        QuestionContent content = change.getQuestionContent();
-        GradingRules rules = change.getGradingRules();
-        if (rules != null && rules.getMaxPoints() != null && rules.getMaxPoints().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new ApiException(ErrorCode.E204,
-                    ErrorCode.E204.message("gradingRules.maxPoints must be > 0, questionId: " + questionId));
-        }
-
-        if (QuestionType.SINGLE_CHOICE.name().equalsIgnoreCase(normalizedType)
-                || QuestionType.MULTIPLE_CHOICE.name().equalsIgnoreCase(normalizedType)) {
-            if (content == null || content.getOptions() == null || content.getOptions().isEmpty()) {
-                throw new ApiException(ErrorCode.E204,
-                        ErrorCode.E204.message("questionContent.options is required, questionId: " + questionId));
-            }
-            if (rules == null || rules.getChoice() == null) {
-                throw new ApiException(ErrorCode.E204,
-                        ErrorCode.E204.message("gradingRules.choice is required, questionId: " + questionId));
-            }
-            if (rules.getChoice().getCorrectOptionIds() == null || rules.getChoice().getCorrectOptionIds().isEmpty()) {
-                throw new ApiException(ErrorCode.E204,
-                        ErrorCode.E204.message("gradingRules.choice.correctOptionIds is required, questionId: " + questionId));
-            }
-            return;
-        }
-
-        if (QuestionType.SHORT_TEXT.name().equalsIgnoreCase(normalizedType)) {
-            if (rules == null || rules.getShortText() == null) {
-                throw new ApiException(ErrorCode.E204,
-                        ErrorCode.E204.message("gradingRules.shortText is required, questionId: " + questionId));
-            }
-            if (rules.getShortText().getAccepted() == null || rules.getShortText().getAccepted().isEmpty()) {
-                throw new ApiException(ErrorCode.E204,
-                        ErrorCode.E204.message("gradingRules.shortText.accepted is required, questionId: " + questionId));
-            }
-            if (!isMatchMethodValid(rules.getShortText().getMatchMethod())) {
-                throw new ApiException(ErrorCode.E204,
-                        ErrorCode.E204.message("gradingRules.shortText.matchMethod is invalid, questionId: " + questionId));
-            }
-            return;
-        }
-
-        if (QuestionType.MATCHING.name().equalsIgnoreCase(normalizedType)) {
-            if (content == null || content.getMatching() == null) {
-                throw new ApiException(ErrorCode.E204,
-                        ErrorCode.E204.message("questionContent.matching is required, questionId: " + questionId));
-            }
-            if (rules == null || rules.getMatching() == null) {
-                throw new ApiException(ErrorCode.E204,
-                        ErrorCode.E204.message("gradingRules.matching is required, questionId: " + questionId));
-            }
-            if (rules.getMatching().getPairs() == null || rules.getMatching().getPairs().isEmpty()) {
-                throw new ApiException(ErrorCode.E204,
-                        ErrorCode.E204.message("gradingRules.matching.pairs is required, questionId: " + questionId));
-            }
-            if (!isSchemeValid(rules.getMatching().getScheme())) {
-                throw new ApiException(ErrorCode.E204,
-                        ErrorCode.E204.message("gradingRules.matching.scheme is invalid, questionId: " + questionId));
-            }
-            return;
-        }
-
-        if (QuestionType.FILL_BLANKS.name().equalsIgnoreCase(normalizedType)) {
-            if (content == null || content.getBlanks() == null) {
-                throw new ApiException(ErrorCode.E204,
-                        ErrorCode.E204.message("questionContent.blanks is required, questionId: " + questionId));
-            }
-            if (!isInputKindValid(content.getBlanks().getInputKind())) {
-                throw new ApiException(ErrorCode.E204,
-                        ErrorCode.E204.message("questionContent.blanks.inputKind is invalid, questionId: " + questionId));
-            }
-            boolean isSelect = isSelectInput(content.getBlanks().getInputKind());
-            if (isSelect) {
-                if (content.getBlanks().getWordBank() == null || content.getBlanks().getWordBank().isEmpty()) {
-                    throw new ApiException(ErrorCode.E204,
-                            ErrorCode.E204.message("questionContent.blanks.wordBank is required, questionId: " + questionId));
-                }
-            } else if (content.getBlanks().getWordBank() != null && !content.getBlanks().getWordBank().isEmpty()) {
-                content.getBlanks().setWordBank(null);
-            }
-            if (rules == null || rules.getFillBlanks() == null) {
-                throw new ApiException(ErrorCode.E204,
-                        ErrorCode.E204.message("gradingRules.fillBlanks is required, questionId: " + questionId));
-            }
-            if (rules.getFillBlanks().getBlanks() == null || rules.getFillBlanks().getBlanks().isEmpty()) {
-                throw new ApiException(ErrorCode.E204,
-                        ErrorCode.E204.message("gradingRules.fillBlanks.blanks is required, questionId: " + questionId));
-            }
-            if (!isSchemeValid(rules.getFillBlanks().getScheme())) {
-                throw new ApiException(ErrorCode.E204,
-                        ErrorCode.E204.message("gradingRules.fillBlanks.scheme is invalid, questionId: " + questionId));
-            }
-            for (GradingRules.BlankRule blank : rules.getFillBlanks().getBlanks()) {
-                if (blank == null) {
-                    continue;
-                }
-                if (isSelect) {
-                    if (blank.getCorrectOptionIds() == null || blank.getCorrectOptionIds().isEmpty()) {
-                        throw new ApiException(ErrorCode.E204,
-                                ErrorCode.E204.message("gradingRules.fillBlanks.correctOptionIds is required, questionId: " + questionId));
-                    }
-                    if (blank.getAccepted() != null && !blank.getAccepted().isEmpty()) {
-                        blank.setAccepted(null);
-                    }
-                    if (blank.getMatchMethod() != null && !blank.getMatchMethod().isBlank()) {
-                        blank.setMatchMethod(null);
-                    }
-                } else {
-                    if (blank.getAccepted() == null || blank.getAccepted().isEmpty()) {
-                        throw new ApiException(ErrorCode.E204,
-                                ErrorCode.E204.message("gradingRules.fillBlanks.accepted is required, questionId: " + questionId));
-                    }
-                    if (!isMatchMethodValid(blank.getMatchMethod())) {
-                        throw new ApiException(ErrorCode.E204,
-                                ErrorCode.E204.message("gradingRules.fillBlanks.matchMethod is invalid, questionId: " + questionId));
-                    }
-                    if (blank.getCorrectOptionIds() != null && !blank.getCorrectOptionIds().isEmpty()) {
-                        blank.setCorrectOptionIds(null);
-                    }
-                }
-            }
-            return;
-        }
-
-        if (QuestionType.FILE_UPLOAD.name().equalsIgnoreCase(normalizedType)) {
-            if (content == null || content.getFileUpload() == null) {
-                throw new ApiException(ErrorCode.E204,
-                        ErrorCode.E204.message("questionContent.fileUpload is required, questionId: " + questionId));
-            }
-            Integer maxFiles = content.getFileUpload().getMaxFiles();
-            if (maxFiles == null || maxFiles <= 0) {
-                throw new ApiException(ErrorCode.E204,
-                        ErrorCode.E204.message("questionContent.fileUpload.maxFiles must be > 0, questionId: " + questionId));
-            }
-        }
-    }
-
-    private boolean isSchemeValid(String scheme) {
-        if (scheme == null || scheme.isBlank()) {
-            return false;
-        }
-        String normalized = scheme.toLowerCase(Locale.ROOT);
-        return "per_pair".equals(normalized) || "all_or_nothing".equals(normalized);
-    }
-
-    private boolean isMatchMethodValid(String method) {
-        if (method == null || method.isBlank()) {
-            return false;
-        }
-        String normalized = method.toLowerCase(Locale.ROOT);
-        return "exact".equals(normalized) || "contains".equals(normalized);
-    }
-
-    private boolean isInputKindValid(String inputKind) {
-        if (inputKind == null || inputKind.isBlank()) {
-            return false;
-        }
-        String normalized = inputKind.toLowerCase(Locale.ROOT);
-        return "text".equals(normalized) || "select".equals(normalized);
-    }
-
-    private boolean isSelectInput(String inputKind) {
-        return "select".equalsIgnoreCase(inputKind);
-    }
-
-    private String normalizeQuestionType(String type, String questionId) {
-        if (type == null || type.isBlank()) {
-            throw new ApiException(ErrorCode.E221, "Invalid question type, questionId: " + questionId);
-        }
-        String normalized = type.toUpperCase(Locale.ROOT);
-        try {
-            return QuestionType.valueOf(normalized).name();
-        } catch (IllegalArgumentException ex) {
-            throw new ApiException(ErrorCode.E221, "Invalid question type, questionId: " + questionId);
-        }
-    }
 
 }

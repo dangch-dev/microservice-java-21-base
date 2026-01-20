@@ -16,7 +16,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.test.web.servlet.MockMvc;
 import pl.co.assessment.dto.ExamDraftChangeRequest;
-import pl.co.assessment.dto.ExamDraftChangeType;
 import pl.co.assessment.dto.ExamDraftMetadataRequest;
 import pl.co.assessment.dto.ExamDraftSaveRequest;
 import pl.co.assessment.entity.json.GradingRules;
@@ -112,7 +111,7 @@ class ExamControllerTest {
     @WithMockUser(roles = "ADMIN")
     void saveDraft_returns_validation_error_when_question_id_missing() throws Exception {
         ExamDraftSaveRequest request = validRequest();
-        request.getChanges().get(0).setQuestionId(null);
+        request.getQuestionChanges().get(0).setQuestionId(null);
 
         mockMvc.perform(post("/exams/{examId}/draft/save", "exam-1")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -126,7 +125,7 @@ class ExamControllerTest {
     @WithMockUser(roles = "ADMIN")
     void saveDraft_returns_validation_error_when_question_id_blank() throws Exception {
         ExamDraftSaveRequest request = validRequest();
-        request.getChanges().get(0).setQuestionId("   ");
+        request.getQuestionChanges().get(0).setQuestionId("   ");
 
         mockMvc.perform(post("/exams/{examId}/draft/save", "exam-1")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -141,11 +140,11 @@ class ExamControllerTest {
     void saveDraft_returns_invalid_type_when_change_type_invalid() throws Exception {
         String payload = """
                 {
-                  "changes": [
+                  "questionChanges": [
                     {
                       "questionId": "q1",
                       "questionOrder": 1,
-                      "changeTypes": ["INVALID"],
+                      "deleted": "INVALID",
                       "type": "SINGLE_CHOICE",
                       "questionContent": {
                         "options": [
@@ -185,9 +184,54 @@ class ExamControllerTest {
                 .andExpect(jsonPath("$.errorCode").value(ErrorCode.E227.code()));
     }
 
+    @Test
+    void discardDraft_returns_401_when_unauthenticated() throws Exception {
+        mockMvc.perform(post("/exams/{examId}/draft/discard", "exam-1")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.errorCode").value(ErrorCode.UNAUTHORIZED.code()));
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    void discardDraft_returns_403_when_not_admin() throws Exception {
+        mockMvc.perform(post("/exams/{examId}/draft/discard", "exam-1")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.errorCode").value(ErrorCode.FORBIDDEN.code()));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void discardDraft_returns_200_when_admin() throws Exception {
+        doNothing().when(examService).discardDraft("exam-1");
+
+        mockMvc.perform(post("/exams/{examId}/draft/discard", "exam-1")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+
+        verify(examService).discardDraft("exam-1");
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void discardDraft_returns_service_error_when_service_throws() throws Exception {
+        doThrow(new ApiException(ErrorCode.E420, "Draft exam version does not exist"))
+                .when(examService).discardDraft("exam-1");
+
+        mockMvc.perform(post("/exams/{examId}/draft/discard", "exam-1")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.errorCode").value(ErrorCode.E420.code()));
+    }
+
     private ExamDraftSaveRequest validRequest() {
         ExamDraftSaveRequest request = new ExamDraftSaveRequest();
-        request.setChanges(List.of(validChange()));
+        request.setQuestionChanges(List.of(validChange()));
         return request;
     }
 
@@ -195,7 +239,7 @@ class ExamControllerTest {
         ExamDraftChangeRequest change = new ExamDraftChangeRequest();
         change.setQuestionId("q1");
         change.setQuestionOrder(1);
-        change.setChangeTypes(List.of(ExamDraftChangeType.ADD));
+        change.setDeleted(false);
         change.setType("SINGLE_CHOICE");
         change.setQuestionContent(contentWithOptions());
         change.setGradingRules(rulesWithChoice());

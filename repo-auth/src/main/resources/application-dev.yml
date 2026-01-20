@@ -4,7 +4,7 @@ spring:
       mode: always
       data-locations: classpath:init-data.sql
   datasource:
-    url: jdbc:mysql://localhost:3306/id_mysql_database?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    url: jdbc:mysql://dangch-mysql:53306/id_mysql_database?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: root
     password: mysql_root_password
   jpa:
@@ -17,14 +17,14 @@ spring:
     defer-datasource-initialization: true
   data:
     redis:
-      host: localhost
-      port: 6379
+      host: dangch-redis
+      port: 56379
       password: redis_password
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: dangch-kafka:59092
 
 server:
-  port: 8082
+  port: 58082
 
 security:
   external-jwt:
@@ -40,10 +40,10 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: http://localhost:8761/eureka
+      defaultZone: http://dangch-eureka:58761/eureka
   instance:
     prefer-ip-address: true
-    hostname: localhost
+    hostname: dangch-auth
     instance-id: ${spring.application.name}:${server.port}
 
 logging:
@@ -67,3 +67,4 @@ kafka:
     notification: notification.in-app
     file: storage.file
     mail: notification.mail
+

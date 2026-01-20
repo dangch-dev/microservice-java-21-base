@@ -1,0 +1,288 @@
+services:
+  mysql:
+    image: dangch-mysql
+    build:
+      context: .
+      dockerfile: docker/infra/mysql.Dockerfile
+    container_name: dangch-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: mysql_root_password
+      MYSQL_TCP_PORT: 53306
+    command: ["--port=53306"]
+    ports:
+      - "53306:53306"
+    volumes:
+      - dangch-mysql_data:/var/lib/mysql
+    networks:
+      app-network:
+        aliases:
+          - dangch-mysql
+
+  redis:
+    image: dangch-redis
+    build:
+      context: .
+      dockerfile: docker/infra/redis.Dockerfile
+    container_name: dangch-redis
+    restart: unless-stopped
+    command: ["redis-server", "--requirepass", "redis_password", "--port", "56379"]
+    volumes:
+      - dangch-redis_data:/data
+    networks:
+      app-network:
+        aliases:
+          - dangch-redis
+
+  zookeeper:
+    image: dangch-zookeeper
+    build:
+      context: .
+      dockerfile: docker/infra/zookeeper.Dockerfile
+    container_name: dangch-zookeeper
+    restart: unless-stopped
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 52181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - dangch-zookeeper_data:/var/lib/zookeeper/data
+      - dangch-zookeeper_datalog:/var/lib/zookeeper/log
+    networks:
+      app-network:
+        aliases:
+          - dangch-zookeeper
+
+  kafka:
+    image: dangch-kafka
+    build:
+      context: .
+      dockerfile: docker/infra/kafka.Dockerfile
+    container_name: dangch-kafka
+    restart: unless-stopped
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: dangch-zookeeper:52181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://dangch-kafka:59092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:59092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    volumes:
+      - dangch-kafka_data:/var/lib/kafka/data
+    networks:
+      app-network:
+        aliases:
+          - dangch-kafka
+
+  mongodb:
+    image: dangch-mongodb
+    build:
+      context: .
+      dockerfile: docker/infra/mongodb.Dockerfile
+    container_name: dangch-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongodb
+      MONGO_INITDB_ROOT_PASSWORD: mongodb_mongodb_password
+    volumes:
+      - dangch-mongodb_data:/data/db
+    networks:
+      app-network:
+        aliases:
+          - dangch-mongodb
+
+  minio:
+    image: dangch-minio
+    build:
+      context: .
+      dockerfile: docker/infra/minio.Dockerfile
+    container_name: dangch-minio
+    restart: unless-stopped
+    command: server /data --address ":59000" --console-address ":59001"
+    environment:
+      MINIO_ROOT_USER: minio_root
+      MINIO_ROOT_PASSWORD: minio_root_password
+    ports:
+      - "59001:59001"
+    volumes:
+      - dangch-minio_data:/data
+    networks:
+      app-network:
+        aliases:
+          - dangch-minio
+
+  eureka:
+    image: dangch-eureka
+    build:
+      context: .
+      dockerfile: repo-eureka/Dockerfile
+    container_name: dangch-eureka
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+    volumes:
+      - ./secrets:/secrets:ro
+    networks:
+      app-network:
+        aliases:
+          - dangch-eureka
+
+  api-gateway:
+    image: dangch-api-gateway
+    build:
+      context: .
+      dockerfile: repo-api-gateway/Dockerfile
+    container_name: dangch-api-gateway
+    restart: unless-stopped
+    depends_on:
+      - eureka
+      - redis
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+    ports:
+      - "58080:58080"
+    volumes:
+      - ./secrets:/secrets:ro
+    networks:
+      app-network:
+        aliases:
+          - dangch-api-gateway
+
+  identity:
+    image: dangch-identity
+    build:
+      context: .
+      dockerfile: repo-identity/Dockerfile
+    container_name: dangch-identity
+    restart: unless-stopped
+    depends_on:
+      - mysql
+      - kafka
+      - eureka
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+    volumes:
+      - ./secrets:/secrets:ro
+    networks:
+      app-network:
+        aliases:
+          - dangch-identity
+
+  auth:
+    image: dangch-auth
+    build:
+      context: .
+      dockerfile: repo-auth/Dockerfile
+    container_name: dangch-auth
+    restart: unless-stopped
+    depends_on:
+      - mysql
+      - redis
+      - kafka
+      - eureka
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+    volumes:
+      - ./secrets:/secrets:ro
+    networks:
+      app-network:
+        aliases:
+          - dangch-auth
+
+  notification:
+    image: dangch-notification
+    build:
+      context: .
+      dockerfile: repo-notification/Dockerfile
+    container_name: dangch-notification
+    restart: unless-stopped
+    depends_on:
+      - mysql
+      - kafka
+      - eureka
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+    volumes:
+      - ./secrets:/secrets:ro
+    networks:
+      app-network:
+        aliases:
+          - dangch-notification
+
+  realtime:
+    image: dangch-realtime
+    build:
+      context: .
+      dockerfile: repo-realtime/Dockerfile
+    container_name: dangch-realtime
+    restart: unless-stopped
+    depends_on:
+      - kafka
+      - eureka
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+    volumes:
+      - ./secrets:/secrets:ro
+    networks:
+      app-network:
+        aliases:
+          - dangch-realtime
+
+  storage:
+    image: dangch-storage
+    build:
+      context: .
+      dockerfile: repo-storage/Dockerfile
+    container_name: dangch-storage
+    restart: unless-stopped
+    depends_on:
+      - mysql
+      - kafka
+      - minio
+      - eureka
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+    volumes:
+      - ./secrets:/secrets:ro
+    networks:
+      app-network:
+        aliases:
+          - dangch-storage
+
+  assessment:
+    image: dangch-assessment
+    build:
+      context: .
+      dockerfile: repo-assessment/Dockerfile
+    container_name: dangch-assessment
+    restart: unless-stopped
+    depends_on:
+      - mysql
+      - eureka
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+    volumes:
+      - ./secrets:/secrets:ro
+    networks:
+      app-network:
+        aliases:
+          - dangch-assessment
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  dangch-mysql_data:
+  dangch-redis_data:
+  dangch-zookeeper_data:
+  dangch-zookeeper_datalog:
+  dangch-kafka_data:
+  dangch-mongodb_data:
+  dangch-minio_data:
+
