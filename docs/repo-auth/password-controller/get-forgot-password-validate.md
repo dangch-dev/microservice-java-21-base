@@ -10,6 +10,11 @@
 ### Query Params
 - token: string (required)
 
+## Required
+| field | location | required |
+| --- | --- | --- |
+| token | query | x |
+
 ## Response
 ### Success
 ```
@@ -40,4 +45,9 @@
 
 ## Logic (Internal)
 1. Validate reset token and return user info.
+
+
+
+
+
 

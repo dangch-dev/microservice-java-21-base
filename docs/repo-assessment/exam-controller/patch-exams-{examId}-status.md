@@ -20,6 +20,13 @@
 }
 ```
 
+## Required
+| field | location | required |
+| --- | --- | --- |
+| examId | path | x |
+| enabled | body | x |
+| Authorization | header | x |
+
 ## Response
 ### Success
 ```
@@ -54,4 +61,10 @@
 2. Validate `enabled` not null.
 3. If `enabled=true`, require `published_exam_version_id` and status = PUBLISHED.
 4. Update `is_enabled`.
+
+
+
+
+
+
 

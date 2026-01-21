@@ -25,6 +25,12 @@
 }
 ```
 
+## Required
+| field | location | required |
+| --- | --- | --- |
+| id | path | x |
+| Authorization | header | x |
+
 ## Response
 ### Success
 ```
@@ -67,5 +73,10 @@
 ## Logic (Internal)
 1. Load user by id.
 2. Update provided fields and return updated user.
+
+
+
+
+
 
 

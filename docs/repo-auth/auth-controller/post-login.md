@@ -15,6 +15,12 @@
 }
 ```
 
+## Required
+| field | location | required |
+| --- | --- | --- |
+| email | body | x |
+| password | body | x |
+
 ## Response
 ### Success
 ```
@@ -54,4 +60,6 @@
 
 ## Notes
 - Token expiry values are in seconds.
+
+
 

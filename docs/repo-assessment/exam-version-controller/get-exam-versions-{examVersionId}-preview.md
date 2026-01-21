@@ -13,6 +13,12 @@
 ### Headers
 - Authorization: string (Bearer token)
 
+## Required
+| field | location | required |
+| --- | --- | --- |
+| Authorization | header | x |
+| examVersionId | path | x |
+
 ## Response
 ### Success
 ```
@@ -187,4 +193,9 @@
 
 ## Notes
 - Preview returns grading rules because this endpoint is admin-only.
+
+
+
+
+
 

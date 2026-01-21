@@ -19,6 +19,13 @@
 }
 ```
 
+## Required
+| field | location | required |
+| --- | --- | --- |
+| email | body | x |
+| fullName | body | x |
+| password | body | x |
+
 ## Response
 ### Success
 ```
@@ -57,4 +64,6 @@
 
 ## Notes
 - Email verification is issued separately.
+
+
 

@@ -13,6 +13,12 @@
 ### Headers
 - Authorization: string (Bearer token)
 
+## Required
+| field | location | required |
+| --- | --- | --- |
+| examId | path | x |
+| Authorization | header | x |
+
 ## Response
 ### Success
 ```
@@ -41,4 +47,9 @@
 ## Logic (Internal)
 1. Lock and load exam row.
 2. Set `deleted = true`.
+
+
+
+
+
 

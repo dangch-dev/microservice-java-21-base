@@ -20,6 +20,13 @@
 }
 ```
 
+## Required
+| field | location | required |
+| --- | --- | --- |
+| name | body | x |
+| Authorization | header | x |
+| categoryId | body | x |
+
 ## Response
 ### Success
 ```
@@ -57,5 +64,10 @@
 ## Notes
 - Draft metadata is initialized from request name/description/duration.
 - `is_enabled` defaults to `false`.
+
+
+
+
+
 
 

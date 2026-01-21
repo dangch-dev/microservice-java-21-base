@@ -26,6 +26,14 @@
 }
 ```
 
+## Required
+| field | location | required |
+| --- | --- | --- |
+| files | body | x |
+| description | body | x |
+| Authorization | header | x |
+| title | body | x |
+
 ## Response
 ### Success
 ```
@@ -75,4 +83,9 @@
 ## Logic (Internal)
 1. Create ticket with status OPEN and creator userId.
 2. Publish attached files.
+
+
+
+
+
 

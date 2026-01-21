@@ -13,6 +13,11 @@
 ### Query Params
 - disposition: string (optional, inline|attachment, default inline)
 
+## Required
+| field | location | required |
+| --- | --- | --- |
+| id | path | x |
+
 ## Response
 ### Success
 - Content-Type: file mime type
@@ -35,4 +40,9 @@
 ## Logic (Internal)
 1. Load file metadata by id.
 2. Fetch object stream and return as binary response.
+
+
+
+
+
 

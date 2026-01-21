@@ -14,6 +14,11 @@
 }
 ```
 
+## Required
+| field | location | required |
+| --- | --- | --- |
+| refreshToken | body | x |
+
 ## Response
 ### Success
 ```
@@ -57,4 +62,6 @@ efreshToken is missing.
 
 ## Notes
 - Refresh token rotation revokes the previous token.
+
+
 

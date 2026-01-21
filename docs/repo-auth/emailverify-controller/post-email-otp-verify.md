@@ -17,6 +17,12 @@
 }
 ```
 
+## Required
+| field | location | required |
+| --- | --- | --- |
+| otp | body | x |
+| Authorization | header | x |
+
 ## Response
 ### Success
 ```
@@ -57,4 +63,9 @@
 
 ## Notes
 - Max attempts is 5.
+
+
+
+
+
 

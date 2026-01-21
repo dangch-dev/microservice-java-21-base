@@ -10,6 +10,11 @@
 ### Headers
 - Authorization: string (Bearer token)
 
+## Required
+| field | location | required |
+| --- | --- | --- |
+| Authorization | header | x |
+
 ## Response
 ### Success
 ```
@@ -46,5 +51,10 @@
 
 ## Notes
 - Empty list returns `data: []`.
+
+
+
+
+
 
 

@@ -15,6 +15,12 @@
 }
 ```
 
+## Required
+| field | location | required |
+| --- | --- | --- |
+| token | body | x |
+| newPassword | body | x |
+
 ## Response
 ### Success
 ```
@@ -45,4 +51,6 @@ ewPassword is missing.
 ## Logic (Internal)
 1. Validate reset token and user.
 2. Update user password and revoke reset token.
+
+
 

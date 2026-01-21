@@ -10,6 +10,11 @@
 ### Headers
 - Authorization: string (Bearer token)
 
+## Required
+| field | location | required |
+| --- | --- | --- |
+| Authorization | header | x |
+
 ## Response
 ### Success
 ```
@@ -40,4 +45,9 @@
 
 ## Notes
 - OTP TTL is 10 minutes.
+
+
+
+
+
 

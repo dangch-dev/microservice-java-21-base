@@ -13,6 +13,12 @@
 ### Headers
 - Authorization: string (Bearer token)
 
+## Required
+| field | location | required |
+| --- | --- | --- |
+| ticketId | path | x |
+| Authorization | header | x |
+
 ## Response
 ### Success
 ```
@@ -60,4 +66,9 @@
 ## Logic (Internal)
 1. Load ticket and validate access.
 2. Return comments sorted by created time.
+
+
+
+
+
 

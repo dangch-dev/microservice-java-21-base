@@ -14,6 +14,11 @@
 }
 ```
 
+## Required
+| field | location | required |
+| --- | --- | --- |
+| refreshToken | body | x |
+
 ## Response
 ### Success
 ```
@@ -44,4 +49,6 @@ efreshToken is missing.
 
 ## Notes
 - Logout is idempotent for unknown tokens.
+
+
 

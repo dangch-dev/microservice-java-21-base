@@ -10,6 +10,11 @@
 ### Headers
 - Authorization: string (Bearer token)
 
+## Required
+| field | location | required |
+| --- | --- | --- |
+| Authorization | header | x |
+
 ## Response
 ### Success
 ```
@@ -36,4 +41,9 @@
 
 ## Logic (Internal)
 1. Mark all notifications as seen for the user.
+
+
+
+
+
 

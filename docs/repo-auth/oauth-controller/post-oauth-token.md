@@ -11,6 +11,12 @@
 - client_id: string (required)
 - client_secret: string (required)
 
+## Required
+| field | location | required |
+| --- | --- | --- |
+| client_secret | query | x |
+| client_id | query | x |
+
 ## Response
 ### Success
 ```
@@ -41,4 +47,9 @@
 ## Logic (Internal)
 1. Validate client credentials.
 2. Issue internal access token.
+
+
+
+
+
 

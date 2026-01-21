@@ -158,6 +158,12 @@
 }
 ```
 
+## Required
+| field | location | required |
+| --- | --- | --- |
+| examId | path | x |
+| Authorization | header | x |
+
 ## Response
 ### Success
 ```
@@ -216,5 +222,10 @@
 | `FILL_BLANKS` | `blanks.input_kind`; if `input_kind=select` => `blanks.word_bank[]` (each with `id`, `content`) | `fill_blanks.blanks[]` (each with `blank_id`); if `input_kind=text` => `accepted[]`, `match_method`; if `input_kind=select` => `correct_option_ids[]`; plus `fill_blanks.scheme` |
 | `ESSAY` | none | none |
 | `FILE_UPLOAD` | `file_upload.max_files` | none |
+
+
+
+
+
 
 

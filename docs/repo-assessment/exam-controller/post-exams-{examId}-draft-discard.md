@@ -13,6 +13,12 @@
 ### Headers
 - Authorization: string (Bearer token)
 
+## Required
+| field | location | required |
+| --- | --- | --- |
+| examId | path | x |
+| Authorization | header | x |
+
 ## Response
 ### Success
 ```
@@ -47,5 +53,10 @@
 
 ## Notes
 - Calling multiple times is safe; if draft already null it returns OK.
+
+
+
+
+
 
 

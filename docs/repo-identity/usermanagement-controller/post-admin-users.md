@@ -24,6 +24,15 @@
 }
 ```
 
+## Required
+| field | location | required |
+| --- | --- | --- |
+| status | body | x |
+| email | body | x |
+| fullName | body | x |
+| Authorization | header | x |
+| password | body | x |
+
 ## Response
 ### Success
 ```
@@ -67,5 +76,10 @@
 ## Logic (Internal)
 1. Validate request and resolve roles.
 2. Create user with specified status and roles.
+
+
+
+
+
 
 

@@ -10,6 +10,11 @@
 ### Headers
 - Authorization: string (Bearer token)
 
+## Required
+| field | location | required |
+| --- | --- | --- |
+| Authorization | header | x |
+
 ## Response
 ### Success
 ```
@@ -47,4 +52,9 @@
 ## Logic (Internal)
 1. Resolve userId from access token.
 2. Load user and map to profile response.
+
+
+
+
+
 

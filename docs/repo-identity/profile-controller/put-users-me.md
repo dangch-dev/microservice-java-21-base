@@ -20,6 +20,12 @@
 }
 ```
 
+## Required
+| field | location | required |
+| --- | --- | --- |
+| fullName | body | x |
+| Authorization | header | x |
+
 ## Response
 ### Success
 ```
@@ -60,4 +66,9 @@
 ## Logic (Internal)
 1. Resolve userId from access token.
 2. Update profile fields and return updated profile.
+
+
+
+
+
 

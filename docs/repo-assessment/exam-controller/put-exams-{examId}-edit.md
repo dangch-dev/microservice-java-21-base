@@ -13,6 +13,12 @@
 ### Headers
 - Authorization: string (Bearer token)
 
+## Required
+| field | location | required |
+| --- | --- | --- |
+| examId | path | x |
+| Authorization | header | x |
+
 ## Response
 ### Success
 ```
@@ -187,5 +193,10 @@
 
 ## Notes
 - `questionContent` and `gradingRules` fields are populated by question type; unused fields can be null/omitted.
+
+
+
+
+
 
 

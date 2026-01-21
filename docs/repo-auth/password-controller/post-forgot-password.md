@@ -14,6 +14,11 @@
 }
 ```
 
+## Required
+| field | location | required |
+| --- | --- | --- |
+| email | body | x |
+
 ## Response
 ### Success
 ```
@@ -45,4 +50,6 @@
 
 ## Notes
 - Token TTL is 15 minutes.
+
+
 

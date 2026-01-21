@@ -21,6 +21,12 @@
 }
 ```
 
+## Required
+| field | location | required |
+| --- | --- | --- |
+| ticketId | path | x |
+| Authorization | header | x |
+
 ## Response
 ### Success
 ```
@@ -72,4 +78,9 @@
 1. Load ticket by id.
 2. Update status and or assignee.
 3. Publish notifications when status or assignee changes.
+
+
+
+
+
 

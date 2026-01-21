@@ -13,6 +13,12 @@
 ### Headers
 - Authorization: string (Bearer token)
 
+## Required
+| field | location | required |
+| --- | --- | --- |
+| examId | path | x |
+| Authorization | header | x |
+
 ## Response
 ### Success
 ```
@@ -50,4 +56,9 @@
 ## Notes
 - Draft version becomes the published version; no new exam version is created.
 - Questions and question versions are not modified.
+
+
+
+
+
 

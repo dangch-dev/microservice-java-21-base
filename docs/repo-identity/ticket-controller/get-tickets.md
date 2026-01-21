@@ -15,6 +15,12 @@
 ### Headers
 - Authorization: string (Bearer token)
 
+## Required
+| field | location | required |
+| --- | --- | --- |
+| status | query | x |
+| Authorization | header | x |
+
 ## Response
 ### Success
 ```
@@ -73,4 +79,9 @@
 
 ## Notes
 - page is zero based.
+
+
+
+
+
 

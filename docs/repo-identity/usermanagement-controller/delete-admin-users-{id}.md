@@ -13,6 +13,12 @@
 ### Headers
 - Authorization: string (Bearer token)
 
+## Required
+| field | location | required |
+| --- | --- | --- |
+| id | path | x |
+| Authorization | header | x |
+
 ## Response
 ### Success
 ```
@@ -41,5 +47,10 @@
 
 ## Logic (Internal)
 1. Delete user by id.
+
+
+
+
+
 
 

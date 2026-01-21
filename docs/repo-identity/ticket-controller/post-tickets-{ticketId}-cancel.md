@@ -13,6 +13,12 @@
 ### Headers
 - Authorization: string (Bearer token)
 
+## Required
+| field | location | required |
+| --- | --- | --- |
+| ticketId | path | x |
+| Authorization | header | x |
+
 ## Response
 ### Success
 ```
@@ -63,4 +69,9 @@
 1. Load ticket by id.
 2. Validate creator and status rules.
 3. Update status to CANCELLED.
+
+
+
+
+
 

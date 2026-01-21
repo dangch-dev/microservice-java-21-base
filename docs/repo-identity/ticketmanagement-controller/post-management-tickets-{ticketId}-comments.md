@@ -28,6 +28,14 @@
 }
 ```
 
+## Required
+| field | location | required |
+| --- | --- | --- |
+| content | body | x |
+| files | body | x |
+| ticketId | path | x |
+| Authorization | header | x |
+
 ## Response
 ### Success
 ```
@@ -76,4 +84,9 @@
 ## Logic (Internal)
 1. Load ticket by id.
 2. Save comment and publish file and notification events.
+
+
+
+
+
 
