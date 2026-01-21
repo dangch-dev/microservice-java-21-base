@@ -48,7 +48,7 @@ public class AuthServiceImpl implements AuthService {
         user.getRoles().add(userRole);
         User saved = userRepository.save(user);
 
-        // TODO: Send mail verify OTP
+        emailVerificationService.sendOtp(saved);
 
         return jwtTokenService.issueExternalTokens(saved);
     }

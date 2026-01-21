@@ -21,6 +21,7 @@ import pl.co.assessment.entity.ExamVersionStatus;
 import pl.co.assessment.entity.ExamVersionQuestion;
 import pl.co.assessment.entity.Question;
 import pl.co.assessment.entity.QuestionVersion;
+import pl.co.assessment.entity.json.QuestionContent;
 import pl.co.assessment.repository.ExamEditorQuestionRow;
 import pl.co.assessment.repository.ExamListRow;
 import pl.co.assessment.repository.ExamRepository;
@@ -32,6 +33,8 @@ import pl.co.assessment.service.ExamService;
 import pl.co.assessment.service.QuestionService;
 import pl.co.common.exception.ApiException;
 import pl.co.common.exception.ErrorCode;
+import pl.co.common.file.FileMeta;
+import pl.co.common.file.FilePublisher;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -50,6 +53,7 @@ public class ExamServiceImpl implements ExamService {
     private final QuestionRepository questionRepository;
     private final QuestionVersionRepository questionVersionRepository;
     private final QuestionService questionService;
+    private final FilePublisher filePublisher;
 
     @Override
     @Transactional
@@ -422,6 +426,7 @@ public class ExamServiceImpl implements ExamService {
                     Integer order = finalOrders.get(questionId);
                     String type = questionService.normalizeQuestionType(change.getType(), questionId);
                     questionService.processQuestionPayload(change, type);
+                    publishQuestionFiles(change);
 
                     Question question = new Question();
                     question.setId(questionId);
@@ -454,6 +459,7 @@ public class ExamServiceImpl implements ExamService {
                     ExamVersionQuestion target = mapQuestionByQuestionId.get(questionId);
                     String type = questionService.normalizeQuestionType(change.getType(), questionId);
                     questionService.processQuestionPayload(change, type);
+                    publishQuestionFiles(change);
                     int nextVersion = questionVersionRepository.findMaxVersionByQuestionIdAndDeletedFalse(questionId) + 1;
                     QuestionVersion questionVersion = QuestionVersion.builder()
                             .questionId(questionId)
@@ -483,6 +489,50 @@ public class ExamServiceImpl implements ExamService {
             draftExam.setDurationMinutes(metadata.getDurationMinutes());
             examVersionRepository.save(draftExam);
         }
+    }
+
+    private void publishQuestionFiles(ExamDraftChangeRequest change) {
+        QuestionContent content = change.getQuestionContent();
+        if (content == null) {
+            return;
+        }
+        List<FileMeta> files = new ArrayList<>();
+        addFiles(files, content.getPrompt() == null ? null : content.getPrompt().getFiles());
+        addFiles(files, content.getExplanation() == null ? null : content.getExplanation().getFiles());
+        if (content.getOptions() != null) {
+            for (QuestionContent.Option option : content.getOptions()) {
+                if (option == null) {
+                    continue;
+                }
+                addFiles(files, option.getFiles());
+            }
+        }
+        if (content.getMatching() != null) {
+            if (content.getMatching().getLeftItems() != null) {
+                for (QuestionContent.Item item : content.getMatching().getLeftItems()) {
+                    if (item == null) {
+                        continue;
+                    }
+                    addFiles(files, item.getFiles());
+                }
+            }
+            if (content.getMatching().getRightItems() != null) {
+                for (QuestionContent.Item item : content.getMatching().getRightItems()) {
+                    if (item == null) {
+                        continue;
+                    }
+                    addFiles(files, item.getFiles());
+                }
+            }
+        }
+        filePublisher.publish(files);
+    }
+
+    private void addFiles(List<FileMeta> target, List<FileMeta> files) {
+        if (files == null || files.isEmpty()) {
+            return;
+        }
+        target.addAll(files);
     }
 
     @Override

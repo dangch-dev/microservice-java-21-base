@@ -44,6 +44,16 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
     public void sendOtp(String userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(ErrorCode.E238));
+        sendOtp(user);
+    }
+
+    @Transactional
+    @Override
+    public void sendOtp(User user) {
+        if (user == null) {
+            throw new ApiException(ErrorCode.E238);
+        }
+
         // Delete old OTP
         emailVerificationOTPRepository.deleteByUserId(user.getId());
 
