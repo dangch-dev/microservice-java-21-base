@@ -1,4 +1,4 @@
-﻿# GET /exams
+# GET /api/assessment/exams
 
 ## Summary
 - List exams with optional filters and pagination.
@@ -63,4 +63,5 @@
 
 ## Notes
 - `page` is zero-based.
+
 

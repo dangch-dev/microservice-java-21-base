@@ -1,4 +1,4 @@
-﻿# GET /tickets/{ticketId}
+# GET /api/id/tickets/{ticketId}
 
 ## Summary
 - Get ticket details by id for the current user.
@@ -61,3 +61,4 @@
 ## Logic (Internal)
 1. Load ticket by id.
 2. Validate ownership and return ticket details.
+

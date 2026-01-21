@@ -1,4 +1,4 @@
-﻿# PUT /admin/users/{id}
+# PUT /api/id/admin/users/{id}
 
 ## Summary
 - Update user fields by id.
@@ -67,3 +67,5 @@
 ## Logic (Internal)
 1. Load user by id.
 2. Update provided fields and return updated user.
+
+

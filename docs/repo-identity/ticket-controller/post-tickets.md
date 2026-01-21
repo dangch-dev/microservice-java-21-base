@@ -1,4 +1,4 @@
-﻿# POST /tickets
+# POST /api/id/tickets
 
 ## Summary
 - Create a new support ticket.
@@ -75,3 +75,4 @@
 ## Logic (Internal)
 1. Create ticket with status OPEN and creator userId.
 2. Publish attached files.
+

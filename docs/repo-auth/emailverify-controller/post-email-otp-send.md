@@ -1,4 +1,4 @@
-﻿# POST /email/otp/send
+# POST /api/auth/email/otp/send
 
 ## Summary
 - Send a verification OTP to the authenticated user email.
@@ -40,3 +40,4 @@
 
 ## Notes
 - OTP TTL is 10 minutes.
+

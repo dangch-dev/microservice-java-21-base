@@ -1,4 +1,4 @@
-﻿# POST /refresh
+# POST /api/auth/refresh
 
 ## Summary
 - Rotate refresh token and return a new token pair.
@@ -57,3 +57,4 @@ efreshToken is missing.
 
 ## Notes
 - Refresh token rotation revokes the previous token.
+

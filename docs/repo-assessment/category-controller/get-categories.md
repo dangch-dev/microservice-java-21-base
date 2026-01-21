@@ -1,4 +1,4 @@
-﻿# GET /categories
+# GET /api/assessment/categories
 
 ## Summary
 - List all categories.
@@ -46,4 +46,5 @@
 
 ## Notes
 - Empty list returns `data: []`.
+
 

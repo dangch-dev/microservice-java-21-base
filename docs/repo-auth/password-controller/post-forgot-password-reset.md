@@ -1,4 +1,4 @@
-﻿# POST /forgot-password/reset
+# POST /api/auth/forgot-password/reset
 
 ## Summary
 - Reset password with a valid reset token.
@@ -45,3 +45,4 @@ ewPassword is missing.
 ## Logic (Internal)
 1. Validate reset token and user.
 2. Update user password and revoke reset token.
+

@@ -1,4 +1,4 @@
-﻿# GET /notifications/unread-count
+# GET /api/notification/notifications/unread-count
 
 ## Summary
 - Get unread notification count for the current user.
@@ -36,3 +36,4 @@
 
 ## Logic (Internal)
 1. Count unread notifications by userId.
+

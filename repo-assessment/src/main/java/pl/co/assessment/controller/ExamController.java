@@ -8,6 +8,7 @@ import pl.co.assessment.dto.ExamCreateResponse;
 import pl.co.assessment.dto.ExamDraftSaveRequest;
 import pl.co.assessment.dto.ExamEditorResponse;
 import pl.co.assessment.dto.ExamPageResponse;
+import pl.co.assessment.dto.ExamStatusUpdateRequest;
 import pl.co.assessment.service.ExamService;
 import pl.co.common.dto.ApiResponse;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -54,6 +55,19 @@ public class ExamController {
     @PostMapping("/{examId}/draft/publish")
     public ApiResponse<Void> publishDraft(@PathVariable("examId") String examId) {
         examService.publishDraft(examId);
+        return ApiResponse.ok(null);
+    }
+
+    @PatchMapping("/{examId}/status")
+    public ApiResponse<Void> updateStatus(@PathVariable("examId") String examId,
+                                          @RequestBody ExamStatusUpdateRequest request) {
+        examService.updateStatus(examId, request);
+        return ApiResponse.ok(null);
+    }
+
+    @DeleteMapping("/{examId}")
+    public ApiResponse<Void> delete(@PathVariable("examId") String examId) {
+        examService.deleteExam(examId);
         return ApiResponse.ok(null);
     }
 }

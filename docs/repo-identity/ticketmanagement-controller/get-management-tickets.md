@@ -1,4 +1,4 @@
-﻿# GET /management/tickets
+# GET /api/id/management/tickets
 
 ## Summary
 - List tickets for management view.
@@ -74,3 +74,5 @@
 
 ## Notes
 - page is zero based.
+
+

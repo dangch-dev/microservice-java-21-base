@@ -1,4 +1,4 @@
-﻿# GET /notifications
+# GET /api/notification/notifications
 
 ## Summary
 - List notifications for the current user.
@@ -66,3 +66,4 @@
 
 ## Notes
 - page is zero based.
+

@@ -1,4 +1,4 @@
-﻿# GET /forgot-password/validate
+# GET /api/auth/forgot-password/validate
 
 ## Summary
 - Validate reset token and return user info for the reset page.
@@ -40,3 +40,4 @@
 
 ## Logic (Internal)
 1. Validate reset token and return user info.
+

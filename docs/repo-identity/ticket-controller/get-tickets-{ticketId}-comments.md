@@ -1,4 +1,4 @@
-﻿# GET /tickets/{ticketId}/comments
+# GET /api/id/tickets/{ticketId}/comments
 
 ## Summary
 - List comments for a ticket.
@@ -60,3 +60,4 @@
 ## Logic (Internal)
 1. Load ticket and validate access.
 2. Return comments sorted by created time.
+

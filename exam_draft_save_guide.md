@@ -1,12 +1,12 @@
-﻿# Huong dan FE - API /exams/{examId}/draft/save
+# Huong dan FE - API /api/assessment/exams/{examId}/draft/save
 
 ## 1) Endpoint
-- Method: `POST /exams/{examId}/draft/save`
+- Method: `POST /api/assessment/exams/{examId}/draft/save`
 - Auth: admin role (`ROLE_ADMIN`)
 - Response: `ApiResponse<Void>` (success=true, data=null)
 
 ## 2) Truoc khi goi
-- Draft phai ton tai. Goi `PUT /exams/{examId}/edit` truoc de tao/lay draft.
+- Draft phai ton tai. Goi `PUT /api/assessment/exams/{examId}/edit` truoc de tao/lay draft.
 - Neu draft khong ton tai: tra ve `E420` (422) "Draft exam version does not exist".
 
 ## 3) Body request (camelCase)
@@ -307,3 +307,5 @@ Moi `files` trong question content dung format sau:
   }
 }
 ```
+
+

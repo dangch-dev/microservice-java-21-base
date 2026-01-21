@@ -1,4 +1,4 @@
-﻿# POST /notifications/{id}/seen
+# POST /api/notification/notifications/{id}/seen
 
 ## Summary
 - Mark a notification as seen.
@@ -54,3 +54,4 @@
 ## Logic (Internal)
 1. Find notification by id and userId.
 2. Mark it as seen.
+

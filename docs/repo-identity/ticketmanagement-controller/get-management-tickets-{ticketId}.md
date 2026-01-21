@@ -1,4 +1,4 @@
-﻿# GET /management/tickets/{ticketId}
+# GET /api/id/management/tickets/{ticketId}
 
 ## Summary
 - Get ticket details for management view.
@@ -60,3 +60,4 @@
 
 ## Logic (Internal)
 1. Load ticket by id and return details.
+

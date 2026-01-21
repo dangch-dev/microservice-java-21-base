@@ -1,4 +1,4 @@
-# POST /exams/{examId}/draft/publish
+# POST /api/assessment/exams/{examId}/draft/publish
 
 ## Summary
 - Publish the current draft version and archive the previous published version.
@@ -50,3 +50,4 @@
 ## Notes
 - Draft version becomes the published version; no new exam version is created.
 - Questions and question versions are not modified.
+

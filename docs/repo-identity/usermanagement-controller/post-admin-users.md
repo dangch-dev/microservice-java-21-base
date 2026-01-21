@@ -1,4 +1,4 @@
-﻿# POST /admin/users
+# POST /api/id/admin/users
 
 ## Summary
 - Create a new user by admin.
@@ -67,3 +67,5 @@
 ## Logic (Internal)
 1. Validate request and resolve roles.
 2. Create user with specified status and roles.
+
+

@@ -1,4 +1,4 @@
-﻿# POST /oauth/token
+# POST /api/auth/oauth/token
 
 ## Summary
 - Issue an internal token for service to service authentication.
@@ -41,3 +41,4 @@
 ## Logic (Internal)
 1. Validate client credentials.
 2. Issue internal access token.
+

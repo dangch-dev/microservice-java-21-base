@@ -1,4 +1,4 @@
-﻿# POST /tickets/{ticketId}/comments
+# POST /api/id/tickets/{ticketId}/comments
 
 ## Summary
 - Add a comment to a ticket.
@@ -76,3 +76,4 @@
 ## Logic (Internal)
 1. Load ticket and validate comment access.
 2. Save comment and publish file and notification events.
+

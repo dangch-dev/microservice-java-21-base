@@ -1,4 +1,4 @@
-﻿# POST /tickets/{ticketId}/cancel
+# POST /api/id/tickets/{ticketId}/cancel
 
 ## Summary
 - Cancel a ticket created by the current user.
@@ -63,3 +63,4 @@
 1. Load ticket by id.
 2. Validate creator and status rules.
 3. Update status to CANCELLED.
+

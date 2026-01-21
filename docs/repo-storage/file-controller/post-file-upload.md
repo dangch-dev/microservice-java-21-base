@@ -1,4 +1,4 @@
-﻿# POST /file/upload
+# POST /api/storage/file/upload
 
 ## Summary
 - Upload a file and return its metadata.
@@ -41,3 +41,4 @@
 ## Logic (Internal)
 1. Validate file input.
 2. Upload to object storage and persist metadata.
+

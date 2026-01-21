@@ -1,4 +1,4 @@
-﻿# POST /admin/users/{id}/activate
+# POST /api/id/admin/users/{id}/activate
 
 ## Summary
 - Activate a user.
@@ -50,3 +50,5 @@
 
 ## Logic (Internal)
 1. Update user status to ACTIVE.
+
+

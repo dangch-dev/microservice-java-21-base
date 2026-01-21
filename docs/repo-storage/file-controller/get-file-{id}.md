@@ -1,4 +1,4 @@
-﻿# GET /file/{id}
+# GET /api/storage/file/{id}
 
 ## Summary
 - Download a file by id.
@@ -35,3 +35,4 @@
 ## Logic (Internal)
 1. Load file metadata by id.
 2. Fetch object stream and return as binary response.
+

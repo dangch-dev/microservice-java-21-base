@@ -1,4 +1,4 @@
-﻿# POST /forgot-password
+# POST /api/auth/forgot-password
 
 ## Summary
 - Request a password reset token by email.
@@ -45,3 +45,4 @@
 
 ## Notes
 - Token TTL is 15 minutes.
+

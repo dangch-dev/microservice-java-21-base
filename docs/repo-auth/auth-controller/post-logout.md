@@ -1,4 +1,4 @@
-﻿# POST /logout
+# POST /api/auth/logout
 
 ## Summary
 - Revoke a refresh token.
@@ -44,3 +44,4 @@ efreshToken is missing.
 
 ## Notes
 - Logout is idempotent for unknown tokens.
+

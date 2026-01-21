@@ -1,4 +1,4 @@
-﻿# POST /exams
+# POST /api/assessment/exams
 
 ## Summary
 - Create a new exam and its first draft version.
@@ -56,4 +56,6 @@
 
 ## Notes
 - Draft metadata is initialized from request name/description/duration.
+- `is_enabled` defaults to `false`.
+
 

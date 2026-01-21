@@ -1,4 +1,4 @@
-﻿# GET /management/tickets/{ticketId}/comments
+# GET /api/id/management/tickets/{ticketId}/comments
 
 ## Summary
 - List comments for a ticket (management view).
@@ -59,3 +59,4 @@
 
 ## Logic (Internal)
 1. Load ticket by id and return comments.
+

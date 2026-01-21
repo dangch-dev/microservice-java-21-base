@@ -28,6 +28,10 @@ public class Exam extends BaseEntity {
     @Column(name = "category_id", length = 26)
     private String categoryId;
 
+    @Builder.Default
+    @Column(name = "is_enabled", nullable = false, columnDefinition = "tinyint(1) default 0")
+    private boolean enabled = false;
+
     @Column(name = "published_exam_version_id", length = 26)
     private String publishedExamVersionId;
 

@@ -1,4 +1,4 @@
-﻿# POST /signup
+# POST /api/auth/signup
 
 ## Summary
 - Register a new user and return access and refresh tokens.
@@ -57,3 +57,4 @@
 
 ## Notes
 - Email verification is issued separately.
+

@@ -1,4 +1,4 @@
-﻿# PUT /users/me
+# PUT /api/id/users/me
 
 ## Summary
 - Update current user profile.
@@ -60,3 +60,4 @@
 ## Logic (Internal)
 1. Resolve userId from access token.
 2. Update profile fields and return updated profile.
+

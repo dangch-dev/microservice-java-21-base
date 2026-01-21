@@ -1,4 +1,4 @@
-﻿# DELETE /admin/users/{id}
+# DELETE /api/id/admin/users/{id}
 
 ## Summary
 - Delete user by id.
@@ -41,3 +41,5 @@
 
 ## Logic (Internal)
 1. Delete user by id.
+
+

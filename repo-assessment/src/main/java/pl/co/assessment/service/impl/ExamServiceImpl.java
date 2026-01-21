@@ -14,6 +14,7 @@ import pl.co.assessment.dto.ExamEditorQuestion;
 import pl.co.assessment.dto.ExamEditorResponse;
 import pl.co.assessment.dto.ExamListItemResponse;
 import pl.co.assessment.dto.ExamPageResponse;
+import pl.co.assessment.dto.ExamStatusUpdateRequest;
 import pl.co.assessment.entity.Exam;
 import pl.co.assessment.entity.ExamVersion;
 import pl.co.assessment.entity.ExamVersionStatus;
@@ -546,6 +547,51 @@ public class ExamServiceImpl implements ExamService {
 
         exam.setPublishedExamVersionId(draftId);
         exam.setDraftExamVersionId(null);
+        examRepository.save(exam);
+    }
+
+    @Override
+    @Transactional
+    public void updateStatus(String examId, ExamStatusUpdateRequest request) {
+        Exam exam = examRepository.findByIdAndDeletedFalseForUpdate(examId)
+                .orElseThrow(() -> new ApiException(ErrorCode.E227, ErrorCode.E227.message("Exam not found")));
+
+        Boolean enabled = request == null ? null : request.getEnabled();
+        if (enabled == null) {
+            throw new ApiException(ErrorCode.E221);
+        }
+        if (exam.isEnabled() == enabled) {
+            if (enabled) {
+                throw new ApiException(ErrorCode.E204, ErrorCode.E204.message("Exam status is already enabled"));
+            }
+            throw new ApiException(ErrorCode.E204, ErrorCode.E204.message("Exam status is already disabled"));
+        }
+        if (enabled) {
+            String publishedId = exam.getPublishedExamVersionId();
+            if (publishedId == null || publishedId.isBlank()) {
+                throw new ApiException(ErrorCode.E420,
+                        ErrorCode.E420.message("Published exam version does not exist"));
+            }
+            ExamVersion published = examVersionRepository
+                    .findByIdAndExamIdAndDeletedFalse(publishedId, exam.getId())
+                    .orElseThrow(() -> new ApiException(ErrorCode.E420,
+                            ErrorCode.E420.message("Published exam version does not exist")));
+            if (!ExamVersionStatus.PUBLISHED.name().equalsIgnoreCase(published.getStatus())) {
+                throw new ApiException(ErrorCode.E420,
+                        ErrorCode.E420.message("Exam version is not published"));
+            }
+        }
+
+        exam.setEnabled(enabled);
+        examRepository.save(exam);
+    }
+
+    @Override
+    @Transactional
+    public void deleteExam(String examId) {
+        Exam exam = examRepository.findByIdAndDeletedFalseForUpdate(examId)
+                .orElseThrow(() -> new ApiException(ErrorCode.E227, ErrorCode.E227.message("Exam not found")));
+        exam.setDeleted(true);
         examRepository.save(exam);
     }
 }

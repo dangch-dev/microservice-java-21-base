@@ -1,4 +1,4 @@
-﻿# PUT /exams/{examId}/edit
+# PUT /api/assessment/exams/{examId}/edit
 
 ## Summary
 - Get or create a draft version for editing and return its content.
@@ -187,4 +187,5 @@
 
 ## Notes
 - `questionContent` and `gradingRules` fields are populated by question type; unused fields can be null/omitted.
+
 

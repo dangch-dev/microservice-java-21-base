@@ -1,4 +1,4 @@
-﻿# PATCH /management/tickets/{ticketId}/status
+# PATCH /api/id/management/tickets/{ticketId}/status
 
 ## Summary
 - Update ticket status or assignee.
@@ -72,3 +72,4 @@
 1. Load ticket by id.
 2. Update status and or assignee.
 3. Publish notifications when status or assignee changes.
+

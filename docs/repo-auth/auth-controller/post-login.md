@@ -1,4 +1,4 @@
-﻿# POST /login
+# POST /api/auth/login
 
 ## Summary
 - Authenticate with email and password and return access and refresh tokens.
@@ -54,3 +54,4 @@
 
 ## Notes
 - Token expiry values are in seconds.
+

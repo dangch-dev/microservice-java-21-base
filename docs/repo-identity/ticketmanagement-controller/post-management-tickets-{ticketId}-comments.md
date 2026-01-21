@@ -1,4 +1,4 @@
-﻿# POST /management/tickets/{ticketId}/comments
+# POST /api/id/management/tickets/{ticketId}/comments
 
 ## Summary
 - Add a comment to a ticket as admin.
@@ -76,3 +76,4 @@
 ## Logic (Internal)
 1. Load ticket by id.
 2. Save comment and publish file and notification events.
+

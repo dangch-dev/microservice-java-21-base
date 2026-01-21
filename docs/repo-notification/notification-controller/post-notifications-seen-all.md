@@ -1,4 +1,4 @@
-﻿# POST /notifications/seen/all
+# POST /api/notification/notifications/seen/all
 
 ## Summary
 - Mark all notifications as seen.
@@ -36,3 +36,4 @@
 
 ## Logic (Internal)
 1. Mark all notifications as seen for the user.
+

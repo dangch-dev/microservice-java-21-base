@@ -1,4 +1,4 @@
-﻿# GET /tickets
+# GET /api/id/tickets
 
 ## Summary
 - List tickets created by the current user.
@@ -73,3 +73,4 @@
 
 ## Notes
 - page is zero based.
+

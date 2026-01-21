@@ -1,4 +1,4 @@
-﻿# POST /notifications/{id}/read
+# POST /api/notification/notifications/{id}/read
 
 ## Summary
 - Mark a notification as read and seen.
@@ -54,3 +54,4 @@
 ## Logic (Internal)
 1. Find notification by id and userId.
 2. Mark it as read and seen.
+

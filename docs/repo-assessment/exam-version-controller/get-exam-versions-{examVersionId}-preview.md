@@ -1,4 +1,4 @@
-# GET /exam-versions/{examVersionId}/preview
+# GET /api/assessment/exam-versions/{examVersionId}/preview
 
 ## Summary
 - Preview an exam version (draft, published, or archived) by version id.
@@ -187,3 +187,4 @@
 
 ## Notes
 - Preview returns grading rules because this endpoint is admin-only.
+

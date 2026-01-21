@@ -1,4 +1,4 @@
-﻿# GET /admin/users/{id}
+# GET /api/id/admin/users/{id}
 
 ## Summary
 - Get user details by id.
@@ -50,3 +50,5 @@
 
 ## Logic (Internal)
 1. Load user by id and map to response.
+
+

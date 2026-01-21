@@ -1,4 +1,4 @@
-﻿# POST /email/otp/verify
+# POST /api/auth/email/otp/verify
 
 ## Summary
 - Verify OTP and issue new access and refresh tokens.
@@ -57,3 +57,4 @@
 
 ## Notes
 - Max attempts is 5.
+

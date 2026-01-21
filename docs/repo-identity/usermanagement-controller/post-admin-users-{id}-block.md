@@ -1,4 +1,4 @@
-﻿# POST /admin/users/{id}/block
+# POST /api/id/admin/users/{id}/block
 
 ## Summary
 - Block a user.
@@ -50,3 +50,5 @@
 
 ## Logic (Internal)
 1. Update user status to BLOCKED.
+
+

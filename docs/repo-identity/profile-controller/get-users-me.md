@@ -1,4 +1,4 @@
-﻿# GET /users/me
+# GET /api/id/users/me
 
 ## Summary
 - Get the current user profile.
@@ -47,3 +47,4 @@
 ## Logic (Internal)
 1. Resolve userId from access token.
 2. Load user and map to profile response.
+

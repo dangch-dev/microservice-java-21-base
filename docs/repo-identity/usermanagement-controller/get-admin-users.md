@@ -1,4 +1,4 @@
-﻿# GET /admin/users
+# GET /api/id/admin/users
 
 ## Summary
 - List users with optional filters and pagination.
@@ -66,3 +66,5 @@
 
 ## Notes
 - page is zero based.
+
+
