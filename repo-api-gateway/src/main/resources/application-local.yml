@@ -5,6 +5,22 @@ spring:
       write-dates-as-timestamps: false
   cloud:
     gateway:
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+              - http://localhost:5173
+              - http://127.0.0.1:5173
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - PATCH
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
       httpclient:
         wiretap: true
       httpserver:
@@ -54,6 +70,11 @@ spring:
             - StripPrefix=${config.strip-prefix}
   main:
     web-application-type: reactive
+  jpa:
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
 
 server:
   port: 8080
@@ -78,8 +99,3 @@ logging:
         socket:
           server: DEBUG
       messaging: DEBUG
-    web.reactive.socket: DEBUGjpa:
-    properties:
-      hibernate:
-        jdbc:
-          time_zone: UTC
