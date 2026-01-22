@@ -1,4 +1,8 @@
 spring:
+  jackson:
+    time-zone: UTC
+    serialization:
+      write-dates-as-timestamps: false
   datasource:
     url: jdbc:mysql://localhost:3306/storage_mysql_database?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: root
@@ -10,6 +14,8 @@ spring:
       ddl-auto: update
     properties:
       hibernate:
+        jdbc:
+          time_zone: UTC
         dialect: org.hibernate.dialect.MySQL8Dialect
     open-in-view: false
     defer-datasource-initialization: false

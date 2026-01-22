@@ -1,4 +1,8 @@
 spring:
+  jackson:
+    time-zone: UTC
+    serialization:
+      write-dates-as-timestamps: false
   cloud:
     gateway:
       httpclient:
@@ -74,6 +78,8 @@ logging:
         socket:
           server: DEBUG
       messaging: DEBUG
-    web.reactive.socket: DEBUG
-
-
+    web.reactive.socket: DEBUGjpa:
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
