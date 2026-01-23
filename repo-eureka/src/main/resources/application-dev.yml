@@ -1,4 +1,13 @@
 spring:
+  jpa:
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  jackson:
+    time-zone: UTC
+    serialization:
+      write-dates-as-timestamps: false
   autoconfigure:
     exclude:
       # Database Off
@@ -27,5 +36,3 @@ kafka:
     file: storage.file
     notification: notification.in-app
     mail: notification.mail
-
-

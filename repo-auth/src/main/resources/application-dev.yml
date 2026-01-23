@@ -1,4 +1,8 @@
 spring:
+  jackson:
+    time-zone: UTC
+    serialization:
+      write-dates-as-timestamps: false
   sql:
     init:
       mode: always
@@ -12,6 +16,8 @@ spring:
       ddl-auto: update
     properties:
       hibernate:
+        jdbc:
+          time_zone: UTC
         dialect: org.hibernate.dialect.MySQL8Dialect
     open-in-view: false
     defer-datasource-initialization: true
@@ -67,4 +73,3 @@ kafka:
     notification: notification.in-app
     file: storage.file
     mail: notification.mail
-
