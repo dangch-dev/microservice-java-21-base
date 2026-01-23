@@ -48,7 +48,9 @@
     "avatarUrl": string | null,
     "address": string | null,
     "roles": [string],
-    "status": string (ACTIVE|BLOCKED)
+    "status": string (ACTIVE|BLOCKED),
+    "createdAt": string,
+    "updatedAt": string
   }
 }
 ```

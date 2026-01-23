@@ -4,6 +4,7 @@ import pl.co.common.security.UserStatus;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.time.Instant;
 import java.util.Set;
 
 @Getter
@@ -17,4 +18,6 @@ public class AdminUserResponse {
     private final String address;
     private final Set<String> roles;
     private final UserStatus status;
+    private final Instant createdAt;
+    private final Instant updatedAt;
 }

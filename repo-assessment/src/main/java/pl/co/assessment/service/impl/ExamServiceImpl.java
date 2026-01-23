@@ -223,7 +223,7 @@ public class ExamServiceImpl implements ExamService {
         boolean hasMetadata = request.getMetadata() != null;
         boolean hasChanges = request.getQuestionChanges() != null && !request.getQuestionChanges().isEmpty();
         if (!hasMetadata && !hasChanges) {
-            throw new ApiException(ErrorCode.E221, ErrorCode.E221.message("metadata or changes is required"));
+            return;
         }
 
         // Get exam
@@ -563,7 +563,11 @@ public class ExamServiceImpl implements ExamService {
 
     @Override
     @Transactional
-    public void publishDraft(String examId) {
+    public void publishDraft(String examId, ExamDraftSaveRequest request) {
+        if (request != null) {
+            saveDraft(examId, request);
+        }
+
         Exam exam = examRepository.findByIdAndDeletedFalseForUpdate(examId)
                 .orElseThrow(() -> new ApiException(ErrorCode.E227, ErrorCode.E227.message("Exam not found")));
 

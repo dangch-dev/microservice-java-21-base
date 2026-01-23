@@ -53,8 +53,9 @@ public class ExamController {
     }
 
     @PostMapping("/{examId}/draft/publish")
-    public ApiResponse<Void> publishDraft(@PathVariable("examId") String examId) {
-        examService.publishDraft(examId);
+    public ApiResponse<Void> publishDraft(@PathVariable("examId") String examId,
+                                          @Valid @RequestBody(required = false) ExamDraftSaveRequest request) {
+        examService.publishDraft(examId, request);
         return ApiResponse.ok(null);
     }
 

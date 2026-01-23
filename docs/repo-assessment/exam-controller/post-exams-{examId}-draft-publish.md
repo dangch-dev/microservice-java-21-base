@@ -13,6 +13,10 @@
 ### Headers
 - Authorization: string (Bearer token)
 
+### Body
+- Same as `/api/assessment/exams/{examId}/draft/save` (ExamDraftSaveRequest).
+- If provided, must include at least `metadata` or `questionChanges`.
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
@@ -33,6 +37,7 @@
 ### Errors
 - (400 Bad Request) - errorCode: 221 when draft does not exist or status is not DRAFT.
 - (400 Bad Request) - errorCode: 221 when draft has no active questions.
+- (400 Bad Request) - errorCode: 221 when request body is provided but missing metadata and questionChanges.
 - (404 Not Found) - errorCode: 227 when exam not found.
 - (401 Unauthorized) - errorCode: UNAUTHORIZED when access token is missing/invalid.
 - (401 Unauthorized) - errorCode: 234 when access token is expired.
