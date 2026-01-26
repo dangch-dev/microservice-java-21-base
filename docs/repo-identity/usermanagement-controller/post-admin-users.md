@@ -1,10 +1,17 @@
 # POST /api/id/admin/users
 
+
 ## Summary
 - Create a new user by admin.
 
+
+## Description
+1. Validate request and resolve roles.
+2. Create user with specified status and roles.
+
 ## Auth & Permissions
 - ADMIN
+
 
 ## Request
 ### Headers
@@ -24,6 +31,7 @@
 }
 ```
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
@@ -32,6 +40,7 @@
 | fullName | body | x |
 | Authorization | header | x |
 | password | body | x |
+
 
 ## Response
 ### Success
@@ -74,14 +83,3 @@
   "data": null
 }
 ```
-
-## Logic (Internal)
-1. Validate request and resolve roles.
-2. Create user with specified status and roles.
-
-
-
-
-
-
-

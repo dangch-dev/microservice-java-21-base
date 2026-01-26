@@ -1,10 +1,18 @@
 # PATCH /api/id/management/tickets/{ticketId}/status
 
+
 ## Summary
 - Update ticket status or assignee.
 
+
+## Description
+1. Load ticket by id.
+2. Update status and or assignee.
+3. Publish notifications when status or assignee changes.
+
 ## Auth & Permissions
 - ADMIN
+
 
 ## Request
 ### Path Params
@@ -21,11 +29,13 @@
 }
 ```
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | ticketId | path | x |
 | Authorization | header | x |
+
 
 ## Response
 ### Success
@@ -73,14 +83,3 @@
   "data": null
 }
 ```
-
-## Logic (Internal)
-1. Load ticket by id.
-2. Update status and or assignee.
-3. Publish notifications when status or assignee changes.
-
-
-
-
-
-

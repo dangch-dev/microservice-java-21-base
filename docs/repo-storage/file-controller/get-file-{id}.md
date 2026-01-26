@@ -1,10 +1,17 @@
 # GET /api/storage/file/{id}
 
+
 ## Summary
 - Download a file by id.
 
+
+## Description
+1. Load file metadata by id.
+2. Fetch object stream and return as binary response.
+
 ## Auth & Permissions
 - PUBLIC
+
 
 ## Request
 ### Path Params
@@ -13,10 +20,12 @@
 ### Query Params
 - disposition: string (optional, inline|attachment, default inline)
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | id | path | x |
+
 
 ## Response
 ### Success
@@ -36,13 +45,3 @@
   "data": null
 }
 ```
-
-## Logic (Internal)
-1. Load file metadata by id.
-2. Fetch object stream and return as binary response.
-
-
-
-
-
-

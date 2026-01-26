@@ -1,10 +1,18 @@
 # GET /api/assessment/exam-versions/{examVersionId}/preview
 
+
 ## Summary
 - Preview an exam version (draft, published, or archived) by version id.
 
+
+## Description
+1. Load exam version by id (deleted = false).
+2. Load questions by `question_order` and join question versions.
+3. Return metadata and full question payload.
+
 ## Auth & Permissions
 - ADMIN
+
 
 ## Request
 ### Path Params
@@ -13,11 +21,13 @@
 ### Headers
 - Authorization: string (Bearer token)
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | Authorization | header | x |
 | examVersionId | path | x |
+
 
 ## Response
 ### Success
@@ -27,14 +37,14 @@
   "errorCode": string | null,
   "errorMessage": string | null,
   "data": {
-    "mode": string,
-    "examVersionId": string,
     "metadata": {
       "name": string,
       "description": string | null,
       "durationMinutes": integer | null,
       "shuffleQuestions": boolean,
-      "shuffleOptions": boolean
+      "shuffleOptions": boolean,
+      "status": string,
+      "enabled": boolean
     },
     "questions": [
       {
@@ -186,16 +196,8 @@
 }
 ```
 
-## Logic (Internal)
-1. Load exam version by id (deleted = false).
-2. Load questions by `question_order` and join question versions.
-3. Return metadata and full question payload.
 
 ## Notes
 - Preview returns grading rules because this endpoint is admin-only.
-
-
-
-
 
 

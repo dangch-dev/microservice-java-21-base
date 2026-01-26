@@ -1,10 +1,18 @@
 # POST /api/assessment/exams
 
+
 ## Summary
 - Create a new exam and its first draft version.
 
+
+## Description
+1. Create `Exam` with categoryId.
+2. Create `ExamVersion` (status = DRAFT, shuffle flags = false).
+3. Set `draft_exam_version_id` on Exam and return ids.
+
 ## Auth & Permissions
 - ADMIN
+
 
 ## Request
 ### Headers
@@ -20,12 +28,14 @@
 }
 ```
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | name | body | x |
 | Authorization | header | x |
 | categoryId | body | x |
+
 
 ## Response
 ### Success
@@ -56,18 +66,10 @@
 }
 ```
 
-## Logic (Internal)
-1. Create `Exam` with categoryId.
-2. Create `ExamVersion` (status = DRAFT, shuffle flags = false).
-3. Set `draft_exam_version_id` on Exam and return ids.
 
 ## Notes
 - Draft metadata is initialized from request name/description/duration.
 - `is_enabled` defaults to `false`.
-
-
-
-
 
 
 

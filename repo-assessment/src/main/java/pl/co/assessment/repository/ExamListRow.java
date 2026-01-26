@@ -5,8 +5,10 @@ public interface ExamListRow {
     String getExamVersionId();
     String getCategoryName();
     String getName();
+    String getDescription();
     String getStatus();
     Integer getDurationMinutes();
     Boolean getShuffleQuestions();
     Boolean getShuffleOptions();
+    Boolean getEnabled();
 }

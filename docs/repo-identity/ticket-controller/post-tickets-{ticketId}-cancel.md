@@ -1,10 +1,18 @@
 # POST /api/id/tickets/{ticketId}/cancel
 
+
 ## Summary
 - Cancel a ticket created by the current user.
 
+
+## Description
+1. Load ticket by id.
+2. Validate creator and status rules.
+3. Update status to CANCELLED.
+
 ## Auth & Permissions
 - USER
+
 
 ## Request
 ### Path Params
@@ -13,11 +21,13 @@
 ### Headers
 - Authorization: string (Bearer token)
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | ticketId | path | x |
 | Authorization | header | x |
+
 
 ## Response
 ### Success
@@ -64,14 +74,3 @@
   "data": null
 }
 ```
-
-## Logic (Internal)
-1. Load ticket by id.
-2. Validate creator and status rules.
-3. Update status to CANCELLED.
-
-
-
-
-
-

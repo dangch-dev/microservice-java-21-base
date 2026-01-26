@@ -1,10 +1,18 @@
 # PUT /api/assessment/exams/{examId}/edit
 
+
 ## Summary
 - Get or create a draft version for editing and return its content.
 
+
+## Description
+1. Load exam; if draft pointer invalid, clear it.
+2. If no draft exists, create a new draft (empty or cloned from published).
+3. Load questions for draft version and return metadata + questions.
+
 ## Auth & Permissions
 - ADMIN
+
 
 ## Request
 ### Path Params
@@ -13,11 +21,13 @@
 ### Headers
 - Authorization: string (Bearer token)
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | examId | path | x |
 | Authorization | header | x |
+
 
 ## Response
 ### Success
@@ -27,14 +37,14 @@
   "errorCode": string | null,
   "errorMessage": string | null,
   "data": {
-    "mode": string,
-    "examVersionId": string,
     "metadata": {
       "name": string,
       "description": string | null,
       "durationMinutes": integer | null,
       "shuffleQuestions": boolean,
-      "shuffleOptions": boolean
+      "shuffleOptions": boolean,
+      "status": string,
+      "enabled": boolean
     },
     "questions": [
       {
@@ -186,17 +196,9 @@
 }
 ```
 
-## Logic (Internal)
-1. Load exam; if draft pointer invalid, clear it.
-2. If no draft exists, create a new draft (empty or cloned from published).
-3. Load questions for draft version and return metadata + questions.
 
 ## Notes
 - `questionContent` and `gradingRules` fields are populated by question type; unused fields can be null/omitted.
-
-
-
-
 
 
 

@@ -1,10 +1,17 @@
 # GET /api/id/tickets/{ticketId}/comments
 
+
 ## Summary
 - List comments for a ticket.
 
+
+## Description
+1. Load ticket and validate access.
+2. Return comments sorted by created time.
+
 ## Auth & Permissions
 - USER
+
 
 ## Request
 ### Path Params
@@ -13,11 +20,13 @@
 ### Headers
 - Authorization: string (Bearer token)
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | ticketId | path | x |
 | Authorization | header | x |
+
 
 ## Response
 ### Success
@@ -62,13 +71,3 @@
   "data": null
 }
 ```
-
-## Logic (Internal)
-1. Load ticket and validate access.
-2. Return comments sorted by created time.
-
-
-
-
-
-

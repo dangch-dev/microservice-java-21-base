@@ -51,3 +51,6 @@ kafka:
     notification: notification.in-app
     file: storage.file
     mail: notification.mail
+
+assessment:
+  attempt-timeout-cron: "0 */1 * * * *"

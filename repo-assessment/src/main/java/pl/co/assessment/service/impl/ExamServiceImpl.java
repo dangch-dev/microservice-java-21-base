@@ -96,10 +96,12 @@ public class ExamServiceImpl implements ExamService {
                         row.getExamVersionId(),
                         row.getCategoryName(),
                         row.getName(),
+                        row.getDescription(),
                         row.getStatus(),
                         row.getDurationMinutes(),
                         Boolean.TRUE.equals(row.getShuffleQuestions()),
-                        Boolean.TRUE.equals(row.getShuffleOptions())))
+                        Boolean.TRUE.equals(row.getShuffleOptions()),
+                        Boolean.TRUE.equals(row.getEnabled())))
                 .toList();
         return ExamPageResponse.builder()
                 .items(items)
@@ -191,7 +193,9 @@ public class ExamServiceImpl implements ExamService {
                 editorVersion.getDescription(),
                 editorVersion.getDurationMinutes(),
                 editorVersion.isShuffleQuestions(),
-                editorVersion.isShuffleOptions()
+                editorVersion.isShuffleOptions(),
+                editorVersion.getStatus(),
+                exam.isEnabled()
         );
 
         // Load questions for editorVersion
@@ -209,8 +213,6 @@ public class ExamServiceImpl implements ExamService {
         }
 
         return new ExamEditorResponse(
-                editorVersion.getStatus(),
-                editorVersion.getId(),
                 metadata,
                 questions
         );
@@ -563,11 +565,7 @@ public class ExamServiceImpl implements ExamService {
 
     @Override
     @Transactional
-    public void publishDraft(String examId, ExamDraftSaveRequest request) {
-        if (request != null) {
-            saveDraft(examId, request);
-        }
-
+    public void publishDraft(String examId) {
         Exam exam = examRepository.findByIdAndDeletedFalseForUpdate(examId)
                 .orElseThrow(() -> new ApiException(ErrorCode.E227, ErrorCode.E227.message("Exam not found")));
 

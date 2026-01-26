@@ -1,10 +1,17 @@
 # POST /api/auth/logout
 
+
 ## Summary
 - Revoke a refresh token.
 
+
+## Description
+1. Validate request payload.
+2. Revoke the provided refresh token if it exists.
+
 ## Auth & Permissions
 - PUBLIC
+
 
 ## Request
 ### Body
@@ -14,10 +21,12 @@
 }
 ```
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | refreshToken | body | x |
+
 
 ## Response
 ### Success
@@ -43,12 +52,6 @@ efreshToken is missing.
 }
 ```
 
-## Logic (Internal)
-1. Validate request payload.
-2. Revoke the provided refresh token if it exists.
 
 ## Notes
 - Logout is idempotent for unknown tokens.
-
-
-

@@ -1,10 +1,19 @@
-# PATCH /api/assessment/exams/{examId}/status
+# PATCH /api/assessment/exams/{examId}/enable
+
 
 ## Summary
 - Update exam enable flag (is_enabled).
 
+
+## Description
+1. Lock and load exam row.
+2. Validate `enabled` not null.
+3. If `enabled=true`, require `published_exam_version_id` and status = PUBLISHED.
+4. Update `is_enabled`.
+
 ## Auth & Permissions
 - ADMIN
+
 
 ## Request
 ### Path Params
@@ -20,12 +29,14 @@
 }
 ```
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | examId | path | x |
 | enabled | body | x |
 | Authorization | header | x |
+
 
 ## Response
 ### Success
@@ -55,16 +66,3 @@
   "data": null
 }
 ```
-
-## Logic (Internal)
-1. Lock and load exam row.
-2. Validate `enabled` not null.
-3. If `enabled=true`, require `published_exam_version_id` and status = PUBLISHED.
-4. Update `is_enabled`.
-
-
-
-
-
-
-

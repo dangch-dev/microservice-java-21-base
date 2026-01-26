@@ -1,19 +1,27 @@
 # GET /api/notification/notifications/unread-count
 
+
 ## Summary
 - Get unread notification count for the current user.
 
+
+## Description
+1. Count unread notifications by userId.
+
 ## Auth & Permissions
 - USER
+
 
 ## Request
 ### Headers
 - Authorization: string (Bearer token)
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | Authorization | header | x |
+
 
 ## Response
 ### Success
@@ -38,12 +46,3 @@
   "data": null
 }
 ```
-
-## Logic (Internal)
-1. Count unread notifications by userId.
-
-
-
-
-
-

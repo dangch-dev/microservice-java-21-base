@@ -1,10 +1,17 @@
 # PUT /api/id/admin/users/{id}
 
+
 ## Summary
 - Update user fields by id.
 
+
+## Description
+1. Load user by id.
+2. Update provided fields and return updated user.
+
 ## Auth & Permissions
 - ADMIN
+
 
 ## Request
 ### Path Params
@@ -25,11 +32,13 @@
 }
 ```
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | id | path | x |
 | Authorization | header | x |
+
 
 ## Response
 ### Success
@@ -71,14 +80,3 @@
   "data": null
 }
 ```
-
-## Logic (Internal)
-1. Load user by id.
-2. Update provided fields and return updated user.
-
-
-
-
-
-
-

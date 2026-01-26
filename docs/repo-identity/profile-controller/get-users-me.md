@@ -1,19 +1,28 @@
 # GET /api/id/users/me
 
+
 ## Summary
 - Get the current user profile.
 
+
+## Description
+1. Resolve userId from access token.
+2. Load user and map to profile response.
+
 ## Auth & Permissions
 - USER
+
 
 ## Request
 ### Headers
 - Authorization: string (Bearer token)
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | Authorization | header | x |
+
 
 ## Response
 ### Success
@@ -48,13 +57,3 @@
   "data": null
 }
 ```
-
-## Logic (Internal)
-1. Resolve userId from access token.
-2. Load user and map to profile response.
-
-
-
-
-
-

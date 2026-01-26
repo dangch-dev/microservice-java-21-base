@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.security.core.Authentication;
 import pl.co.common.dto.ApiResponse;
-import pl.co.common.filter.principal.AuthPrincipal;
+import pl.co.common.security.AuthUtils;
 import pl.co.notification.dto.NotificationPageResponse;
 import pl.co.notification.dto.NotificationResponse;
 import pl.co.notification.service.NotificationService;
@@ -26,35 +26,34 @@ public class NotificationController {
     public ApiResponse<NotificationPageResponse> list(Authentication authentication,
                                                       @RequestParam(defaultValue = "0") @Min(0) Integer page,
                                                       @RequestParam(defaultValue = "20") @Min(1) Integer size) {
-        AuthPrincipal principal = (AuthPrincipal) authentication.getPrincipal();
-        String userId = principal.userId();
+        String userId = AuthUtils.resolveUserId(authentication);
         return ApiResponse.ok(notificationService.list(userId, page, size));
     }
 
     @GetMapping("/unread-count")
     public ApiResponse<Long> unreadCount(Authentication authentication) {
-        AuthPrincipal principal = (AuthPrincipal) authentication.getPrincipal();
-        return ApiResponse.ok(notificationService.unreadCount(principal.userId()));
+        String userId = AuthUtils.resolveUserId(authentication);
+        return ApiResponse.ok(notificationService.unreadCount(userId));
     }
 
     @PostMapping("/{id}/seen")
     public ApiResponse<NotificationResponse> markSeen(Authentication authentication,
                                                       @PathVariable("id") String id) {
-        AuthPrincipal principal = (AuthPrincipal) authentication.getPrincipal();
-        return ApiResponse.ok(notificationService.markSeen(principal.userId(), id));
+        String userId = AuthUtils.resolveUserId(authentication);
+        return ApiResponse.ok(notificationService.markSeen(userId, id));
     }
 
     @PostMapping("/{id}/read")
     public ApiResponse<NotificationResponse> markRead(Authentication authentication,
                                                       @PathVariable("id") String id) {
-        AuthPrincipal principal = (AuthPrincipal) authentication.getPrincipal();
-        return ApiResponse.ok(notificationService.markRead(principal.userId(), id));
+        String userId = AuthUtils.resolveUserId(authentication);
+        return ApiResponse.ok(notificationService.markRead(userId, id));
     }
 
     @PostMapping("/seen/all")
     public ApiResponse<Void> markAllSeen(Authentication authentication) {
-        AuthPrincipal principal = (AuthPrincipal) authentication.getPrincipal();
-        notificationService.markAllSeen(principal.userId());
+        String userId = AuthUtils.resolveUserId(authentication);
+        notificationService.markAllSeen(userId);
         return ApiResponse.ok(null);
     }
 }

@@ -1,10 +1,18 @@
 # POST /api/auth/login
 
+
 ## Summary
 - Authenticate with email and password and return access and refresh tokens.
 
+
+## Description
+1. Validate request body (email/password present and format correct).
+2. Find user by email and verify password.
+3. If valid, issue access + refresh tokens and return expiry in seconds.
+
 ## Auth & Permissions
 - PUBLIC
+
 
 ## Request
 ### Body
@@ -15,11 +23,13 @@
 }
 ```
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | email | body | x |
 | password | body | x |
+
 
 ## Response
 ### Success
@@ -53,13 +63,6 @@
 }
 ```
 
-## Logic (Internal)
-1. Validate request payload.
-2. Look up user by email and verify password.
-3. Issue access and refresh tokens.
 
 ## Notes
 - Token expiry values are in seconds.
-
-
-

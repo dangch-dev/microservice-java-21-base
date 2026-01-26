@@ -49,10 +49,12 @@ public interface ExamRepository extends JpaRepository<Exam, String> {
                 ev.id AS examVersionId,
                 c.name AS categoryName,
                 ev.name AS name,
+                ev.description AS description,
                 ev.status AS status,
                 ev.durationMinutes AS durationMinutes,
                 ev.shuffleQuestions AS shuffleQuestions,
-                ev.shuffleOptions AS shuffleOptions
+                ev.shuffleOptions AS shuffleOptions,
+                e.enabled AS enabled
             FROM Exam e
             JOIN ExamVersion ev
               ON ev.id = COALESCE(e.publishedExamVersionId, e.draftExamVersionId)

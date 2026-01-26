@@ -1,10 +1,16 @@
 # GET /api/id/management/tickets/{ticketId}
 
+
 ## Summary
 - Get ticket details for management view.
 
+
+## Description
+1. Load ticket by id and return details.
+
 ## Auth & Permissions
 - ADMIN
+
 
 ## Request
 ### Path Params
@@ -13,11 +19,13 @@
 ### Headers
 - Authorization: string (Bearer token)
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | ticketId | path | x |
 | Authorization | header | x |
+
 
 ## Response
 ### Success
@@ -63,12 +71,3 @@
   "data": null
 }
 ```
-
-## Logic (Internal)
-1. Load ticket by id and return details.
-
-
-
-
-
-

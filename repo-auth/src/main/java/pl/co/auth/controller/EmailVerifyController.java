@@ -12,9 +12,7 @@ import pl.co.auth.dto.VerifyEmailOtpRequest;
 import pl.co.auth.service.EmailVerificationService;
 import pl.co.auth.service.JwtTokenService;
 import pl.co.common.dto.ApiResponse;
-import pl.co.common.exception.ApiException;
-import pl.co.common.exception.ErrorCode;
-import pl.co.common.filter.principal.AuthPrincipal;
+import pl.co.common.security.AuthUtils;
 
 @RestController
 @RequestMapping("/email")
@@ -26,7 +24,7 @@ public class EmailVerifyController {
 
     @PostMapping("/otp/send")
     public ApiResponse<Void> sendOtp(Authentication authentication) {
-        String userId = resolveUserId(authentication);
+        String userId = AuthUtils.resolveUserId(authentication);
         emailVerificationService.sendOtp(userId);
         return ApiResponse.ok(null);
     }
@@ -34,17 +32,7 @@ public class EmailVerifyController {
     @PostMapping("/otp/verify")
     public ApiResponse<TokenResponse> verifyOtp(Authentication authentication,
                                        @Valid @RequestBody VerifyEmailOtpRequest request) {
-        String userId = resolveUserId(authentication);
+        String userId = AuthUtils.resolveUserId(authentication);
         return ApiResponse.ok(emailVerificationService.verifyOtp(userId, request.getOtp()));
-    }
-
-    private String resolveUserId(Authentication authentication) {
-        if (authentication == null || authentication.getPrincipal() == null) {
-            throw new ApiException(ErrorCode.UNAUTHORIZED);
-        }
-        if (authentication.getPrincipal() instanceof AuthPrincipal principal) {
-            return principal.userId();
-        }
-        throw new ApiException(ErrorCode.UNAUTHORIZED);
     }
 }

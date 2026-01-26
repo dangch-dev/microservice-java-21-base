@@ -3,12 +3,7 @@ package pl.co.assessment.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import pl.co.assessment.dto.ExamCreateRequest;
-import pl.co.assessment.dto.ExamCreateResponse;
-import pl.co.assessment.dto.ExamDraftSaveRequest;
-import pl.co.assessment.dto.ExamEditorResponse;
-import pl.co.assessment.dto.ExamPageResponse;
-import pl.co.assessment.dto.ExamStatusUpdateRequest;
+import pl.co.assessment.dto.*;
 import pl.co.assessment.service.ExamService;
 import pl.co.common.dto.ApiResponse;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -53,13 +48,12 @@ public class ExamController {
     }
 
     @PostMapping("/{examId}/draft/publish")
-    public ApiResponse<Void> publishDraft(@PathVariable("examId") String examId,
-                                          @Valid @RequestBody(required = false) ExamDraftSaveRequest request) {
-        examService.publishDraft(examId, request);
+    public ApiResponse<Void> publishDraft(@PathVariable("examId") String examId) {
+        examService.publishDraft(examId);
         return ApiResponse.ok(null);
     }
 
-    @PatchMapping("/{examId}/status")
+    @PatchMapping("/{examId}/enable")
     public ApiResponse<Void> updateStatus(@PathVariable("examId") String examId,
                                           @RequestBody ExamStatusUpdateRequest request) {
         examService.updateStatus(examId, request);

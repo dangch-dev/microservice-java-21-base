@@ -1,10 +1,17 @@
 # POST /api/id/tickets
 
+
 ## Summary
 - Create a new support ticket.
 
+
+## Description
+1. Create ticket with status OPEN and creator userId.
+2. Publish attached files.
+
 ## Auth & Permissions
 - USER
+
 
 ## Request
 ### Headers
@@ -26,6 +33,7 @@
 }
 ```
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
@@ -33,6 +41,7 @@
 | description | body | x |
 | Authorization | header | x |
 | title | body | x |
+
 
 ## Response
 ### Success
@@ -79,13 +88,3 @@
   "data": null
 }
 ```
-
-## Logic (Internal)
-1. Create ticket with status OPEN and creator userId.
-2. Publish attached files.
-
-
-
-
-
-

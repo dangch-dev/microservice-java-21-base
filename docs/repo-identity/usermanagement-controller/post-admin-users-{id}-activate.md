@@ -1,10 +1,16 @@
 # POST /api/id/admin/users/{id}/activate
 
+
 ## Summary
 - Activate a user.
 
+
+## Description
+1. Update user status to ACTIVE.
+
 ## Auth & Permissions
 - ADMIN
+
 
 ## Request
 ### Path Params
@@ -13,11 +19,13 @@
 ### Headers
 - Authorization: string (Bearer token)
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | id | path | x |
 | Authorization | header | x |
+
 
 ## Response
 ### Success
@@ -55,13 +63,3 @@
   "data": null
 }
 ```
-
-## Logic (Internal)
-1. Update user status to ACTIVE.
-
-
-
-
-
-
-

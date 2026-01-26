@@ -1,19 +1,28 @@
 # POST /api/auth/email/otp/send
 
+
 ## Summary
 - Send a verification OTP to the authenticated user email.
 
+
+## Description
+1. Resolve user from access token.
+2. Create OTP and send email.
+
 ## Auth & Permissions
 - USER
+
 
 ## Request
 ### Headers
 - Authorization: string (Bearer token)
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | Authorization | header | x |
+
 
 ## Response
 ### Success
@@ -39,15 +48,8 @@
 }
 ```
 
-## Logic (Internal)
-1. Resolve user from access token.
-2. Create OTP and send email.
 
 ## Notes
 - OTP TTL is 10 minutes.
-
-
-
-
 
 

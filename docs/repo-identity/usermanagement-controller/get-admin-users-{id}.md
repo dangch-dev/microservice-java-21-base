@@ -1,10 +1,16 @@
 # GET /api/id/admin/users/{id}
 
+
 ## Summary
 - Get user details by id.
 
+
+## Description
+1. Load user by id and map to response.
+
 ## Auth & Permissions
 - ADMIN
+
 
 ## Request
 ### Path Params
@@ -13,11 +19,13 @@
 ### Headers
 - Authorization: string (Bearer token)
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | id | path | x |
 | Authorization | header | x |
+
 
 ## Response
 ### Success
@@ -55,13 +63,3 @@
   "data": null
 }
 ```
-
-## Logic (Internal)
-1. Load user by id and map to response.
-
-
-
-
-
-
-

@@ -1,10 +1,18 @@
 # POST /api/auth/signup
 
+
 ## Summary
 - Register a new user and return access and refresh tokens.
 
+
+## Description
+1. Validate request payload.
+2. Check duplicate email and resolve default role.
+3. Create user with ROLE_USER and issue tokens.
+
 ## Auth & Permissions
 - PUBLIC
+
 
 ## Request
 ### Body
@@ -19,12 +27,14 @@
 }
 ```
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | email | body | x |
 | fullName | body | x |
 | password | body | x |
+
 
 ## Response
 ### Success
@@ -57,13 +67,6 @@
 }
 ```
 
-## Logic (Internal)
-1. Validate request payload.
-2. Check duplicate email and resolve default role.
-3. Create user with ROLE_USER and issue tokens.
 
 ## Notes
 - Email verification is issued separately.
-
-
-

@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import pl.co.assessment.dto.ExamEditorMetadata;
 import pl.co.assessment.dto.ExamEditorQuestion;
 import pl.co.assessment.dto.ExamEditorResponse;
+import pl.co.assessment.entity.Exam;
 import pl.co.assessment.entity.ExamVersion;
 import pl.co.assessment.repository.ExamEditorQuestionRow;
 import pl.co.assessment.repository.ExamRepository;
@@ -31,12 +32,17 @@ public class ExamVersionServiceImpl implements ExamVersionService {
                 .orElseThrow(() -> new ApiException(ErrorCode.E227,
                         ErrorCode.E227.message("Exam version not found")));
 
+        Exam exam = examRepository.findByIdAndDeletedFalse(version.getExamId())
+                .orElseThrow(() -> new ApiException(ErrorCode.E227, ErrorCode.E227.message("Exam not found")));
+
         ExamEditorMetadata metadata = new ExamEditorMetadata(
                 version.getName(),
                 version.getDescription(),
                 version.getDurationMinutes(),
                 version.isShuffleQuestions(),
-                version.isShuffleOptions()
+                version.isShuffleOptions(),
+                version.getStatus(),
+                exam.isEnabled()
         );
 
         List<ExamEditorQuestionRow> rows = examRepository.findEditorQuestionsByVersionId(version.getId());
@@ -53,8 +59,6 @@ public class ExamVersionServiceImpl implements ExamVersionService {
         }
 
         return new ExamEditorResponse(
-                version.getStatus(),
-                version.getId(),
                 metadata,
                 questions
         );

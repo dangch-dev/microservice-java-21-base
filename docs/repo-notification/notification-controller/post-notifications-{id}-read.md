@@ -1,10 +1,17 @@
 # POST /api/notification/notifications/{id}/read
 
+
 ## Summary
 - Mark a notification as read and seen.
 
+
+## Description
+1. Find notification by id and userId.
+2. Mark it as read and seen.
+
 ## Auth & Permissions
 - USER
+
 
 ## Request
 ### Path Params
@@ -13,11 +20,13 @@
 ### Headers
 - Authorization: string (Bearer token)
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | id | path | x |
 | Authorization | header | x |
+
 
 ## Response
 ### Success
@@ -56,13 +65,3 @@
   "data": null
 }
 ```
-
-## Logic (Internal)
-1. Find notification by id and userId.
-2. Mark it as read and seen.
-
-
-
-
-
-

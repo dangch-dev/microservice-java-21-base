@@ -13,7 +13,6 @@ import pl.co.common.file.FilePublisher;
 import pl.co.common.notification.NotificationAction;
 import pl.co.common.notification.NotificationEvent;
 import pl.co.common.notification.NotificationPublisher;
-import pl.co.common.filter.principal.AuthPrincipal;
 import pl.co.identity.dto.TicketCommentRequest;
 import pl.co.identity.dto.TicketCommentResponse;
 import pl.co.identity.dto.TicketFilterRequest;
@@ -52,7 +51,7 @@ public class TicketManagementServiceImpl implements TicketManagementService {
 
     @Override
     @Transactional(readOnly = true)
-    public TicketPageResponse list(AuthPrincipal principal, TicketFilterRequest filter) {
+    public TicketPageResponse list(String userId, TicketFilterRequest filter) {
         int pageValue = filter.getPage() == null ? 0 : filter.getPage();
         int sizeValue = filter.getSize() == null ? 20 : filter.getSize();
         PageRequest page = PageRequest.of(Math.max(pageValue, 0), Math.max(sizeValue, 1));
@@ -70,7 +69,7 @@ public class TicketManagementServiceImpl implements TicketManagementService {
 
     @Override
     @Transactional(readOnly = true)
-    public TicketResponse get(AuthPrincipal principal, String ticketId) {
+    public TicketResponse get(String userId, String ticketId) {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new ApiException(ErrorCode.E227, "Ticket not found"));
         return toManagementResponse(ticket);
@@ -78,7 +77,7 @@ public class TicketManagementServiceImpl implements TicketManagementService {
 
     @Override
     @Transactional
-    public TicketResponse updateStatus(AuthPrincipal principal, String ticketId, TicketStatusUpdateRequest request) {
+    public TicketResponse updateStatus(String userId, String ticketId, TicketStatusUpdateRequest request) {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new ApiException(ErrorCode.E227, "Ticket not found"));
         String previousStatus = ticket.getStatus();
@@ -96,13 +95,13 @@ public class TicketManagementServiceImpl implements TicketManagementService {
         }
 
         Ticket saved = ticketRepository.save(ticket);
-        notifyAssignmentAndStatus(principal, saved, previousStatus, previousAssignee, newAssigneeName);
+        notifyAssignmentAndStatus(userId, saved, previousStatus, previousAssignee, newAssigneeName);
         return ticketMapper.toResponse(saved);
     }
 
     @Override
     @Transactional
-    public TicketCommentResponse addComment(AuthPrincipal principal, String ticketId, TicketCommentRequest request) {
+    public TicketCommentResponse addComment(String userId, String ticketId, TicketCommentRequest request) {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new ApiException(ErrorCode.E227, "Ticket not found"));
         TicketComment comment = TicketComment.builder()
@@ -115,14 +114,14 @@ public class TicketManagementServiceImpl implements TicketManagementService {
         // Publish file
         filePublisher.publish(request.getFiles());
         // Publish notification
-        notifyComment(principal, ticket, saved);
+        notifyComment(userId, ticket, saved);
 
         return toCommentResponse(saved);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<TicketCommentResponse> listComments(AuthPrincipal principal, String ticketId) {
+    public List<TicketCommentResponse> listComments(String userId, String ticketId) {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new ApiException(ErrorCode.E227, "Ticket not found"));
         return ticketCommentRepository.findByTicketIdOrderByCreatedAtAsc(ticketId).stream()
@@ -183,13 +182,13 @@ public class TicketManagementServiceImpl implements TicketManagementService {
                 .build();
     }
 
-    private void notifyAssignmentAndStatus(AuthPrincipal actor, Ticket ticket, String previousStatus, String previousAssignee, String assigneeName) {
+    private void notifyAssignmentAndStatus(String actorId, Ticket ticket, String previousStatus, String previousAssignee, String assigneeName) {
         if (ticket.getAssignedTo() != null && !ticket.getAssignedTo().equals(previousAssignee)) {
             String assigneeId = ticket.getAssignedTo();
             String creatorId = ticket.getCreatedBy();
-            Map<String, Object> payload = baseTicketPayload(ticket, actor.userId());
+            Map<String, Object> payload = baseTicketPayload(ticket, actorId);
             payload.put("assigneeName", assigneeName);
-            if (!assigneeId.isBlank() && !assigneeId.equals(actor.userId())) {
+            if (!assigneeId.isBlank() && !assigneeId.equals(actorId)) {
                 notificationPublisher.publish(new NotificationEvent(
                         assigneeId,
                         NotificationAction.TICKET_ASSIGNED.name(),
@@ -201,7 +200,7 @@ public class TicketManagementServiceImpl implements TicketManagementService {
                 ));
             }
             if (!creatorId.equals(assigneeId)) {
-                if (!creatorId.isBlank() && !creatorId.equals(actor.userId())) {
+                if (!creatorId.isBlank() && !creatorId.equals(actorId)) {
                     notificationPublisher.publish(new NotificationEvent(
                             creatorId,
                             NotificationAction.TICKET_ASSIGNED.name(),
@@ -217,21 +216,21 @@ public class TicketManagementServiceImpl implements TicketManagementService {
             }
         }
         if (!java.util.Objects.equals(previousStatus, ticket.getStatus())) {
-            notifyStatusChange(actor, ticket, previousStatus);
+            notifyStatusChange(actorId, ticket, previousStatus);
         }
     }
 
-    private void notifyStatusChange(AuthPrincipal actor, Ticket ticket, String previousStatus) {
-        Map<String, Object> payload = baseTicketPayload(ticket, actor.userId());
+    private void notifyStatusChange(String actorId, Ticket ticket, String previousStatus) {
+        Map<String, Object> payload = baseTicketPayload(ticket, actorId);
         payload.put("previousStatus", previousStatus);
         Set<String> targets = new HashSet<>();
         targets.add(ticket.getCreatedBy());
         if (ticket.getAssignedTo() != null) {
             targets.add(ticket.getAssignedTo());
         }
-        targets.remove(actor.userId());
+        targets.remove(actorId);
         for (String target : targets) {
-            if (target == null || target.isBlank() || target.equals(actor.userId())) {
+            if (target == null || target.isBlank() || target.equals(actorId)) {
                 continue;
             }
             notificationPublisher.publish(new NotificationEvent(
@@ -246,23 +245,23 @@ public class TicketManagementServiceImpl implements TicketManagementService {
         }
     }
 
-    private void notifyComment(AuthPrincipal actor, Ticket ticket, TicketComment comment) {
+    private void notifyComment(String actorId, Ticket ticket, TicketComment comment) {
         Set<String> targets = new HashSet<>();
-        if (!actor.userId().equals(ticket.getCreatedBy())) {
+        if (!actorId.equals(ticket.getCreatedBy())) {
             targets.add(ticket.getCreatedBy());
         }
-        if (ticket.getAssignedTo() != null && !actor.userId().equals(ticket.getAssignedTo())) {
+        if (ticket.getAssignedTo() != null && !actorId.equals(ticket.getAssignedTo())) {
             targets.add(ticket.getAssignedTo());
         }
-        targets.remove(actor.userId());
+        targets.remove(actorId);
         if (targets.isEmpty()) {
             return;
         }
-        Map<String, Object> payload = baseTicketPayload(ticket, actor.userId());
+        Map<String, Object> payload = baseTicketPayload(ticket, actorId);
         payload.put("commentId", comment.getId());
         payload.put("comment", comment.getContent());
         for (String target : targets) {
-            if (target == null || target.isBlank() || target.equals(actor.userId())) {
+            if (target == null || target.isBlank() || target.equals(actorId)) {
                 continue;
             }
             notificationPublisher.publish(new NotificationEvent(
