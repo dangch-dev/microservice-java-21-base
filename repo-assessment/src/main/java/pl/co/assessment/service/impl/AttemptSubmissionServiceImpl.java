@@ -2,6 +2,7 @@ package pl.co.assessment.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.co.assessment.entity.ExamAttempt;
@@ -10,6 +11,8 @@ import pl.co.assessment.entity.ExamAttemptStatus;
 import pl.co.assessment.entity.ExamVersion;
 import pl.co.assessment.repository.ExamAttemptRepository;
 import pl.co.assessment.repository.ExamVersionRepository;
+import pl.co.assessment.service.AttemptSubmissionService;
+import pl.co.common.event.EventPublisher;
 import pl.co.common.exception.ApiException;
 import pl.co.common.exception.ErrorCode;
 
@@ -21,10 +24,13 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class AttemptServiceImplImpl implements pl.co.assessment.service.AttemptServiceImpl {
+public class AttemptSubmissionServiceImpl implements AttemptSubmissionService {
 
     private final ExamAttemptRepository examAttemptRepository;
     private final ExamVersionRepository examVersionRepository;
+    private final EventPublisher eventPublisher;
+    @Value("${kafka.topics.assessment-grading}")
+    private String assessmentGradingTopic;
 
     @Override
     @Transactional
@@ -57,38 +63,50 @@ public class AttemptServiceImplImpl implements pl.co.assessment.service.AttemptS
         attempt.setStatus(ExamAttemptStatus.SUBMITTED.name());
         examAttemptRepository.save(attempt);
 
-        // TODO: enqueue attemptId for grading
+        if(ExamAttemptGradingStatus.AUTO_GRADING.name().equalsIgnoreCase(attempt.getGradingStatus())) {
+            eventPublisher.publish(assessmentGradingTopic, attempt.getId(),
+                    java.util.Map.of("attemptId", attempt.getId()));
+        }
     }
 
+    @Override
+    public void timeout(List<ExamAttempt> timeOutAttempts) {
+        Map<String, ExamVersion> versions = loadVersions(timeOutAttempts);
+        for (ExamAttempt attempt : timeOutAttempts) {
+            ExamVersion version = versions.get(attempt.getExamVersionId());
+            if (version == null) {
+                continue;
+            }
+            // Set End Time
+            Instant deadline = computeDeadline(attempt.getStartTime(), version.getDurationMinutes());
+            attempt.setStatus(ExamAttemptStatus.TIMEOUT.name());
+            if (attempt.getEndTime() == null || attempt.getEndTime().isAfter(deadline)) {
+                attempt.setEndTime(deadline);
+            }
+
+            // Set Grading status
+            if (attempt.getGradingStatus() == null) {
+                attempt.setGradingStatus(ExamAttemptGradingStatus.AUTO_GRADING.name());
+            }
+            // Publish grading event
+            if(ExamAttemptGradingStatus.AUTO_GRADING.name().equalsIgnoreCase(attempt.getGradingStatus())) {
+                eventPublisher.publish(assessmentGradingTopic, attempt.getId(),
+                        java.util.Map.of("attemptId", attempt.getId()));
+            }
+        }
+
+        examAttemptRepository.saveAll(timeOutAttempts);
+    }
+
+    @Override
     @Transactional
-    public void applyTimeouts() {
-        List<ExamAttempt> inProgress = examAttemptRepository
-                .findByStatusAndDeletedFalse(ExamAttemptStatus.IN_PROGRESS.name());
-        if (inProgress.isEmpty()) {
+    public void finalizeTimeouts() {
+        List<ExamAttempt> timeOutAttempt = examAttemptRepository.findExpiredAttempts();
+        if (timeOutAttempt.isEmpty()) {
             return;
         }
 
-        Map<String, ExamVersion> versions = loadVersions(inProgress);
-        Instant now = Instant.now();
-        boolean changed = false;
-        for (ExamAttempt attempt : inProgress) {
-            ExamVersion version = versions.get(attempt.getExamVersionId());
-            if (version == null || attempt.getStartTime() == null || version.getDurationMinutes() == null) {
-                continue;
-            }
-            Instant deadline = computeDeadline(attempt.getStartTime(), version.getDurationMinutes());
-            if (deadline != null && now.isAfter(deadline)) {
-                attempt.setStatus(ExamAttemptStatus.TIMEOUT.name());
-                if (attempt.getEndTime() == null || attempt.getEndTime().isAfter(deadline)) {
-                    attempt.setEndTime(deadline);
-                }
-                changed = true;
-            }
-        }
-
-        if (changed) {
-            examAttemptRepository.saveAll(inProgress);
-        }
+        timeout(timeOutAttempt);
     }
 
     private Map<String, ExamVersion> loadVersions(List<ExamAttempt> attempts) {

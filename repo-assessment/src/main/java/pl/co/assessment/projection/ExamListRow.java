@@ -1,4 +1,4 @@
-package pl.co.assessment.repository;
+package pl.co.assessment.projection;
 
 public interface ExamListRow {
     String getExamId();

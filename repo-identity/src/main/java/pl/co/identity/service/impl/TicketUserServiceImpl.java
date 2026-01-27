@@ -1,6 +1,7 @@
 package pl.co.identity.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
@@ -10,7 +11,7 @@ import pl.co.common.exception.ApiException;
 import pl.co.common.exception.ErrorCode;
 import pl.co.common.notification.NotificationAction;
 import pl.co.common.file.FileMeta;
-import pl.co.common.file.FilePublisher;
+import pl.co.common.event.EventPublisher;
 import pl.co.identity.dto.TicketCommentRequest;
 import pl.co.identity.dto.TicketCommentResponse;
 import pl.co.identity.dto.TicketCreateRequest;
@@ -19,7 +20,6 @@ import pl.co.identity.dto.TicketPageResponse;
 import pl.co.identity.dto.TicketResponse;
 import pl.co.identity.dto.TicketStatusUpdateRequest;
 import pl.co.common.notification.NotificationEvent;
-import pl.co.common.notification.NotificationPublisher;
 import pl.co.identity.entity.TicketComment;
 import pl.co.identity.entity.Ticket;
 import pl.co.identity.entity.TicketStatus;
@@ -44,8 +44,13 @@ public class TicketUserServiceImpl implements TicketUserService {
     private final TicketMapper ticketMapper;
     private final TicketCommentRepository ticketCommentRepository;
     private final UserRepository userRepository;
-    private final NotificationPublisher notificationPublisher;
-    private final FilePublisher filePublisher;
+    private final EventPublisher eventPublisher;
+
+    @Value("${kafka.topics.notification}")
+    private String notificationTopic;
+
+    @Value("${kafka.topics.file}")
+    private String fileTopic;
 
     @Override
     @Transactional
@@ -59,7 +64,7 @@ public class TicketUserServiceImpl implements TicketUserService {
                 .files(request.getFiles())
                 .build();
         Ticket saved = ticketRepository.save(ticket);
-        filePublisher.publish(request.getFiles());
+        publishFiles(request.getFiles());
         return ticketMapper.toResponse(saved);
     }
 
@@ -120,13 +125,13 @@ public class TicketUserServiceImpl implements TicketUserService {
                 .build();
         TicketComment saved = ticketCommentRepository.save(comment);
         //Publish file
-        filePublisher.publish(request.getFiles());
+        publishFiles(request.getFiles());
         // Notification
         Map<String, Object> payload = baseTicketPayload(ticket);
         payload.put("commentId", comment.getId());
         payload.put("comment", comment.getContent());
 
-        notificationPublisher.publish(new NotificationEvent(
+        eventPublisher.publish(notificationTopic, userId, new NotificationEvent(
                 userId,
                 NotificationAction.TICKET_COMMENT_ADDED.name(),
                 NotificationAction.TICKET_COMMENT_ADDED.title(),
@@ -221,5 +226,19 @@ public class TicketUserServiceImpl implements TicketUserService {
         payload.put("status", ticket.getStatus());
         payload.put("title", ticket.getTitle());
         return payload;
+    }
+
+    private void publishFiles(List<FileMeta> files) {
+        if (files == null || files.isEmpty()) {
+            return;
+        }
+        List<String> fileIds = files.stream()
+                .map(FileMeta::fileId)
+                .filter(id -> id != null && !id.isBlank())
+                .toList();
+        if (fileIds.isEmpty()) {
+            return;
+        }
+        eventPublisher.publish(fileTopic, null, fileIds);
     }
 }

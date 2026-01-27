@@ -1,4 +1,4 @@
-package pl.co.assessment.repository;
+package pl.co.assessment.projection;
 
 import pl.co.assessment.entity.json.GradingRules;
 import pl.co.assessment.entity.json.QuestionContent;

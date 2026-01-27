@@ -325,20 +325,17 @@ public class AttemptAnswerServiceImpl implements AttemptAnswerService {
             validBlankIds.add(rule.getBlankId());
         }
         Set<String> wordBankIds = new HashSet<>();
-        String inputKind = null;
-        if (content != null && content.getBlanks() != null) {
-            inputKind = content.getBlanks().getInputKind();
-            if (content.getBlanks().getWordBank() != null) {
-                for (QuestionContent.WordBankItem item : content.getBlanks().getWordBank()) {
-                    wordBankIds.add(item.getId());
-                }
+        String inputKind = gradingRules.getFillBlanks().getInputKind();
+        if (content != null && content.getBlanks() != null && content.getBlanks().getWordBank() != null) {
+            for (QuestionContent.WordBankItem item : content.getBlanks().getWordBank()) {
+                wordBankIds.add(item.getId());
             }
         }
         for (AnswerJson.BlankAnswer blank : payload.getBlanks()) {
             if (blank.getBlankId() == null || !validBlankIds.contains(blank.getBlankId())) {
                 throw new ApiException(ErrorCode.E221, ErrorCode.E221.message("Invalid blank id"));
             }
-            if ("word_bank".equalsIgnoreCase(inputKind)) {
+            if ("word_bank".equalsIgnoreCase(inputKind) || "select".equalsIgnoreCase(inputKind)) {
                 List<String> selected = blank.getSelectedOptionIds();
                 if (selected == null) {
                     throw new ApiException(ErrorCode.E221, ErrorCode.E221.message("selectedOptionIds is required"));

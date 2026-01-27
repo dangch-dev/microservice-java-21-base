@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.repository.query.Param;
 import pl.co.assessment.entity.Exam;
+import pl.co.assessment.projection.ExamEditorQuestionRow;
+import pl.co.assessment.projection.ExamListRow;
 
 import jakarta.persistence.LockModeType;
 import java.util.List;

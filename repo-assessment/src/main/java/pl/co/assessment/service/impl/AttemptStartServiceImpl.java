@@ -26,6 +26,7 @@ import pl.co.assessment.repository.ExamVersionQuestionRepository;
 import pl.co.assessment.repository.ExamVersionRepository;
 import pl.co.assessment.repository.QuestionVersionRepository;
 import pl.co.assessment.service.AttemptStartService;
+import pl.co.assessment.service.AttemptSubmissionService;
 import pl.co.common.exception.ApiException;
 import pl.co.common.exception.ErrorCode;
 
@@ -49,6 +50,7 @@ public class AttemptStartServiceImpl implements AttemptStartService {
     private final AttemptQuestionOrderRepository attemptQuestionOrderRepository;
     private final AttemptOptionOrderRepository attemptOptionOrderRepository;
     private final QuestionVersionRepository questionVersionRepository;
+    private final AttemptSubmissionService attemptSubmissionService;
 
     @Override
     @Transactional
@@ -100,12 +102,13 @@ public class AttemptStartServiceImpl implements AttemptStartService {
         // Load attempt version to compute remaining time
         ExamVersion attemptVersion = examVersionRepository.findByIdAndExamIdAndDeletedFalse(attempt.getExamVersionId(), exam.getId())
                 .orElseThrow(() -> new ApiException(ErrorCode.E420, ErrorCode.E420.message("Exam version does not exist")));
-        long remainingSeconds = computeRemainingSeconds(attempt, attemptVersion);
+        Long remainingSeconds = computeRemainingSeconds(attempt, attemptVersion);
         return AttemptStartResponse.builder()
                 .attemptId(attempt.getId())
                 .mode(AttemptStartMode.RESUME)
                 .examId(exam.getId())
                 .examVersionId(attempt.getExamVersionId())
+                .status(attempt.getStatus())
                 .name(attemptVersion.getName())
                 .description(attemptVersion.getDescription())
                 .startTime(attempt.getStartTime())
@@ -114,19 +117,26 @@ public class AttemptStartServiceImpl implements AttemptStartService {
                 .build();
     }
 
-    private long computeRemainingSeconds(ExamAttempt attempt, ExamVersion attemptVersion) {
+    private Long computeRemainingSeconds(ExamAttempt attempt, ExamVersion attemptVersion) {
         // SUBMITTED or TIMEOUT returns remaining = 0
         if (ExamAttemptStatus.SUBMITTED.name().equalsIgnoreCase(attempt.getStatus())
                 || ExamAttemptStatus.TIMEOUT.name().equalsIgnoreCase(attempt.getStatus())) {
             return 0L;
         }
-        long durationSeconds = attemptVersion.getDurationMinutes() == null ? 0L : attemptVersion.getDurationMinutes() * 60L;
-        if (durationSeconds <= 0L || attempt.getStartTime() == null) {
-            return 0L;
+        if (attemptVersion.getDurationMinutes() == null || attempt.getStartTime() == null) {
+            return null;
+        }
+        long durationSeconds = attemptVersion.getDurationMinutes() * 60L;
+        if (durationSeconds <= 0L) {
+            return null;
         }
         long elapsed = Duration.between(attempt.getStartTime(), Instant.now()).getSeconds();
         long remaining = durationSeconds - elapsed;
-        return Math.max(0L, remaining);
+        if (remaining <= 0L) {
+            attemptSubmissionService.timeout(List.of(attempt));
+            return 0L;
+        }
+        return remaining;
     }
 
     private ExamAttempt createAttempt(Exam exam, ExamVersion published) {
@@ -137,7 +147,6 @@ public class AttemptStartServiceImpl implements AttemptStartService {
                 .examVersionId(published.getId())
                 .startTime(now)
                 .status(ExamAttemptStatus.IN_PROGRESS.name())
-                .gradingStatus(ExamAttemptGradingStatus.AUTO_GRADING.name())
                 .build();
         return examAttemptRepository.save(attempt);
     }
@@ -242,12 +251,13 @@ public class AttemptStartServiceImpl implements AttemptStartService {
 
     private AttemptStartResponse buildNewResponse(Exam exam, ExamVersion published, ExamAttempt created) {
         // Build NEW response
-        long durationSeconds = published.getDurationMinutes() == null ? 0L : published.getDurationMinutes() * 60L;
+        Long durationSeconds = published.getDurationMinutes() == null ? null : published.getDurationMinutes() * 60L;
         return AttemptStartResponse.builder()
                 .attemptId(created.getId())
                 .mode(AttemptStartMode.NEW)
                 .examId(exam.getId())
                 .examVersionId(published.getId())
+                .status(created.getStatus())
                 .name(published.getName())
                 .description(published.getDescription())
                 .startTime(created.getStartTime())

@@ -50,7 +50,7 @@ public class ExamAttempt extends BaseEntity {
     @Column(nullable = false, length = 30)
     private String status;
 
-    @Column(name = "grading_status", nullable = false, length = 30)
+    @Column(name = "grading_status", length = 30)
     private String gradingStatus;
 
     @Column(precision = 8, scale = 2)
@@ -58,4 +58,7 @@ public class ExamAttempt extends BaseEntity {
 
     @Column(name = "max_score", precision = 8, scale = 2)
     private BigDecimal maxScore;
+
+    @Column(name = "percent", precision = 5, scale = 2)
+    private BigDecimal percent;
 }

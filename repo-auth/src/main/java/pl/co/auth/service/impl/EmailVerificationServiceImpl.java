@@ -1,6 +1,7 @@
 package pl.co.auth.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,7 +15,7 @@ import pl.co.auth.repository.EmailVerificationOTPRepository;
 import pl.co.auth.repository.UserRepository;
 import pl.co.auth.service.EmailVerificationService;
 import pl.co.common.mail.MailMessage;
-import pl.co.common.mail.MailPublisher;
+import pl.co.common.event.EventPublisher;
 import pl.co.common.security.UserStatus;
 import pl.co.common.template.TemplateLoader;
 
@@ -29,7 +30,7 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
     private final EmailVerificationOTPRepository emailVerificationOTPRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final MailPublisher mailPublisher;
+    private final EventPublisher eventPublisher;
     private final TemplateLoader templateLoader;
 
     private static final Duration VERIFY_TTL = Duration.ofMinutes(10);
@@ -38,6 +39,9 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
     private static final String OTP_TEMPLATE_PATH = "classpath:templates/email/verify-otp.html";
     private final JwtTokenService jwtTokenService;
+
+    @Value("${kafka.topics.mail}")
+    private String mailTopic;
 
     @Transactional
     @Override
@@ -73,7 +77,7 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
         String body = renderMailVerifyOtp(user.getEmail(), otpValue, VERIFY_TTL);
 
         // Publish Mail
-        mailPublisher.publish(new MailMessage(
+        eventPublisher.publish(mailTopic, user.getId(), new MailMessage(
                 user.getEmail(),
                 "Verify your account",
                 body,

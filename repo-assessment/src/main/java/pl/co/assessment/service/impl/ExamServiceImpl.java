@@ -1,6 +1,7 @@
 package pl.co.assessment.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -22,8 +23,8 @@ import pl.co.assessment.entity.ExamVersionQuestion;
 import pl.co.assessment.entity.Question;
 import pl.co.assessment.entity.QuestionVersion;
 import pl.co.assessment.entity.json.QuestionContent;
-import pl.co.assessment.repository.ExamEditorQuestionRow;
-import pl.co.assessment.repository.ExamListRow;
+import pl.co.assessment.projection.ExamEditorQuestionRow;
+import pl.co.assessment.projection.ExamListRow;
 import pl.co.assessment.repository.ExamRepository;
 import pl.co.assessment.repository.ExamVersionQuestionRepository;
 import pl.co.assessment.repository.ExamVersionRepository;
@@ -34,7 +35,7 @@ import pl.co.assessment.service.QuestionService;
 import pl.co.common.exception.ApiException;
 import pl.co.common.exception.ErrorCode;
 import pl.co.common.file.FileMeta;
-import pl.co.common.file.FilePublisher;
+import pl.co.common.event.EventPublisher;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -53,7 +54,10 @@ public class ExamServiceImpl implements ExamService {
     private final QuestionRepository questionRepository;
     private final QuestionVersionRepository questionVersionRepository;
     private final QuestionService questionService;
-    private final FilePublisher filePublisher;
+    private final EventPublisher eventPublisher;
+
+    @Value("${kafka.topics.file}")
+    private String fileTopic;
 
     @Override
     @Transactional
@@ -527,7 +531,7 @@ public class ExamServiceImpl implements ExamService {
                 }
             }
         }
-        filePublisher.publish(files);
+        publishFiles(files);
     }
 
     private void addFiles(List<FileMeta> target, List<FileMeta> files) {
@@ -535,6 +539,20 @@ public class ExamServiceImpl implements ExamService {
             return;
         }
         target.addAll(files);
+    }
+
+    private void publishFiles(List<FileMeta> files) {
+        if (files == null || files.isEmpty()) {
+            return;
+        }
+        List<String> fileIds = files.stream()
+                .map(FileMeta::fileId)
+                .filter(id -> id != null && !id.isBlank())
+                .toList();
+        if (fileIds.isEmpty()) {
+            return;
+        }
+        eventPublisher.publish(fileTopic, null, fileIds);
     }
 
     @Override

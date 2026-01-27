@@ -1,11 +1,17 @@
 package pl.co.assessment.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.co.assessment.dto.AttemptAnswerResponse;
 import pl.co.assessment.dto.AttemptDetailResponse;
+import pl.co.assessment.dto.AttemptListItemResponse;
+import pl.co.assessment.dto.AttemptPageResponse;
 import pl.co.assessment.dto.AttemptQuestionResponse;
+import pl.co.assessment.dto.AttemptResultItemResponse;
+import pl.co.assessment.dto.AttemptResultResponse;
 import pl.co.assessment.entity.AttemptOptionOrder;
 import pl.co.assessment.entity.AttemptQuestionOrder;
 import pl.co.assessment.entity.ExamAttempt;
@@ -23,6 +29,8 @@ import pl.co.assessment.repository.ExamVersionRepository;
 import pl.co.assessment.repository.QuestionVersionRepository;
 import pl.co.assessment.repository.UserAnswerRepository;
 import pl.co.assessment.service.AttemptQueryService;
+import pl.co.assessment.service.AttemptSubmissionService;
+import pl.co.assessment.projection.AttemptListRow;
 import pl.co.common.exception.ApiException;
 import pl.co.common.exception.ErrorCode;
 
@@ -46,9 +54,10 @@ public class AttemptQueryServiceImpl implements AttemptQueryService {
     private final AttemptOptionOrderRepository attemptOptionOrderRepository;
     private final QuestionVersionRepository questionVersionRepository;
     private final UserAnswerRepository userAnswerRepository;
+    private final AttemptSubmissionService attemptSubmissionService;
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public AttemptDetailResponse getAttempt(String attemptId, String userId) {
         ExamAttempt attempt = loadAttemptOrThrow(attemptId);
         assertOwner(attempt, userId);
@@ -58,9 +67,14 @@ public class AttemptQueryServiceImpl implements AttemptQueryService {
         Map<String, QuestionVersion> questionVersionMap = loadQuestionVersions(mappings);
         Map<String, List<String>> optionOrderMap = resolveOptionOrderMap(attempt, version);
 
-        List<AttemptQuestionResponse> questions = buildQuestions(mappings, questionVersionMap, optionOrderMap);
-        List<AttemptAnswerResponse> answers = loadAnswers(attempt.getId());
-        long remainingSeconds = computeRemainingSeconds(attempt, version);
+        Long remainingSeconds = computeRemainingSeconds(attempt, version);
+        boolean inProgress = ExamAttemptStatus.IN_PROGRESS.name().equalsIgnoreCase(attempt.getStatus());
+        List<AttemptQuestionResponse> questions = inProgress
+                ? buildQuestions(mappings, questionVersionMap, optionOrderMap)
+                : null;
+        List<AttemptAnswerResponse> answers = inProgress
+                ? loadAnswers(attempt.getId())
+                : null;
 
         return AttemptDetailResponse.builder()
                 .attemptId(attempt.getId())
@@ -74,6 +88,88 @@ public class AttemptQueryServiceImpl implements AttemptQueryService {
                 .timeRemainingSeconds(remainingSeconds)
                 .questions(questions)
                 .answers(answers)
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AttemptPageResponse listAttempts(String userId,
+                                            String status,
+                                            String gradingStatus,
+                                            Instant fromTime,
+                                            Instant toTime,
+                                            Integer page,
+                                            Integer size) {
+        int pageValue = page == null ? 0 : page;
+        int sizeValue = size == null ? 20 : size;
+        PageRequest pageRequest = PageRequest.of(Math.max(pageValue, 0), Math.max(sizeValue, 1));
+        Page<AttemptListRow> result = examAttemptRepository.findAttemptList(
+                userId,
+                status,
+                gradingStatus,
+                fromTime,
+                toTime,
+                pageRequest
+        );
+        List<AttemptListItemResponse> items = result.getContent().stream()
+                .map(row -> AttemptListItemResponse.builder()
+                        .attemptId(row.getAttemptId())
+                        .examId(row.getExamId())
+                        .examVersionId(row.getExamVersionId())
+                        .name(row.getName())
+                        .description(row.getDescription())
+                        .durationMinutes(row.getDurationMinutes())
+                        .status(row.getStatus())
+                        .gradingStatus(row.getGradingStatus())
+                        .startTime(row.getStartTime())
+                        .endTime(row.getEndTime())
+                        .score(row.getScore())
+                        .maxScore(row.getMaxScore())
+                        .percent(row.getPercent())
+                        .build())
+                .toList();
+        return AttemptPageResponse.builder()
+                .items(items)
+                .totalElements(result.getTotalElements())
+                .totalPages(result.getTotalPages())
+                .page(result.getNumber())
+                .size(result.getSize())
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public AttemptResultResponse getAttemptResult(String attemptId, String userId) {
+        ExamAttempt attempt = loadAttemptOrThrow(attemptId);
+        assertOwner(attempt, userId);
+
+        if (ExamAttemptStatus.IN_PROGRESS.name().equalsIgnoreCase(attempt.getStatus())) {
+            throw new ApiException(ErrorCode.E420, ErrorCode.E420.message("Attempt is in progress"));
+        }
+
+        ExamVersion version = loadVersionOrThrow(attempt);
+        List<ExamVersionQuestion> mappings = resolveQuestionOrder(attempt, version);
+        Map<String, QuestionVersion> questionVersionMap = loadQuestionVersions(mappings);
+        Map<String, List<String>> optionOrderMap = resolveOptionOrderMap(attempt, version);
+        Map<String, UserAnswer> answerMap = loadAnswerMap(attempt.getId());
+
+        List<AttemptResultItemResponse> items = buildResultItems(mappings, questionVersionMap, optionOrderMap, answerMap);
+
+        return AttemptResultResponse.builder()
+                .attemptId(attempt.getId())
+                .examId(attempt.getExamId())
+                .examVersionId(attempt.getExamVersionId())
+                .status(attempt.getStatus())
+                .gradingStatus(attempt.getGradingStatus())
+                .name(version.getName())
+                .description(version.getDescription())
+                .durationMinutes(version.getDurationMinutes())
+                .startTime(attempt.getStartTime())
+                .endTime(attempt.getEndTime())
+                .score(attempt.getScore())
+                .maxScore(attempt.getMaxScore())
+                .percent(attempt.getPercent())
+                .items(items)
                 .build();
     }
 
@@ -99,19 +195,35 @@ public class AttemptQueryServiceImpl implements AttemptQueryService {
                 .toList();
     }
 
-    private long computeRemainingSeconds(ExamAttempt attempt, ExamVersion version) {
+    private Map<String, UserAnswer> loadAnswerMap(String attemptId) {
+        List<UserAnswer> answers = userAnswerRepository.findByAttemptIdAndDeletedFalse(attemptId);
+        Map<String, UserAnswer> map = new HashMap<>();
+        for (UserAnswer answer : answers) {
+            map.put(answer.getExamVersionQuestionId(), answer);
+        }
+        return map;
+    }
+
+    private Long computeRemainingSeconds(ExamAttempt attempt, ExamVersion version) {
         // SUBMITTED or TIMEOUT => remaining = 0
         if (ExamAttemptStatus.SUBMITTED.name().equalsIgnoreCase(attempt.getStatus())
                 || ExamAttemptStatus.TIMEOUT.name().equalsIgnoreCase(attempt.getStatus())) {
             return 0L;
         }
-        long durationSeconds = version.getDurationMinutes() == null ? 0L : version.getDurationMinutes() * 60L;
-        if (durationSeconds <= 0L || attempt.getStartTime() == null) {
-            return 0L;
+        if (version.getDurationMinutes() == null || attempt.getStartTime() == null) {
+            return null;
+        }
+        long durationSeconds = version.getDurationMinutes() * 60L;
+        if (durationSeconds <= 0L) {
+            return null;
         }
         long elapsed = Duration.between(attempt.getStartTime(), Instant.now()).getSeconds();
         long remaining = durationSeconds - elapsed;
-        return Math.max(0L, remaining);
+        if (remaining <= 0L) {
+            attemptSubmissionService.timeout(List.of(attempt));
+            return 0L;
+        }
+        return remaining;
     }
 
     private List<ExamVersionQuestion> resolveQuestionOrder(ExamAttempt attempt, ExamVersion version) {
@@ -201,6 +313,35 @@ public class AttemptQueryServiceImpl implements AttemptQueryService {
                     .build());
         }
         return questions;
+    }
+
+    private List<AttemptResultItemResponse> buildResultItems(List<ExamVersionQuestion> mappings,
+                                                             Map<String, QuestionVersion> questionVersionMap,
+                                                             Map<String, List<String>> optionOrderMap,
+                                                             Map<String, UserAnswer> answerMap) {
+        List<AttemptResultItemResponse> items = new ArrayList<>();
+        int displayOrder = 1;
+        for (ExamVersionQuestion mapping : mappings) {
+            QuestionVersion qv = questionVersionMap.get(mapping.getQuestionVersionId());
+            if (qv == null) {
+                continue;
+            }
+            QuestionContent content = qv.getQuestionContent();
+            QuestionContent resolvedContent = applyOptionOrder(content, qv.getId(), optionOrderMap);
+            UserAnswer answer = answerMap.get(mapping.getId());
+            items.add(AttemptResultItemResponse.builder()
+                    .order(displayOrder++)
+                    .examVersionQuestionId(mapping.getId())
+                    .questionVersionId(qv.getId())
+                    .type(qv.getType())
+                    .questionContent(resolvedContent)
+                    .gradingRules(qv.getGradingRules())
+                    .answerJson(answer == null ? null : answer.getAnswerJson())
+                    .earnedPoints(answer == null ? null : answer.getEarnedPoints())
+                    .answerGradingStatus(answer == null ? null : answer.getGradingStatus())
+                    .build());
+        }
+        return items;
     }
 
     private QuestionContent applyOptionOrder(QuestionContent content,

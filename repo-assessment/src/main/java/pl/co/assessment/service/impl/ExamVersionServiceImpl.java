@@ -8,7 +8,7 @@ import pl.co.assessment.dto.ExamEditorQuestion;
 import pl.co.assessment.dto.ExamEditorResponse;
 import pl.co.assessment.entity.Exam;
 import pl.co.assessment.entity.ExamVersion;
-import pl.co.assessment.repository.ExamEditorQuestionRow;
+import pl.co.assessment.projection.ExamEditorQuestionRow;
 import pl.co.assessment.repository.ExamRepository;
 import pl.co.assessment.repository.ExamVersionRepository;
 import pl.co.assessment.service.ExamVersionService;

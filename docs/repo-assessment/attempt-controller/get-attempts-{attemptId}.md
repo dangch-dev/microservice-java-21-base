@@ -7,7 +7,7 @@
 
 ## Description
 1. Load attempt (deleted = false) and verify owner.
-2. Load exam version and compute timeRemainingSeconds (no DB mutation).
+2. Load exam version and compute timeRemainingSeconds; if expired, the attempt may be marked TIMEOUT.
 3. Resolve question order (shuffle -> attempt order, else default order).
 4. Apply option order if shuffleOptions enabled.
 5. Load saved answers for resume.
@@ -47,7 +47,7 @@
     "description": string | null,
     "durationMinutes": integer | null,
     "startTime": string (ISO-8601) | null,
-    "timeRemainingSeconds": integer,
+    "timeRemainingSeconds": integer | null,
     "questions": [
       {
         "order": integer,
@@ -137,13 +137,13 @@
           }
         }
       }
-    ],
+    ] | null,
     "answers": [
       {
         "examVersionQuestionId": string,
         "answerJson": object
       }
-    ]
+    ] | null
   }
 }
 ```
@@ -167,3 +167,5 @@
 ## Notes
 - `gradingRules` are not returned on this endpoint.
 - When stored option order is missing, options keep original order.
+- `timeRemainingSeconds` is null when `durationMinutes` or `startTime` is null.
+- `questions` and `answers` are returned only when attempt status = IN_PROGRESS.

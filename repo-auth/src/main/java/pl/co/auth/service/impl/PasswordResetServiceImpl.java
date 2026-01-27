@@ -14,7 +14,7 @@ import pl.co.auth.service.PasswordResetService;
 import pl.co.common.exception.ApiException;
 import pl.co.common.exception.ErrorCode;
 import pl.co.common.mail.MailMessage;
-import pl.co.common.mail.MailPublisher;
+import pl.co.common.event.EventPublisher;
 import pl.co.common.template.TemplateLoader;
 
 import java.net.URLEncoder;
@@ -31,10 +31,13 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final TemplateLoader templateLoader;
-    private final MailPublisher mailPublisher;
+    private final EventPublisher eventPublisher;
 
     @Value("${app.frontend.reset-password-url}")
     private String resetPasswordUrl;
+
+    @Value("${kafka.topics.mail}")
+    private String mailTopic;
 
     private static final Duration RESET_TTL = Duration.ofMinutes(15);
     private static final String RESET_TEMPLATE_PATH = "classpath:templates/email/reset-password.html";
@@ -65,7 +68,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
 
         // Publish mail
         String body = renderResetPassword(user.getEmail(), resetLink, RESET_TTL);
-        mailPublisher.publish(new MailMessage(
+        eventPublisher.publish(mailTopic, user.getId(), new MailMessage(
                 user.getEmail(),
                 "Reset your password",
                 body,

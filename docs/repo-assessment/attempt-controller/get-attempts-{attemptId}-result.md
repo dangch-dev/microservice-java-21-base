@@ -1,22 +1,24 @@
-# GET /api/assessment/exam-versions/{examVersionId}/preview
+# GET /api/assessment/attempts/{attemptId}/result
 
 
 ## Summary
-- Preview an exam version (draft, published, or archived) by version id.
+- Get attempt result (scores + content + grading rules + answers).
 
 
 ## Description
-1. Load exam version by id (deleted = false).
-2. Load questions by `question_order` and join question versions.
-3. Return metadata and full question payload.
+1. Load attempt (deleted = false) and verify owner.
+2. Reject if attempt is IN_PROGRESS.
+3. Load exam version and resolve question order (shuffle -> attempt order, else default).
+4. Load question versions and user answers.
+5. Return attempt totals and per-question result payload.
 
 ## Auth & Permissions
-- ADMIN
+- USER, ADMIN (owner only)
 
 
 ## Request
 ### Path Params
-- examVersionId: string (required)
+- attemptId: string (required)
 
 ### Headers
 - Authorization: string (Bearer token)
@@ -25,8 +27,8 @@
 ## Required
 | field | location | required |
 | --- | --- | --- |
+| attemptId | path | x |
 | Authorization | header | x |
-| examVersionId | path | x |
 
 
 ## Response
@@ -37,19 +39,23 @@
   "errorCode": string | null,
   "errorMessage": string | null,
   "data": {
-    "metadata": {
-      "name": string,
-      "description": string | null,
-      "durationMinutes": integer | null,
-      "shuffleQuestions": boolean,
-      "shuffleOptions": boolean,
-      "status": string,
-      "enabled": boolean
-    },
-    "questions": [
+    "attemptId": string,
+    "examId": string,
+    "examVersionId": string,
+    "status": string,
+    "gradingStatus": string | null,
+    "name": string,
+    "description": string | null,
+    "durationMinutes": integer | null,
+    "startTime": string (ISO-8601),
+    "endTime": string (ISO-8601) | null,
+    "score": number | null,
+    "maxScore": number | null,
+    "percent": number | null,
+    "items": [
       {
-        "questionId": string,
-        "questionOrder": integer,
+        "order": integer,
+        "examVersionQuestionId": string,
         "questionVersionId": string,
         "type": string,
         "questionContent": {
@@ -144,22 +150,22 @@
             "accepted": [string],
             "match_method": string (exact|contains)
           },
-        "matching": {
-          "pairs": [
-            {
-              "left_id": string,
-              "right_id": string
-            }
-          ],
-          "scheme": string (per_pair|all_or_nothing)
-        },
-        "fill_blanks": {
-          "input_kind": string (text|select),
-          "blanks": [
-            {
-              "blank_id": string,
-              "accepted": [string],
-              "match_method": string (exact|contains),
+          "matching": {
+            "pairs": [
+              {
+                "left_id": string,
+                "right_id": string
+              }
+            ],
+            "scheme": string (per_pair|all_or_nothing)
+          },
+          "fill_blanks": {
+            "input_kind": string (text|select),
+            "blanks": [
+              {
+                "blank_id": string,
+                "accepted": [string],
+                "match_method": string (exact|contains),
                 "correct_option_ids": [string]
               }
             ],
@@ -176,7 +182,10 @@
               }
             ]
           }
-        }
+        },
+        "answerJson": object | null,
+        "earnedPoints": number | null,
+        "answerGradingStatus": string | null
       }
     ]
   }
@@ -184,10 +193,11 @@
 ```
 
 ### Errors
-- (404 Not Found) - errorCode: 227 when exam version not found.
-- (401 Unauthorized) - errorCode: UNAUTHORIZED when access token is missing/invalid.
+- (404 Not Found) - errorCode: 227 when attempt not found.
+- (403 Forbidden) - errorCode: 230 when attempt does not belong to current user.
+- (422 Unprocessable Entity) - errorCode: 420 when attempt is still IN_PROGRESS.
+- (401 Unauthorized) - errorCode: 241 when access token is missing/invalid.
 - (401 Unauthorized) - errorCode: 234 when access token is expired.
-- (403 Forbidden) - errorCode: FORBIDDEN when user is not ADMIN.
 ```
 {
   "success": false,
@@ -199,5 +209,4 @@
 
 
 ## Notes
-- Preview returns grading rules because this endpoint is admin-only.
-
+- This endpoint always returns `questionContent`, `gradingRules`, and `answerJson`.

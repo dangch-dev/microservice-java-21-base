@@ -25,6 +25,10 @@ spring:
     defer-datasource-initialization: true
   cache:
     type: simple
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: assessment-event
 
 server:
   port: 8087
@@ -57,6 +61,7 @@ kafka:
     notification: notification.in-app
     file: storage.file
     mail: notification.mail
+    assessment-grading: assessment.grading
 
 assessment:
   attempt-timeout-cron: "0 */1 * * * *"

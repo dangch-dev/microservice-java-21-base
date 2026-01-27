@@ -1,6 +1,7 @@
 package pl.co.identity.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
@@ -9,10 +10,9 @@ import org.springframework.transaction.annotation.Transactional;
 import pl.co.common.exception.ApiException;
 import pl.co.common.exception.ErrorCode;
 import pl.co.common.file.FileMeta;
-import pl.co.common.file.FilePublisher;
+import pl.co.common.event.EventPublisher;
 import pl.co.common.notification.NotificationAction;
 import pl.co.common.notification.NotificationEvent;
-import pl.co.common.notification.NotificationPublisher;
 import pl.co.identity.dto.TicketCommentRequest;
 import pl.co.identity.dto.TicketCommentResponse;
 import pl.co.identity.dto.TicketFilterRequest;
@@ -46,8 +46,13 @@ public class TicketManagementServiceImpl implements TicketManagementService {
     private final TicketMapper ticketMapper;
     private final TicketCommentRepository ticketCommentRepository;
     private final UserRepository userRepository;
-    private final NotificationPublisher notificationPublisher;
-    private final FilePublisher filePublisher;
+    private final EventPublisher eventPublisher;
+
+    @Value("${kafka.topics.notification}")
+    private String notificationTopic;
+
+    @Value("${kafka.topics.file}")
+    private String fileTopic;
 
     @Override
     @Transactional(readOnly = true)
@@ -112,7 +117,7 @@ public class TicketManagementServiceImpl implements TicketManagementService {
         TicketComment saved = ticketCommentRepository.save(comment);
 
         // Publish file
-        filePublisher.publish(request.getFiles());
+        publishFiles(request.getFiles());
         // Publish notification
         notifyComment(userId, ticket, saved);
 
@@ -189,7 +194,7 @@ public class TicketManagementServiceImpl implements TicketManagementService {
             Map<String, Object> payload = baseTicketPayload(ticket, actorId);
             payload.put("assigneeName", assigneeName);
             if (!assigneeId.isBlank() && !assigneeId.equals(actorId)) {
-                notificationPublisher.publish(new NotificationEvent(
+                eventPublisher.publish(notificationTopic, assigneeId, new NotificationEvent(
                         assigneeId,
                         NotificationAction.TICKET_ASSIGNED.name(),
                         NotificationAction.TICKET_ASSIGNED.title(),
@@ -201,7 +206,7 @@ public class TicketManagementServiceImpl implements TicketManagementService {
             }
             if (!creatorId.equals(assigneeId)) {
                 if (!creatorId.isBlank() && !creatorId.equals(actorId)) {
-                    notificationPublisher.publish(new NotificationEvent(
+                    eventPublisher.publish(notificationTopic, creatorId, new NotificationEvent(
                             creatorId,
                             NotificationAction.TICKET_ASSIGNED.name(),
                             NotificationAction.TICKET_ASSIGNED.title(),
@@ -233,7 +238,7 @@ public class TicketManagementServiceImpl implements TicketManagementService {
             if (target == null || target.isBlank() || target.equals(actorId)) {
                 continue;
             }
-            notificationPublisher.publish(new NotificationEvent(
+            eventPublisher.publish(notificationTopic, target, new NotificationEvent(
                     target,
                     NotificationAction.TICKET_STATUS_UPDATED.name(),
                     NotificationAction.TICKET_STATUS_UPDATED.title(),
@@ -264,7 +269,7 @@ public class TicketManagementServiceImpl implements TicketManagementService {
             if (target == null || target.isBlank() || target.equals(actorId)) {
                 continue;
             }
-            notificationPublisher.publish(new NotificationEvent(
+            eventPublisher.publish(notificationTopic, target, new NotificationEvent(
                     target,
                     NotificationAction.TICKET_COMMENT_ADDED.name(),
                     NotificationAction.TICKET_COMMENT_ADDED.title(),
@@ -284,5 +289,19 @@ public class TicketManagementServiceImpl implements TicketManagementService {
         payload.put("actorId", actorId);
         payload.put("title", ticket.getTitle());
         return payload;
+    }
+
+    private void publishFiles(List<FileMeta> files) {
+        if (files == null || files.isEmpty()) {
+            return;
+        }
+        List<String> fileIds = files.stream()
+                .map(FileMeta::fileId)
+                .filter(id -> id != null && !id.isBlank())
+                .toList();
+        if (fileIds.isEmpty()) {
+            return;
+        }
+        eventPublisher.publish(fileTopic, null, fileIds);
     }
 }

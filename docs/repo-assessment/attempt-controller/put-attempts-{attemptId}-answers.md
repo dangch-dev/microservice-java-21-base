@@ -29,24 +29,24 @@
     {
       "examVersionQuestionId": string,
       "answerJson": {
-        "schemaVersion": integer | null,
+        "schema_version": integer | null,
         "type": string | null,
         "payload": {
-          "selectedOptionIds": [string] | null,
+          "selected_option_ids": [string] | null,
           "text": string | null,
           "pairs": [
-            { "leftId": string, "rightId": string }
+            { "left_id": string, "right_id": string }
           ] | null,
           "blanks": [
             {
-              "blankId": string,
+              "blank_id": string,
               "kind": string | null,
               "value": string | null,
-              "selectedOptionIds": [string] | null
+              "selected_option_ids": [string] | null
             }
           ] | null,
           "files": [
-            { "fileId": string, "name": string | null, "mime": string | null, "size": integer | null }
+            { "file_id": string, "name": string | null, "mime": string | null, "size": integer | null }
           ] | null
         }
       }
@@ -95,3 +95,4 @@
 - Invalid examVersionQuestionId is ignored.
 - answerJson = null clears the stored answer.
 - Answers are blocked when attempt status is TIMEOUT.
+- `schema_version` and `type` are optional; the server uses questionVersion type to validate.

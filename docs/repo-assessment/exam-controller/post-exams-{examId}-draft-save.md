@@ -144,6 +144,7 @@
           "scheme": string (per_pair|all_or_nothing)
         },
         "fill_blanks": {
+          "input_kind": string (text|select),
           "blanks": [
             {
               "blank_id": string,
@@ -217,6 +218,7 @@
 - If `questionId` exists and any of `type/content/rules` is present => must provide all 3.
 - If `questionId` does not exist => ADD, must provide all `type/content/rules`.
 - `questionContent` and `gradingRules` are required for ADD/EDIT; required subfields depend on `type`.
+- `gradingRules.fill_blanks.input_kind` is auto-copied from `questionContent.blanks.input_kind`.
 
 ### Type requirements
 | type | questionContent required | gradingRules required |
@@ -228,6 +230,5 @@
 | `FILL_BLANKS` | `blanks.input_kind`; if `input_kind=select` => `blanks.word_bank[]` (each with `id`, `content`) | `fill_blanks.blanks[]` (each with `blank_id`); if `input_kind=text` => `accepted[]`, `match_method`; if `input_kind=select` => `correct_option_ids[]`; plus `fill_blanks.scheme` |
 | `ESSAY` | none | none |
 | `FILE_UPLOAD` | `file_upload.max_files` | none |
-
 
 
