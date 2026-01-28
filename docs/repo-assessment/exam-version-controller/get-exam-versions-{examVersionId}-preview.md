@@ -1,4 +1,4 @@
-# GET /api/assessment/exam-versions/{examVersionId}/preview
+# GET /api/assessment/management/exam-versions/{examVersionId}/preview
 
 
 ## Summary
