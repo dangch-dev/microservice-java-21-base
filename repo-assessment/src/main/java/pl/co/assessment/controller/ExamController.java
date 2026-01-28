@@ -9,7 +9,7 @@ import pl.co.common.dto.ApiResponse;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
-@RequestMapping("/exams")
+@RequestMapping("/management/exams")
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyAuthority(T(pl.co.common.security.RoleName).ROLE_ADMIN.name())")
 public class ExamController {

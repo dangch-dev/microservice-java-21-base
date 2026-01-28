@@ -1,13 +1,12 @@
-# PUT /api/id/admin/users/{id}
+# GET /api/id/management/users/{id}
 
 
 ## Summary
-- Update user fields by id.
+- Get user details by id.
 
 
 ## Description
-1. Load user by id.
-2. Update provided fields and return updated user.
+1. Load user by id and map to response.
 
 ## Auth & Permissions
 - ADMIN
@@ -19,18 +18,6 @@
 
 ### Headers
 - Authorization: string (Bearer token)
-
-### Body
-```
-{
-  "status": string | null (ACTIVE|BLOCKED),
-  "roleIds": [string] | null,
-  "fullName": string | null,
-  "phoneNumber": string | null,
-  "avatarUrl": string | null,
-  "address": string | null
-}
-```
 
 
 ## Required
@@ -63,10 +50,6 @@
 ```
 
 ### Errors
-- (400 Bad Request) - errorCode: BAD_REQUEST when field length is invalid.
-- (400 Bad Request) - errorCode: 202 when request body has invalid data type or JSON.
-- (400 Bad Request) - errorCode: 221 when role id is not found.
-- (400 Bad Request) - errorCode: 204 when status is invalid.
 - (404 Not Found) - errorCode: NOT_FOUND when user not found.
 - (401 Unauthorized) - errorCode: UNAUTHORIZED when access token is missing or invalid.
 - (401 Unauthorized) - errorCode: 234 when access token is expired.

@@ -1,45 +1,30 @@
-# POST /api/id/admin/users
+# POST /api/id/management/users/{id}/block
 
 
 ## Summary
-- Create a new user by admin.
+- Block a user.
 
 
 ## Description
-1. Validate request and resolve roles.
-2. Create user with specified status and roles.
+1. Update user status to BLOCKED.
 
 ## Auth & Permissions
 - ADMIN
 
 
 ## Request
+### Path Params
+- id: string (required)
+
 ### Headers
 - Authorization: string (Bearer token)
-
-### Body
-```
-{
-  "email": string,
-  "password": string,
-  "fullName": string,
-  "phoneNumber": string | null,
-  "avatarUrl": string | null,
-  "address": string | null,
-  "status": string (ACTIVE|BLOCKED),
-  "roleIds": [string] | null
-}
-```
 
 
 ## Required
 | field | location | required |
 | --- | --- | --- |
-| status | body | x |
-| email | body | x |
-| fullName | body | x |
+| id | path | x |
 | Authorization | header | x |
-| password | body | x |
 
 
 ## Response
@@ -65,12 +50,7 @@
 ```
 
 ### Errors
-- (400 Bad Request) - errorCode: 243 when required fields are missing (email, password, ullName, status).
-- (400 Bad Request) - errorCode: BAD_REQUEST when email format or field length is invalid.
-- (400 Bad Request) - errorCode: 202 when request body has invalid data type or JSON.
-- (409 Conflict) - errorCode: CONFLICT when email already exists.
-- (400 Bad Request) - errorCode: 221 when role id is not found.
-- (400 Bad Request) - errorCode: 204 when status is invalid.
+- (404 Not Found) - errorCode: NOT_FOUND when user not found.
 - (401 Unauthorized) - errorCode: UNAUTHORIZED when access token is missing or invalid.
 - (401 Unauthorized) - errorCode: 234 when access token is expired.
 - (403 Forbidden) - errorCode: FORBIDDEN when user is not ADMIN.

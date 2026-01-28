@@ -1,4 +1,4 @@
-# POST /api/id/admin/users/{id}/activate
+# POST /api/id/management/users/{id}/activate
 
 
 ## Summary

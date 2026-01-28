@@ -1,4 +1,4 @@
-# GET /api/id/admin/users
+# GET /api/id/management/users
 
 
 ## Summary

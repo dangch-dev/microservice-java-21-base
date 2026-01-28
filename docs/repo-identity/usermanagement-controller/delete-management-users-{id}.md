@@ -1,12 +1,12 @@
-# POST /api/id/admin/users/{id}/block
+# DELETE /api/id/management/users/{id}
 
 
 ## Summary
-- Block a user.
+- Delete user by id.
 
 
 ## Description
-1. Update user status to BLOCKED.
+1. Delete user by id.
 
 ## Auth & Permissions
 - ADMIN
@@ -34,18 +34,7 @@
   "success": boolean,
   "errorCode": string | null,
   "errorMessage": string | null,
-  "data": {
-    "id": string,
-    "email": string,
-    "fullName": string,
-    "phoneNumber": string | null,
-    "avatarUrl": string | null,
-    "address": string | null,
-    "roles": [string],
-    "status": string (ACTIVE|BLOCKED),
-    "createdAt": string,
-    "updatedAt": string
-  }
+  "data": null
 }
 ```
 
