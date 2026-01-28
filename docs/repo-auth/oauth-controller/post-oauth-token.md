@@ -1,21 +1,30 @@
 # POST /api/auth/oauth/token
 
+
 ## Summary
 - Issue an internal token for service to service authentication.
 
+
+## Description
+1. Validate client credentials.
+2. Issue internal access token.
+
 ## Auth & Permissions
 - PUBLIC
+
 
 ## Request
 ### Query Params
 - client_id: string (required)
 - client_secret: string (required)
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | client_secret | query | x |
 | client_id | query | x |
+
 
 ## Response
 ### Success
@@ -43,13 +52,3 @@
   "data": null
 }
 ```
-
-## Logic (Internal)
-1. Validate client credentials.
-2. Issue internal access token.
-
-
-
-
-
-

@@ -1,10 +1,17 @@
-# GET /api/id/admin/users
+# GET /api/id/management/users
+
 
 ## Summary
 - List users with optional filters and pagination.
 
+
+## Description
+1. Build filter specification.
+2. Query page and map to response.
+
 ## Auth & Permissions
 - ADMIN
+
 
 ## Request
 ### Query Params
@@ -17,11 +24,13 @@
 ### Headers
 - Authorization: string (Bearer token)
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | status | query | x |
 | Authorization | header | x |
+
 
 ## Response
 ### Success
@@ -40,7 +49,9 @@
         "avatarUrl": string | null,
         "address": string | null,
         "roles": [string],
-        "status": string (ACTIVE|BLOCKED)
+        "status": string (ACTIVE|BLOCKED),
+        "createdAt": string,
+        "updatedAt": string
       }
     ],
     "totalElements": integer,
@@ -66,16 +77,9 @@
 }
 ```
 
-## Logic (Internal)
-1. Build filter specification.
-2. Query page and map to response.
 
 ## Notes
 - page is zero based.
-
-
-
-
 
 
 

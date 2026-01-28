@@ -96,6 +96,7 @@ public class GradingRules {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
     public static class FillBlanks {
+        private String inputKind;
         @Valid
         private List<BlankRule> blanks;
         private String scheme;

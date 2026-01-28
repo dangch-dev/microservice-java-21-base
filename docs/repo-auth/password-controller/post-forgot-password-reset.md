@@ -1,10 +1,17 @@
 # POST /api/auth/forgot-password/reset
 
+
 ## Summary
 - Reset password with a valid reset token.
 
+
+## Description
+1. Validate reset token and user.
+2. Update user password and revoke reset token.
+
 ## Auth & Permissions
 - PUBLIC
+
 
 ## Request
 ### Body
@@ -15,11 +22,13 @@
 }
 ```
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | token | body | x |
 | newPassword | body | x |
+
 
 ## Response
 ### Success
@@ -47,10 +56,3 @@ ewPassword is missing.
   "data": null
 }
 ```
-
-## Logic (Internal)
-1. Validate reset token and user.
-2. Update user password and revoke reset token.
-
-
-

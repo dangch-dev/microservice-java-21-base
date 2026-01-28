@@ -10,8 +10,10 @@ import pl.co.common.exception.ApiException;
 import pl.co.common.exception.ErrorCode;
 
 import java.math.BigDecimal;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 @Service
 public class QuestionServiceImpl implements QuestionService {
@@ -198,48 +200,64 @@ public class QuestionServiceImpl implements QuestionService {
             return;
         }
 
-        if (QuestionType.FILL_BLANKS.name().equalsIgnoreCase(normalizedType)) {
-            if (content == null || content.getBlanks() == null) {
-                throw new ApiException(ErrorCode.E204,
-                        ErrorCode.E204.message("questionContent.blanks is required, questionId: " + questionId));
-            }
-            if (!isInputKindValid(content.getBlanks().getInputKind())) {
-                throw new ApiException(ErrorCode.E204,
-                        ErrorCode.E204.message("questionContent.blanks.inputKind is invalid, questionId: " + questionId));
-            }
-            boolean isSelect = isSelectInput(content.getBlanks().getInputKind());
-            if (isSelect) {
-                if (content.getBlanks().getWordBank() == null || content.getBlanks().getWordBank().isEmpty()) {
-                    throw new ApiException(ErrorCode.E204,
-                            ErrorCode.E204.message("questionContent.blanks.wordBank is required, questionId: " + questionId));
-                }
-            }
-            if (rules == null || rules.getFillBlanks() == null) {
-                throw new ApiException(ErrorCode.E204,
-                        ErrorCode.E204.message("gradingRules.fillBlanks is required, questionId: " + questionId));
-            }
-            if (rules.getFillBlanks().getBlanks() == null || rules.getFillBlanks().getBlanks().isEmpty()) {
-                throw new ApiException(ErrorCode.E204,
-                        ErrorCode.E204.message("gradingRules.fillBlanks.blanks is required, questionId: " + questionId));
-            }
-            if (!isSchemeValid(rules.getFillBlanks().getScheme())) {
-                throw new ApiException(ErrorCode.E204,
-                        ErrorCode.E204.message("gradingRules.fillBlanks.scheme is invalid, questionId: " + questionId));
-            }
-            for (GradingRules.BlankRule blank : rules.getFillBlanks().getBlanks()) {
-                if (blank == null) {
-                    continue;
-                }
-                if (isSelect) {
-                    if (blank.getCorrectOptionIds() == null || blank.getCorrectOptionIds().isEmpty()) {
-                        throw new ApiException(ErrorCode.E204,
-                                ErrorCode.E204.message("gradingRules.fillBlanks.correctOptionIds is required, questionId: " + questionId));
-                    }
-                } else {
-                    if (blank.getAccepted() == null || blank.getAccepted().isEmpty()) {
-                        throw new ApiException(ErrorCode.E204,
-                                ErrorCode.E204.message("gradingRules.fillBlanks.accepted is required, questionId: " + questionId));
-                    }
+          if (QuestionType.FILL_BLANKS.name().equalsIgnoreCase(normalizedType)) {
+              if (content == null || content.getBlanks() == null) {
+                  throw new ApiException(ErrorCode.E204,
+                          ErrorCode.E204.message("questionContent.blanks is required, questionId: " + questionId));
+              }
+              String inputKind = content.getBlanks().getInputKind();
+              if (!isInputKindValid(inputKind)) {
+                  throw new ApiException(ErrorCode.E204,
+                          ErrorCode.E204.message("questionContent.blanks.inputKind is invalid, questionId: " + questionId));
+              }
+              boolean isSelect = isSelectInput(inputKind);
+              if (isSelect) {
+                  if (content.getBlanks().getWordBank() == null || content.getBlanks().getWordBank().isEmpty()) {
+                      throw new ApiException(ErrorCode.E204,
+                              ErrorCode.E204.message("questionContent.blanks.wordBank is required, questionId: " + questionId));
+                  }
+              }
+              if (rules == null || rules.getFillBlanks() == null) {
+                  throw new ApiException(ErrorCode.E204,
+                          ErrorCode.E204.message("gradingRules.fillBlanks is required, questionId: " + questionId));
+              }
+              rules.getFillBlanks().setInputKind(inputKind);
+              if (rules.getFillBlanks().getBlanks() == null || rules.getFillBlanks().getBlanks().isEmpty()) {
+                  throw new ApiException(ErrorCode.E204,
+                          ErrorCode.E204.message("gradingRules.fillBlanks.blanks is required, questionId: " + questionId));
+              }
+              if (!isSchemeValid(rules.getFillBlanks().getScheme())) {
+                  throw new ApiException(ErrorCode.E204,
+                          ErrorCode.E204.message("gradingRules.fillBlanks.scheme is invalid, questionId: " + questionId));
+              }
+              Set<String> wordBankIds = new HashSet<>();
+              if (isSelect && content.getBlanks().getWordBank() != null) {
+                  for (QuestionContent.WordBankItem item : content.getBlanks().getWordBank()) {
+                      if (item != null && item.getId() != null && !item.getId().isBlank()) {
+                          wordBankIds.add(item.getId());
+                      }
+                  }
+              }
+              for (GradingRules.BlankRule blank : rules.getFillBlanks().getBlanks()) {
+                  if (blank == null) {
+                      continue;
+                  }
+                  if (isSelect) {
+                      if (blank.getCorrectOptionIds() == null || blank.getCorrectOptionIds().isEmpty()) {
+                          throw new ApiException(ErrorCode.E204,
+                                  ErrorCode.E204.message("gradingRules.fillBlanks.correctOptionIds is required, questionId: " + questionId));
+                      }
+                      for (String optionId : blank.getCorrectOptionIds()) {
+                          if (!wordBankIds.contains(optionId)) {
+                              throw new ApiException(ErrorCode.E204,
+                                      ErrorCode.E204.message("gradingRules.fillBlanks.correctOptionIds must exist in wordBank, questionId: " + questionId));
+                          }
+                      }
+                  } else {
+                      if (blank.getAccepted() == null || blank.getAccepted().isEmpty()) {
+                          throw new ApiException(ErrorCode.E204,
+                                  ErrorCode.E204.message("gradingRules.fillBlanks.accepted is required, questionId: " + questionId));
+                      }
                     if (!isMatchMethodValid(blank.getMatchMethod())) {
                         throw new ApiException(ErrorCode.E204,
                                 ErrorCode.E204.message("gradingRules.fillBlanks.matchMethod is invalid, questionId: " + questionId));
@@ -262,19 +280,21 @@ public class QuestionServiceImpl implements QuestionService {
         }
     }
 
-    private void normalizeFillBlankInputs(ExamDraftChangeRequest change, String normalizedType) {
-        if (!QuestionType.FILL_BLANKS.name().equalsIgnoreCase(normalizedType)) {
-            return;
-        }
-        QuestionContent content = change.getQuestionContent();
-        GradingRules rules = change.getGradingRules();
-        if (content == null || content.getBlanks() == null || rules == null || rules.getFillBlanks() == null) {
-            return;
-        }
-        boolean isSelect = isSelectInput(content.getBlanks().getInputKind());
-        if (!isSelect && content.getBlanks().getWordBank() != null && !content.getBlanks().getWordBank().isEmpty()) {
-            content.getBlanks().setWordBank(null);
-        }
+      private void normalizeFillBlankInputs(ExamDraftChangeRequest change, String normalizedType) {
+          if (!QuestionType.FILL_BLANKS.name().equalsIgnoreCase(normalizedType)) {
+              return;
+          }
+          QuestionContent content = change.getQuestionContent();
+          GradingRules rules = change.getGradingRules();
+          if (content == null || content.getBlanks() == null || rules == null || rules.getFillBlanks() == null) {
+              return;
+          }
+          String inputKind = content.getBlanks().getInputKind();
+          rules.getFillBlanks().setInputKind(inputKind);
+          boolean isSelect = isSelectInput(inputKind);
+          if (!isSelect && content.getBlanks().getWordBank() != null && !content.getBlanks().getWordBank().isEmpty()) {
+              content.getBlanks().setWordBank(null);
+          }
         List<GradingRules.BlankRule> blanks = rules.getFillBlanks().getBlanks();
         if (blanks == null || blanks.isEmpty()) {
             return;

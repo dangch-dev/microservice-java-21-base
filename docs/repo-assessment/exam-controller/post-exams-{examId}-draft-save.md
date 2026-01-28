@@ -1,10 +1,23 @@
 # POST /api/assessment/exams/{examId}/draft/save
 
+
 ## Summary
 - Save draft metadata and question changes (add/edit/delete/reorder-only).
 
+
+## Description
+1. Validate input: must have `metadata` or `questionChanges`.
+2. Load exam + draft (must be DRAFT).
+3. Classify changes: delete, reorder-only, edit, add.
+4. Validate orders: unique and continuous from 1..N.
+5. Apply delete ? update mappings.
+6. Apply reorder-only ? update questionOrder only.
+7. Apply edit/add ? create new QuestionVersion and update mappings.
+8. Update draft metadata if provided.
+
 ## Auth & Permissions
 - ADMIN
+
 
 ## Request
 ### Path Params
@@ -131,6 +144,7 @@
           "scheme": string (per_pair|all_or_nothing)
         },
         "fill_blanks": {
+          "input_kind": string (text|select),
           "blanks": [
             {
               "blank_id": string,
@@ -158,11 +172,13 @@
 }
 ```
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | examId | path | x |
 | Authorization | header | x |
+
 
 ## Response
 ### Success
@@ -195,15 +211,6 @@
 }
 ```
 
-## Logic (Internal)
-1. Validate input: must have `metadata` or `questionChanges`.
-2. Load exam + draft (must be DRAFT).
-3. Classify changes: delete, reorder-only, edit, add.
-4. Validate orders: unique and continuous from 1..N.
-5. Apply delete ? update mappings.
-6. Apply reorder-only ? update questionOrder only.
-7. Apply edit/add ? create new QuestionVersion and update mappings.
-8. Update draft metadata if provided.
 
 ## Notes
 - If `deleted = true`, only `questionId` is required; content/rules are ignored.
@@ -211,6 +218,7 @@
 - If `questionId` exists and any of `type/content/rules` is present => must provide all 3.
 - If `questionId` does not exist => ADD, must provide all `type/content/rules`.
 - `questionContent` and `gradingRules` are required for ADD/EDIT; required subfields depend on `type`.
+- `gradingRules.fill_blanks.input_kind` is auto-copied from `questionContent.blanks.input_kind`.
 
 ### Type requirements
 | type | questionContent required | gradingRules required |
@@ -222,10 +230,5 @@
 | `FILL_BLANKS` | `blanks.input_kind`; if `input_kind=select` => `blanks.word_bank[]` (each with `id`, `content`) | `fill_blanks.blanks[]` (each with `blank_id`); if `input_kind=text` => `accepted[]`, `match_method`; if `input_kind=select` => `correct_option_ids[]`; plus `fill_blanks.scheme` |
 | `ESSAY` | none | none |
 | `FILE_UPLOAD` | `file_upload.max_files` | none |
-
-
-
-
-
 
 

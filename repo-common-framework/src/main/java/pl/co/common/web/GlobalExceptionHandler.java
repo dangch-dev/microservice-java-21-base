@@ -12,6 +12,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -109,6 +110,16 @@ public class GlobalExceptionHandler {
                 : "Required parameter missing: " + name;
         ApiResponse<Void> body = ApiResponse.error(ErrorCode.E243.code(), message);
         return ResponseEntity.status(ErrorCode.E243.status()).body(body);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponse<Void>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        String name = ex.getName();
+        String message = name == null || name.isBlank()
+                ? ErrorCode.E221.message("Invalid parameter")
+                : ErrorCode.E221.message(name + " is invalid");
+        ApiResponse<Void> body = ApiResponse.error(ErrorCode.E221.code(), message);
+        return ResponseEntity.status(ErrorCode.E221.status()).body(body);
     }
 
     @ExceptionHandler(Exception.class)

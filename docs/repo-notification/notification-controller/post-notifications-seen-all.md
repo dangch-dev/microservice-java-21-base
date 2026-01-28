@@ -1,19 +1,27 @@
 # POST /api/notification/notifications/seen/all
 
+
 ## Summary
 - Mark all notifications as seen.
 
+
+## Description
+1. Mark all notifications as seen for the user.
+
 ## Auth & Permissions
 - USER
+
 
 ## Request
 ### Headers
 - Authorization: string (Bearer token)
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | Authorization | header | x |
+
 
 ## Response
 ### Success
@@ -38,12 +46,3 @@
   "data": null
 }
 ```
-
-## Logic (Internal)
-1. Mark all notifications as seen for the user.
-
-
-
-
-
-

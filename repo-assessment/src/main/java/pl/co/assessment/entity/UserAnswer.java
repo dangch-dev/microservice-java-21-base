@@ -41,7 +41,7 @@ public class UserAnswer extends BaseEntity {
     private String examVersionQuestionId;
 
     @Convert(converter = AnswerJsonConverter.class)
-    @Column(name = "answer_json", nullable = false, columnDefinition = "json")
+    @Column(name = "answer_json", nullable = true, columnDefinition = "json")
     private AnswerJson answerJson;
 
     @Column(name = "earned_points", precision = 8, scale = 2)

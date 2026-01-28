@@ -5,6 +5,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import pl.co.assessment.entity.QuestionVersion;
 
+import java.util.List;
+
 public interface QuestionVersionRepository extends JpaRepository<QuestionVersion, String> {
     @Query("""
             SELECT COALESCE(MAX(qv.version), 0)
@@ -13,4 +15,6 @@ public interface QuestionVersionRepository extends JpaRepository<QuestionVersion
               AND qv.deleted = false
             """)
     int findMaxVersionByQuestionIdAndDeletedFalse(@Param("questionId") String questionId);
+
+    List<QuestionVersion> findByIdInAndDeletedFalse(List<String> ids);
 }

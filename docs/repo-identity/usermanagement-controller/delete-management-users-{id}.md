@@ -1,10 +1,16 @@
-# POST /api/id/admin/users/{id}/block
+# DELETE /api/id/management/users/{id}
+
 
 ## Summary
-- Block a user.
+- Delete user by id.
+
+
+## Description
+1. Delete user by id.
 
 ## Auth & Permissions
 - ADMIN
+
 
 ## Request
 ### Path Params
@@ -13,11 +19,13 @@
 ### Headers
 - Authorization: string (Bearer token)
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | id | path | x |
 | Authorization | header | x |
+
 
 ## Response
 ### Success
@@ -26,16 +34,7 @@
   "success": boolean,
   "errorCode": string | null,
   "errorMessage": string | null,
-  "data": {
-    "id": string,
-    "email": string,
-    "fullName": string,
-    "phoneNumber": string | null,
-    "avatarUrl": string | null,
-    "address": string | null,
-    "roles": [string],
-    "status": string (ACTIVE|BLOCKED)
-  }
+  "data": null
 }
 ```
 
@@ -53,13 +52,3 @@
   "data": null
 }
 ```
-
-## Logic (Internal)
-1. Update user status to BLOCKED.
-
-
-
-
-
-
-

@@ -1,10 +1,19 @@
 # POST /api/assessment/exams/{examId}/draft/discard
 
+
 ## Summary
 - Discard the current draft version of an exam (idempotent).
 
+
+## Description
+1. Lock and load exam.
+2. If no draft pointer ? return OK.
+3. Validate draft exists and status is DRAFT.
+4. Soft delete draft and clear `draft_exam_version_id`.
+
 ## Auth & Permissions
 - ADMIN
+
 
 ## Request
 ### Path Params
@@ -13,11 +22,13 @@
 ### Headers
 - Authorization: string (Bearer token)
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | examId | path | x |
 | Authorization | header | x |
+
 
 ## Response
 ### Success
@@ -45,18 +56,9 @@
 }
 ```
 
-## Logic (Internal)
-1. Lock and load exam.
-2. If no draft pointer ? return OK.
-3. Validate draft exists and status is DRAFT.
-4. Soft delete draft and clear `draft_exam_version_id`.
 
 ## Notes
 - Calling multiple times is safe; if draft already null it returns OK.
-
-
-
-
 
 
 

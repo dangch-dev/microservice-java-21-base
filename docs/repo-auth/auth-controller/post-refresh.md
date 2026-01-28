@@ -1,10 +1,19 @@
 # POST /api/auth/refresh
 
+
 ## Summary
 - Rotate refresh token and return a new token pair.
 
+
+## Description
+1. Validate refresh token signature and claims.
+2. Validate refresh token against storage.
+3. Verify user status and email verification.
+4. Issue new access token and rotate refresh token.
+
 ## Auth & Permissions
 - PUBLIC
+
 
 ## Request
 ### Body
@@ -14,10 +23,12 @@
 }
 ```
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | refreshToken | body | x |
+
 
 ## Response
 ### Success
@@ -54,14 +65,6 @@ efreshToken is missing.
 }
 ```
 
-## Logic (Internal)
-1. Validate refresh token signature and claims.
-2. Validate refresh token against storage.
-3. Verify user status and email verification.
-4. Issue new access token and rotate refresh token.
 
 ## Notes
 - Refresh token rotation revokes the previous token.
-
-
-

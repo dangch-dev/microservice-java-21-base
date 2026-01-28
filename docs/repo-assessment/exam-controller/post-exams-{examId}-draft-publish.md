@@ -1,10 +1,20 @@
 # POST /api/assessment/exams/{examId}/draft/publish
 
+
 ## Summary
 - Publish the current draft version and archive the previous published version.
 
+
+## Description
+1. Lock and load exam row.
+2. Validate draft pointer and draft status.
+3. Ensure draft has at least 1 active question.
+4. Archive old published version (if exists).
+5. Promote draft to PUBLISHED and update exam pointers.
+
 ## Auth & Permissions
 - ADMIN
+
 
 ## Request
 ### Path Params
@@ -13,11 +23,13 @@
 ### Headers
 - Authorization: string (Bearer token)
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | examId | path | x |
 | Authorization | header | x |
+
 
 ## Response
 ### Success
@@ -46,19 +58,8 @@
 }
 ```
 
-## Logic (Internal)
-1. Lock and load exam row.
-2. Validate draft pointer and draft status.
-3. Ensure draft has at least 1 active question.
-4. Archive old published version (if exists).
-5. Promote draft to PUBLISHED and update exam pointers.
 
 ## Notes
 - Draft version becomes the published version; no new exam version is created.
 - Questions and question versions are not modified.
-
-
-
-
-
 

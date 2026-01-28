@@ -1,10 +1,17 @@
 # DELETE /api/assessment/exams/{examId}
 
+
 ## Summary
 - Soft delete an exam.
 
+
+## Description
+1. Lock and load exam row.
+2. Set `deleted = true`.
+
 ## Auth & Permissions
 - ADMIN
+
 
 ## Request
 ### Path Params
@@ -13,11 +20,13 @@
 ### Headers
 - Authorization: string (Bearer token)
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | examId | path | x |
 | Authorization | header | x |
+
 
 ## Response
 ### Success
@@ -43,13 +52,3 @@
   "data": null
 }
 ```
-
-## Logic (Internal)
-1. Lock and load exam row.
-2. Set `deleted = true`.
-
-
-
-
-
-

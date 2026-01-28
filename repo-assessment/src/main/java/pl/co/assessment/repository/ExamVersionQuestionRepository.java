@@ -12,6 +12,10 @@ import java.util.Set;
 public interface ExamVersionQuestionRepository extends JpaRepository<ExamVersionQuestion, String> {
     List<ExamVersionQuestion> findByExamVersionIdAndDeletedFalseOrderByQuestionOrderAsc(String examVersionId);
 
+    List<ExamVersionQuestion> findByIdInAndDeletedFalse(List<String> ids);
+
+    List<ExamVersionQuestion> findByExamVersionIdAndIdInAndDeletedFalse(String examVersionId, List<String> ids);
+
     boolean existsByExamVersionIdAndDeletedFalse(String examVersionId);
 
     @Query("""

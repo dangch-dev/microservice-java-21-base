@@ -1,19 +1,28 @@
 # GET /api/assessment/categories
 
+
 ## Summary
 - List all categories.
 
+
+## Description
+1. Validate ADMIN permission.
+2. Load categories and return as a list.
+
 ## Auth & Permissions
 - ADMIN
+
 
 ## Request
 ### Headers
 - Authorization: string (Bearer token)
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | Authorization | header | x |
+
 
 ## Response
 ### Success
@@ -45,16 +54,9 @@
 }
 ```
 
-## Logic (Internal)
-1. Validate ADMIN permission.
-2. Load categories and return as a list.
 
 ## Notes
 - Empty list returns `data: []`.
-
-
-
-
 
 
 

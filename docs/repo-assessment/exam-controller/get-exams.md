@@ -1,10 +1,17 @@
 # GET /api/assessment/exams
 
+
 ## Summary
 - List exams with optional filters and pagination.
 
+
+## Description
+1. Normalize filters (blank -> null) and apply paging defaults.
+2. Query repository for page result and map to response.
+
 ## Auth & Permissions
 - ADMIN
+
 
 ## Request
 ### Query Params
@@ -16,10 +23,12 @@
 ### Headers
 - Authorization: string (Bearer token)
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | Authorization | header | x |
+
 
 ## Response
 ### Success
@@ -35,10 +44,12 @@
         "examVersionId": string,
         "categoryName": string,
         "name": string,
+        "description": string | null,
         "status": string,
         "durationMinutes": integer | null,
         "shuffleQuestions": boolean,
-        "shuffleOptions": boolean
+        "shuffleOptions": boolean,
+        "enabled": boolean
       }
     ],
     "totalElements": integer,
@@ -62,16 +73,9 @@
 }
 ```
 
-## Logic (Internal)
-1. Normalize filters (blank -> null) and apply paging defaults.
-2. Query repository for page result and map to response.
 
 ## Notes
 - `page` is zero-based.
-
-
-
-
 
 
 

@@ -1,10 +1,17 @@
 # PUT /api/id/users/me
 
+
 ## Summary
 - Update current user profile.
 
+
+## Description
+1. Resolve userId from access token.
+2. Update profile fields and return updated profile.
+
 ## Auth & Permissions
 - USER
+
 
 ## Request
 ### Headers
@@ -20,11 +27,13 @@
 }
 ```
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | fullName | body | x |
 | Authorization | header | x |
+
 
 ## Response
 ### Success
@@ -62,13 +71,3 @@
   "data": null
 }
 ```
-
-## Logic (Internal)
-1. Resolve userId from access token.
-2. Update profile fields and return updated profile.
-
-
-
-
-
-

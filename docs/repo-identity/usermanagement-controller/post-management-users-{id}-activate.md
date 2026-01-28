@@ -1,10 +1,16 @@
-# DELETE /api/id/admin/users/{id}
+# POST /api/id/management/users/{id}/activate
+
 
 ## Summary
-- Delete user by id.
+- Activate a user.
+
+
+## Description
+1. Update user status to ACTIVE.
 
 ## Auth & Permissions
 - ADMIN
+
 
 ## Request
 ### Path Params
@@ -13,11 +19,13 @@
 ### Headers
 - Authorization: string (Bearer token)
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | id | path | x |
 | Authorization | header | x |
+
 
 ## Response
 ### Success
@@ -26,7 +34,18 @@
   "success": boolean,
   "errorCode": string | null,
   "errorMessage": string | null,
-  "data": null
+  "data": {
+    "id": string,
+    "email": string,
+    "fullName": string,
+    "phoneNumber": string | null,
+    "avatarUrl": string | null,
+    "address": string | null,
+    "roles": [string],
+    "status": string (ACTIVE|BLOCKED),
+    "createdAt": string,
+    "updatedAt": string
+  }
 }
 ```
 
@@ -44,13 +63,3 @@
   "data": null
 }
 ```
-
-## Logic (Internal)
-1. Delete user by id.
-
-
-
-
-
-
-

@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import pl.co.common.dto.ApiResponse;
-import pl.co.common.filter.principal.AuthPrincipal;
+import pl.co.common.security.AuthUtils;
 import pl.co.identity.dto.TicketCreateRequest;
 import pl.co.identity.dto.TicketFilterRequest;
 import pl.co.identity.dto.TicketPageResponse;
@@ -25,43 +25,43 @@ public class TicketController {
     @PostMapping
     public ApiResponse<TicketResponse> create(Authentication authentication,
                                               @Valid @RequestBody TicketCreateRequest request) {
-        AuthPrincipal principal = (AuthPrincipal) authentication.getPrincipal();
-        return ApiResponse.ok(ticketUserService.create(principal, request));
+        String userId = AuthUtils.resolveUserId(authentication);
+        return ApiResponse.ok(ticketUserService.create(userId, request));
     }
 
     @GetMapping
     public ApiResponse<TicketPageResponse> list(Authentication authentication,
                                                 @Valid TicketFilterRequest filter) {
-        AuthPrincipal principal = (AuthPrincipal) authentication.getPrincipal();
-        return ApiResponse.ok(ticketUserService.list(principal, filter));
+        String userId = AuthUtils.resolveUserId(authentication);
+        return ApiResponse.ok(ticketUserService.list(userId, filter));
     }
 
     @GetMapping("/{ticketId}")
     public ApiResponse<TicketResponse> get(Authentication authentication,
                                            @PathVariable String ticketId) {
-        AuthPrincipal principal = (AuthPrincipal) authentication.getPrincipal();
-        return ApiResponse.ok(ticketUserService.get(principal, ticketId));
+        String userId = AuthUtils.resolveUserId(authentication);
+        return ApiResponse.ok(ticketUserService.get(userId, ticketId));
     }
 
     @PostMapping("/{ticketId}/cancel")
     public ApiResponse<TicketResponse> cancel(Authentication authentication,
                                               @PathVariable String ticketId) {
-        AuthPrincipal principal = (AuthPrincipal) authentication.getPrincipal();
-        return ApiResponse.ok(ticketUserService.cancel(principal, ticketId));
+        String userId = AuthUtils.resolveUserId(authentication);
+        return ApiResponse.ok(ticketUserService.cancel(userId, ticketId));
     }
 
     @PostMapping("/{ticketId}/comments")
     public ApiResponse<TicketCommentResponse> addComment(Authentication authentication,
                                                          @PathVariable String ticketId,
                                                          @Valid @RequestBody TicketCommentRequest request) {
-        AuthPrincipal principal = (AuthPrincipal) authentication.getPrincipal();
-        return ApiResponse.ok(ticketUserService.addComment(principal, ticketId, request));
+        String userId = AuthUtils.resolveUserId(authentication);
+        return ApiResponse.ok(ticketUserService.addComment(userId, ticketId, request));
     }
 
     @GetMapping("/{ticketId}/comments")
     public ApiResponse<java.util.List<TicketCommentResponse>> listComments(Authentication authentication,
                                                                            @PathVariable String ticketId) {
-        AuthPrincipal principal = (AuthPrincipal) authentication.getPrincipal();
-        return ApiResponse.ok(ticketUserService.listComments(principal, ticketId));
+        String userId = AuthUtils.resolveUserId(authentication);
+        return ApiResponse.ok(ticketUserService.listComments(userId, ticketId));
     }
 }

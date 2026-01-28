@@ -1,10 +1,17 @@
 # POST /api/id/management/tickets/{ticketId}/comments
 
+
 ## Summary
 - Add a comment to a ticket as admin.
 
+
+## Description
+1. Load ticket by id.
+2. Save comment and publish file and notification events.
+
 ## Auth & Permissions
 - ADMIN
+
 
 ## Request
 ### Path Params
@@ -28,6 +35,7 @@
 }
 ```
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
@@ -35,6 +43,7 @@
 | files | body | x |
 | ticketId | path | x |
 | Authorization | header | x |
+
 
 ## Response
 ### Success
@@ -80,13 +89,3 @@
   "data": null
 }
 ```
-
-## Logic (Internal)
-1. Load ticket by id.
-2. Save comment and publish file and notification events.
-
-
-
-
-
-

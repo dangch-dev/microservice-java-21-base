@@ -1,10 +1,17 @@
 # GET /api/id/tickets/{ticketId}
 
+
 ## Summary
 - Get ticket details by id for the current user.
 
+
+## Description
+1. Load ticket by id.
+2. Validate ownership and return ticket details.
+
 ## Auth & Permissions
 - USER
+
 
 ## Request
 ### Path Params
@@ -13,11 +20,13 @@
 ### Headers
 - Authorization: string (Bearer token)
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | ticketId | path | x |
 | Authorization | header | x |
+
 
 ## Response
 ### Success
@@ -63,13 +72,3 @@
   "data": null
 }
 ```
-
-## Logic (Internal)
-1. Load ticket by id.
-2. Validate ownership and return ticket details.
-
-
-
-
-
-

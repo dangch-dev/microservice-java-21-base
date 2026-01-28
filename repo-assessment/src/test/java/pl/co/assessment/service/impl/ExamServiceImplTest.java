@@ -22,6 +22,7 @@ import pl.co.assessment.repository.QuestionRepository;
 import pl.co.assessment.repository.QuestionVersionRepository;
 import pl.co.assessment.service.QuestionService;
 import pl.co.assessment.service.impl.QuestionServiceImpl;
+import pl.co.common.event.EventPublisher;
 import pl.co.common.exception.ApiException;
 import pl.co.common.exception.ErrorCode;
 
@@ -55,6 +56,8 @@ class ExamServiceImplTest {
     private QuestionRepository questionRepository;
     @Mock
     private QuestionVersionRepository questionVersionRepository;
+    @Mock
+    private EventPublisher eventPublisher;
 
     private QuestionService questionService;
     private ExamServiceImpl examService;
@@ -68,7 +71,8 @@ class ExamServiceImplTest {
                 examVersionQuestionRepository,
                 questionRepository,
                 questionVersionRepository,
-                questionService
+                questionService,
+                eventPublisher
         );
         lenient().when(questionVersionRepository.save(any(QuestionVersion.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));

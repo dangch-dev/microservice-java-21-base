@@ -18,6 +18,8 @@ public interface UserMapper {
     ProfileResponse toProfile(User user);
 
     @Mapping(target = "roles", expression = "java(toRoleNames(user.getRoles()))")
+    @Mapping(target = "createdAt", source = "createdAt")
+    @Mapping(target = "updatedAt", source = "updatedAt")
     AdminUserResponse toAdmin(User user);
 
     default Set<String> toRoleNames(Set<Role> roles) {

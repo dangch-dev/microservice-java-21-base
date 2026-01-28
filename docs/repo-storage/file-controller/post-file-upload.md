@@ -1,14 +1,22 @@
 # POST /api/storage/file/upload
 
+
 ## Summary
 - Upload a file and return its metadata.
+
+
+## Description
+1. Validate file input.
+2. Upload to object storage and persist metadata.
 
 ## Auth & Permissions
 - PUBLIC
 
+
 ## Request
 ### Form Data
 - file: file (required)
+
 
 ## Response
 ### Success
@@ -37,10 +45,3 @@
   "data": null
 }
 ```
-
-## Logic (Internal)
-1. Validate file input.
-2. Upload to object storage and persist metadata.
-
-
-

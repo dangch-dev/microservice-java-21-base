@@ -1,19 +1,27 @@
 # GET /api/auth/forgot-password/validate
 
+
 ## Summary
 - Validate reset token and return user info for the reset page.
 
+
+## Description
+1. Validate reset token and return user info.
+
 ## Auth & Permissions
 - PUBLIC
+
 
 ## Request
 ### Query Params
 - token: string (required)
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | token | query | x |
+
 
 ## Response
 ### Success
@@ -42,12 +50,3 @@
   "data": null
 }
 ```
-
-## Logic (Internal)
-1. Validate reset token and return user info.
-
-
-
-
-
-

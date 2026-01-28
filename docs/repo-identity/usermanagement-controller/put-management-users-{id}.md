@@ -1,10 +1,17 @@
-# GET /api/id/admin/users/{id}
+# PUT /api/id/management/users/{id}
+
 
 ## Summary
-- Get user details by id.
+- Update user fields by id.
+
+
+## Description
+1. Load user by id.
+2. Update provided fields and return updated user.
 
 ## Auth & Permissions
 - ADMIN
+
 
 ## Request
 ### Path Params
@@ -13,11 +20,25 @@
 ### Headers
 - Authorization: string (Bearer token)
 
+### Body
+```
+{
+  "status": string | null (ACTIVE|BLOCKED),
+  "roleIds": [string] | null,
+  "fullName": string | null,
+  "phoneNumber": string | null,
+  "avatarUrl": string | null,
+  "address": string | null
+}
+```
+
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | id | path | x |
 | Authorization | header | x |
+
 
 ## Response
 ### Success
@@ -34,12 +55,18 @@
     "avatarUrl": string | null,
     "address": string | null,
     "roles": [string],
-    "status": string (ACTIVE|BLOCKED)
+    "status": string (ACTIVE|BLOCKED),
+    "createdAt": string,
+    "updatedAt": string
   }
 }
 ```
 
 ### Errors
+- (400 Bad Request) - errorCode: BAD_REQUEST when field length is invalid.
+- (400 Bad Request) - errorCode: 202 when request body has invalid data type or JSON.
+- (400 Bad Request) - errorCode: 221 when role id is not found.
+- (400 Bad Request) - errorCode: 204 when status is invalid.
 - (404 Not Found) - errorCode: NOT_FOUND when user not found.
 - (401 Unauthorized) - errorCode: UNAUTHORIZED when access token is missing or invalid.
 - (401 Unauthorized) - errorCode: 234 when access token is expired.
@@ -53,13 +80,3 @@
   "data": null
 }
 ```
-
-## Logic (Internal)
-1. Load user by id and map to response.
-
-
-
-
-
-
-

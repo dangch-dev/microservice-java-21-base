@@ -1,10 +1,17 @@
 # GET /api/notification/notifications
 
+
 ## Summary
 - List notifications for the current user.
 
+
+## Description
+1. Load notifications by userId with paging.
+2. Return items and unread count.
+
 ## Auth & Permissions
 - USER
+
 
 ## Request
 ### Query Params
@@ -14,10 +21,12 @@
 ### Headers
 - Authorization: string (Bearer token)
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | Authorization | header | x |
+
 
 ## Response
 ### Success
@@ -65,15 +74,8 @@
 }
 ```
 
-## Logic (Internal)
-1. Load notifications by userId with paging.
-2. Return items and unread count.
 
 ## Notes
 - page is zero based.
-
-
-
-
 
 

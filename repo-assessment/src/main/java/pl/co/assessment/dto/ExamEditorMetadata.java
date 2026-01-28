@@ -11,4 +11,6 @@ public class ExamEditorMetadata {
     private final Integer durationMinutes;
     private final boolean shuffleQuestions;
     private final boolean shuffleOptions;
+    private final String status;
+    private final boolean enabled;
 }

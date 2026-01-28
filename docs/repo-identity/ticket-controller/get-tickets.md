@@ -1,10 +1,17 @@
 # GET /api/id/tickets
 
+
 ## Summary
 - List tickets created by the current user.
 
+
+## Description
+1. Filter tickets by creator userId and optional status.
+2. Return paged results.
+
 ## Auth & Permissions
 - USER
+
 
 ## Request
 ### Query Params
@@ -15,11 +22,13 @@
 ### Headers
 - Authorization: string (Bearer token)
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | status | query | x |
 | Authorization | header | x |
+
 
 ## Response
 ### Success
@@ -73,15 +82,8 @@
 }
 ```
 
-## Logic (Internal)
-1. Filter tickets by creator userId and optional status.
-2. Return paged results.
 
 ## Notes
 - page is zero based.
-
-
-
-
 
 

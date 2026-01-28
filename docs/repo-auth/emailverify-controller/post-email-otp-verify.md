@@ -1,10 +1,18 @@
 # POST /api/auth/email/otp/verify
 
+
 ## Summary
 - Verify OTP and issue new access and refresh tokens.
 
+
+## Description
+1. Resolve user from access token.
+2. Validate OTP and mark email verified.
+3. Issue new tokens.
+
 ## Auth & Permissions
 - USER
+
 
 ## Request
 ### Headers
@@ -17,11 +25,13 @@
 }
 ```
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | otp | body | x |
 | Authorization | header | x |
+
 
 ## Response
 ### Success
@@ -56,16 +66,8 @@
 }
 ```
 
-## Logic (Internal)
-1. Resolve user from access token.
-2. Validate OTP and mark email verified.
-3. Issue new tokens.
 
 ## Notes
 - Max attempts is 5.
-
-
-
-
 
 

@@ -1,10 +1,16 @@
-# POST /api/id/admin/users/{id}/activate
+# GET /api/id/management/users/{id}
+
 
 ## Summary
-- Activate a user.
+- Get user details by id.
+
+
+## Description
+1. Load user by id and map to response.
 
 ## Auth & Permissions
 - ADMIN
+
 
 ## Request
 ### Path Params
@@ -13,11 +19,13 @@
 ### Headers
 - Authorization: string (Bearer token)
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | id | path | x |
 | Authorization | header | x |
+
 
 ## Response
 ### Success
@@ -34,7 +42,9 @@
     "avatarUrl": string | null,
     "address": string | null,
     "roles": [string],
-    "status": string (ACTIVE|BLOCKED)
+    "status": string (ACTIVE|BLOCKED),
+    "createdAt": string,
+    "updatedAt": string
   }
 }
 ```
@@ -53,13 +63,3 @@
   "data": null
 }
 ```
-
-## Logic (Internal)
-1. Update user status to ACTIVE.
-
-
-
-
-
-
-

@@ -1,10 +1,17 @@
 # GET /api/id/management/tickets
 
+
 ## Summary
 - List tickets for management view.
 
+
+## Description
+1. Filter tickets by status.
+2. Return paged results.
+
 ## Auth & Permissions
 - ADMIN
+
 
 ## Request
 ### Query Params
@@ -15,11 +22,13 @@
 ### Headers
 - Authorization: string (Bearer token)
 
+
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | status | query | x |
 | Authorization | header | x |
+
 
 ## Response
 ### Success
@@ -74,16 +83,9 @@
 }
 ```
 
-## Logic (Internal)
-1. Filter tickets by status.
-2. Return paged results.
 
 ## Notes
 - page is zero based.
-
-
-
-
 
 
 
