@@ -1,4 +1,4 @@
-# GET /api/assessment/exams
+# GET /api/assessment/management/exams
 
 
 ## Summary

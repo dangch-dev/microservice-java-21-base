@@ -1,4 +1,4 @@
-# PATCH /api/assessment/exams/{examId}/enable
+# PATCH /api/assessment/management/exams/{examId}/enable
 
 
 ## Summary

@@ -1,4 +1,4 @@
-# PUT /api/assessment/exams/{examId}/edit
+# PUT /api/assessment/management/exams/{examId}/edit
 
 
 ## Summary

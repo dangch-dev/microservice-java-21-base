@@ -1,4 +1,4 @@
-# DELETE /api/assessment/exams/{examId}
+# DELETE /api/assessment/management/exams/{examId}
 
 
 ## Summary
