@@ -1,4 +1,4 @@
-# POST /api/assessment/exams
+# POST /api/assessment/management/exams
 
 
 ## Summary

@@ -1,4 +1,4 @@
-# POST /api/assessment/exams/{examId}/draft/discard
+# POST /api/assessment/management/exams/{examId}/draft/discard
 
 
 ## Summary
