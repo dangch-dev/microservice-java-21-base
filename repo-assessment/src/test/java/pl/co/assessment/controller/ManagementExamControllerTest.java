@@ -39,9 +39,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(controllers = ExamController.class)
-@Import({GlobalExceptionHandler.class, TrimBindingAdvice.class, ExamControllerTest.TestSecurityConfig.class})
-class ExamControllerTest {
+@WebMvcTest(controllers = ManagementExamController.class)
+@Import({GlobalExceptionHandler.class, TrimBindingAdvice.class, ManagementExamControllerTest.TestSecurityConfig.class})
+class ManagementExamControllerTest {
 
     @Autowired
     private MockMvc mockMvc;

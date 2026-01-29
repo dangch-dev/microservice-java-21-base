@@ -87,13 +87,44 @@ public class ExamServiceImpl implements ExamService {
 
     @Override
     @Transactional(readOnly = true)
-    public ExamPageResponse list(String searchValue, String categoryId, Integer page, Integer size) {
+    public ExamPageResponse list(String searchValue, String categoryId, Boolean enabled, Integer page, Integer size) {
         int pageValue = page == null ? 0 : page;
         int sizeValue = size == null ? 20 : size;
         String normalized = (searchValue == null || searchValue.isBlank()) ? null : searchValue;
         String categoryNormalized = (categoryId == null || categoryId.isBlank()) ? null : categoryId;
+        Boolean enabledFilter = enabled;
         PageRequest pageRequest = PageRequest.of(Math.max(pageValue, 0), Math.max(sizeValue, 1));
-        Page<ExamListRow> result = examRepository.findExamList(normalized, categoryNormalized, pageRequest);
+        Page<ExamListRow> result = examRepository.findExamList(normalized, categoryNormalized, enabledFilter, pageRequest);
+        List<ExamListItemResponse> items = result.getContent().stream()
+                .map(row -> new ExamListItemResponse(
+                        row.getExamId(),
+                        row.getExamVersionId(),
+                        row.getCategoryName(),
+                        row.getName(),
+                        row.getDescription(),
+                        row.getStatus(),
+                        row.getDurationMinutes(),
+                        Boolean.TRUE.equals(row.getShuffleQuestions()),
+                        Boolean.TRUE.equals(row.getShuffleOptions()),
+                        Boolean.TRUE.equals(row.getEnabled())))
+                .toList();
+        return ExamPageResponse.builder()
+                .items(items)
+                .totalElements(result.getTotalElements())
+                .totalPages(result.getTotalPages())
+                .page(result.getNumber())
+                .size(result.getSize())
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ExamPageResponse listPublic(String searchValue, Integer page, Integer size) {
+        int pageValue = page == null ? 0 : page;
+        int sizeValue = size == null ? 20 : size;
+        String normalized = (searchValue == null || searchValue.isBlank()) ? null : searchValue;
+        PageRequest pageRequest = PageRequest.of(Math.max(pageValue, 0), Math.max(sizeValue, 1));
+        Page<ExamListRow> result = examRepository.findPublicExamList(normalized, pageRequest);
         List<ExamListItemResponse> items = result.getContent().stream()
                 .map(row -> new ExamListItemResponse(
                         row.getExamId(),

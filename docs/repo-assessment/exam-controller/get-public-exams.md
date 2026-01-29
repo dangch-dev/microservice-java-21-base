@@ -1,23 +1,23 @@
-# GET /api/assessment/management/exams
+# GET /api/assessment/exams
 
 
 ## Summary
-- List exams with optional filters and pagination.
+- List published exams that are enabled (public list).
 
 
 ## Description
-1. Normalize filters (blank -> null) and apply paging defaults.
-2. Query repository for page result and map to response.
+1. Filter exams by enabled = true.
+2. Use published exam version only.
+3. Filter by exam name when `searchValue` is provided.
+4. Return paged list.
 
 ## Auth & Permissions
-- ADMIN
+- USER, ADMIN
 
 
 ## Request
 ### Query Params
 - searchValue: string | null (optional)
-- categoryId: string | null (optional)
-- enabled: boolean | null (optional)
 - page: integer (optional, default 0)
 - size: integer (optional, default 20, minimum 1)
 
@@ -62,9 +62,8 @@
 ```
 
 ### Errors
-- (401 Unauthorized) - errorCode: UNAUTHORIZED when access token is missing/invalid.
+- (401 Unauthorized) - errorCode: 241 when access token is missing/invalid.
 - (401 Unauthorized) - errorCode: 234 when access token is expired.
-- (403 Forbidden) - errorCode: FORBIDDEN when user is not ADMIN.
 ```
 {
   "success": false,
@@ -76,7 +75,4 @@
 
 
 ## Notes
-- `page` is zero-based.
-
-
-
+- Only `enabled = true` and `PUBLISHED` exam versions are returned.

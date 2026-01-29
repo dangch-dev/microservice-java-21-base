@@ -14,7 +14,7 @@ import pl.co.common.dto.ApiResponse;
 @RequestMapping("/management/exam-versions")
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyAuthority(T(pl.co.common.security.RoleName).ROLE_ADMIN.name())")
-public class ExamVersionController {
+public class ManagementExamVersionController {
 
     private final ExamVersionService examVersionService;
 

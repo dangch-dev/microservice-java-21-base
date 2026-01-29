@@ -10,7 +10,9 @@ import pl.co.assessment.dto.ExamStatusUpdateRequest;
 public interface ExamService {
     ExamCreateResponse create(ExamCreateRequest request);
 
-    ExamPageResponse list(String searchValue, String categoryId, Integer page, Integer size);
+    ExamPageResponse list(String searchValue, String categoryId, Boolean enabled, Integer page, Integer size);
+
+    ExamPageResponse listPublic(String searchValue, Integer page, Integer size);
 
     ExamEditorResponse requestEdit(String examId);
 
