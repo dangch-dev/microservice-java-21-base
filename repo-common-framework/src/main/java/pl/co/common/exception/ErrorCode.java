@@ -41,6 +41,9 @@ public enum ErrorCode {
     E255("255", HttpStatus.CONFLICT,"User exists (email)"), // User exists (email)
     E256("256", HttpStatus.CONFLICT,"User exists (phone)"), // User exists (phone)
     E250("250", HttpStatus.CONFLICT,"Another request in progress"), // Another request in progress
+    E423("423", HttpStatus.CONFLICT,"Attempt is locked (%s)"), // Manual grading lock conflict
+    E424("424", HttpStatus.CONFLICT,"Session conflict (%s)"), // Manual grading session conflict
+    E425("425", HttpStatus.CONFLICT,"Lock lost (%s)"), // Manual grading lock lost
     E420("420", HttpStatus.UNPROCESSABLE_ENTITY,"Business rule violation (%s)"), // Business rule violation
 
     // Not found / Data integrity

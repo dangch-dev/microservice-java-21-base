@@ -85,6 +85,7 @@ public class InternalApiClient {
             headers.forEach(httpHeaders::set);
         }
         applyUserAuthorization(httpHeaders);
+        applyRequestContextHeaders(httpHeaders);
         httpHeaders.set(SecurityConstants.HEADER_INTERNAL_TOKEN, SecurityConstants.HEADER_BEARER_PREFIX + getAccessToken());
         HttpEntity<?> entity = body == null ? new HttpEntity<>(httpHeaders) : new HttpEntity<>(body, httpHeaders);
         return executeWithRetry(() -> restTemplate.exchange(builder.toUriString(), method, entity, responseType));
@@ -204,6 +205,25 @@ public class InternalApiClient {
         String authorization = servletAttributes.getRequest().getHeader(SecurityConstants.HEADER_AUTHORIZATION);
         if (StringUtils.hasText(authorization)) {
             headers.set(SecurityConstants.HEADER_AUTHORIZATION, authorization);
+        }
+    }
+
+    private void applyRequestContextHeaders(HttpHeaders headers) {
+        RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
+        if (!(attributes instanceof ServletRequestAttributes servletAttributes)) {
+            return;
+        }
+        if (!headers.containsKey(SecurityConstants.HEADER_REQUEST_ID)) {
+            String requestId = servletAttributes.getRequest().getHeader(SecurityConstants.HEADER_REQUEST_ID);
+            if (StringUtils.hasText(requestId)) {
+                headers.set(SecurityConstants.HEADER_REQUEST_ID, requestId);
+            }
+        }
+        if (!headers.containsKey(SecurityConstants.HEADER_SESSION_ID)) {
+            String sessionId = servletAttributes.getRequest().getHeader(SecurityConstants.HEADER_SESSION_ID);
+            if (StringUtils.hasText(sessionId)) {
+                headers.set(SecurityConstants.HEADER_SESSION_ID, sessionId);
+            }
         }
     }
 }

@@ -247,6 +247,8 @@ public class ExamServiceImpl implements ExamService {
             ));
         }
 
+        // TODO: lock exam
+
         return new ExamEditorResponse(
                 metadata,
                 questions

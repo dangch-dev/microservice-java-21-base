@@ -29,6 +29,11 @@ spring:
     bootstrap-servers: dangch-kafka:59092
     consumer:
       group-id: assessment-event
+  data:
+    redis:
+      host: dangch-redis
+      port: 56379
+      password: redis_password
 
 server:
   port: 58087

@@ -10,6 +10,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -30,10 +31,10 @@ public class GlobalExceptionHandler {
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(ApiException.class)
-    public ResponseEntity<ApiResponse<Void>> handleApiException(ApiException ex) {
+    public ResponseEntity<ApiResponse<Object>> handleApiException(ApiException ex) {
         ErrorCode code = ex.getErrorCode() == null ? ErrorCode.INTERNAL_ERROR : ex.getErrorCode();
         HttpStatus status = code.status();
-        ApiResponse<Void> body = ApiResponse.error(code.code(), ex.getMessage());
+        ApiResponse<Object> body = ApiResponse.error(code.code(), ex.getMessage(), ex.getData());
         return ResponseEntity.status(status).body(body);
     }
 
@@ -110,6 +111,16 @@ public class GlobalExceptionHandler {
                 : "Required parameter missing: " + name;
         ApiResponse<Void> body = ApiResponse.error(ErrorCode.E243.code(), message);
         return ResponseEntity.status(ErrorCode.E243.status()).body(body);
+    }
+
+    @ExceptionHandler(MissingRequestHeaderException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMissingHeader(MissingRequestHeaderException ex) {
+        String name = ex.getHeaderName();
+        String message = name == null || name.isBlank()
+                ? ErrorCode.E221.message("Header is required")
+                : ErrorCode.E221.message(name + " is required");
+        ApiResponse<Void> body = ApiResponse.error(ErrorCode.E221.code(), message);
+        return ResponseEntity.status(ErrorCode.E221.status()).body(body);
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)

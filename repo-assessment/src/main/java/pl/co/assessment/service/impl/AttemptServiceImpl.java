@@ -8,6 +8,11 @@ import org.springframework.transaction.annotation.Transactional;
 import pl.co.assessment.dto.AttemptAnswerResponse;
 import pl.co.assessment.dto.AttemptDetailResponse;
 import pl.co.assessment.dto.AttemptListItemResponse;
+import pl.co.assessment.dto.AttemptLockResponse;
+import pl.co.assessment.dto.AttemptManagementListItemResponse;
+import pl.co.assessment.dto.AttemptManagementPageResponse;
+import pl.co.assessment.dto.AttemptManualGradingSaveItem;
+import pl.co.assessment.dto.AttemptManualGradingSaveRequest;
 import pl.co.assessment.dto.AttemptPageResponse;
 import pl.co.assessment.dto.AttemptQuestionResponse;
 import pl.co.assessment.dto.AttemptResultItemResponse;
@@ -15,12 +20,15 @@ import pl.co.assessment.dto.AttemptResultResponse;
 import pl.co.assessment.entity.AttemptOptionOrder;
 import pl.co.assessment.entity.AttemptQuestionOrder;
 import pl.co.assessment.entity.ExamAttempt;
+import pl.co.assessment.entity.ExamAttemptGradingStatus;
 import pl.co.assessment.entity.ExamAttemptStatus;
 import pl.co.assessment.entity.ExamVersion;
 import pl.co.assessment.entity.ExamVersionQuestion;
 import pl.co.assessment.entity.QuestionVersion;
 import pl.co.assessment.entity.UserAnswer;
+import pl.co.assessment.entity.UserAnswerGradingStatus;
 import pl.co.assessment.entity.json.QuestionContent;
+import pl.co.assessment.entity.json.GradingRules;
 import pl.co.assessment.repository.AttemptOptionOrderRepository;
 import pl.co.assessment.repository.AttemptQuestionOrderRepository;
 import pl.co.assessment.repository.ExamAttemptRepository;
@@ -28,24 +36,30 @@ import pl.co.assessment.repository.ExamVersionQuestionRepository;
 import pl.co.assessment.repository.ExamVersionRepository;
 import pl.co.assessment.repository.QuestionVersionRepository;
 import pl.co.assessment.repository.UserAnswerRepository;
-import pl.co.assessment.service.AttemptQueryService;
+import pl.co.assessment.service.AttemptService;
 import pl.co.assessment.service.AttemptSubmissionService;
+import pl.co.assessment.service.ManualGradingLockService;
 import pl.co.assessment.projection.AttemptListRow;
+import pl.co.assessment.projection.AttemptManagementListRow;
 import pl.co.common.exception.ApiException;
 import pl.co.common.exception.ErrorCode;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class AttemptQueryServiceImpl implements AttemptQueryService {
+public class AttemptServiceImpl implements AttemptService {
 
     private final ExamAttemptRepository examAttemptRepository;
     private final ExamVersionRepository examVersionRepository;
@@ -55,6 +69,7 @@ public class AttemptQueryServiceImpl implements AttemptQueryService {
     private final QuestionVersionRepository questionVersionRepository;
     private final UserAnswerRepository userAnswerRepository;
     private final AttemptSubmissionService attemptSubmissionService;
+    private final ManualGradingLockService manualGradingLockService;
 
     @Override
     @Transactional
@@ -72,9 +87,15 @@ public class AttemptQueryServiceImpl implements AttemptQueryService {
         List<AttemptQuestionResponse> questions = inProgress
                 ? buildQuestions(mappings, questionVersionMap, optionOrderMap)
                 : null;
-        List<AttemptAnswerResponse> answers = inProgress
-                ? loadAnswers(attempt.getId())
-                : null;
+        List<AttemptAnswerResponse> answers = null;
+        if (inProgress) {
+            answers = userAnswerRepository.findByAttemptIdAndDeletedFalse(attempt.getId()).stream()
+                    .map(answer -> AttemptAnswerResponse.builder()
+                            .examVersionQuestionId(answer.getExamVersionQuestionId())
+                            .answerJson(answer.getAnswerJson())
+                            .build())
+                    .toList();
+        }
 
         return AttemptDetailResponse.builder()
                 .attemptId(attempt.getId())
@@ -146,31 +167,211 @@ public class AttemptQueryServiceImpl implements AttemptQueryService {
         if (ExamAttemptStatus.IN_PROGRESS.name().equalsIgnoreCase(attempt.getStatus())) {
             throw new ApiException(ErrorCode.E420, ErrorCode.E420.message("Attempt is in progress"));
         }
+        return buildAttemptResult(attempt, null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AttemptManagementPageResponse listManagementAttempts(String status,
+                                                                String gradingStatus,
+                                                                String examId,
+                                                                String userId,
+                                                                Instant fromTime,
+                                                                Instant toTime,
+                                                                Integer page,
+                                                                Integer size) {
+        int pageValue = page == null ? 0 : page;
+        int sizeValue = size == null ? 20 : size;
+        PageRequest pageRequest = PageRequest.of(Math.max(pageValue, 0), Math.max(sizeValue, 1));
+        Page<AttemptManagementListRow> result = examAttemptRepository.findManagementAttemptList(
+                status,
+                gradingStatus,
+                examId,
+                userId,
+                fromTime,
+                toTime,
+                pageRequest
+        );
+        List<AttemptManagementListItemResponse> items = result.getContent().stream()
+                .map(row -> AttemptManagementListItemResponse.builder()
+                        .attemptId(row.getAttemptId())
+                        .examId(row.getExamId())
+                        .examVersionId(row.getExamVersionId())
+                        .createdBy(row.getCreatedBy())
+                        .name(row.getName())
+                        .description(row.getDescription())
+                        .durationMinutes(row.getDurationMinutes())
+                        .status(row.getStatus())
+                        .gradingStatus(row.getGradingStatus())
+                        .startTime(row.getStartTime())
+                        .endTime(row.getEndTime())
+                        .score(row.getScore())
+                        .maxScore(row.getMaxScore())
+                        .percent(row.getPercent())
+                        .build())
+                .toList();
+        return AttemptManagementPageResponse.builder()
+                .items(items)
+                .totalElements(result.getTotalElements())
+                .totalPages(result.getTotalPages())
+                .page(result.getNumber())
+                .size(result.getSize())
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public AttemptResultResponse getManagementAttemptResult(String attemptId) {
+        ExamAttempt attempt = loadAttemptOrThrow(attemptId);
+        if (ExamAttemptStatus.IN_PROGRESS.name().equalsIgnoreCase(attempt.getStatus())) {
+            throw new ApiException(ErrorCode.E420, ErrorCode.E420.message("Attempt is in progress"));
+        }
+        return buildAttemptResult(attempt, null);
+    }
+
+    @Override
+    @Transactional
+    public AttemptResultResponse getManagementAttemptManualGrading(String attemptId, String adminId, String sessionId) {
+        // Validate attempt and reject in-progress attempts.
+        ExamAttempt attempt = loadAttemptOrThrow(attemptId);
+        if (ExamAttemptStatus.IN_PROGRESS.name().equalsIgnoreCase(attempt.getStatus())) {
+            throw new ApiException(ErrorCode.E420, ErrorCode.E420.message("Attempt is not gradable"));
+        }
+        // Acquire or renew the manual grading lock.
+        AttemptLockResponse lock = manualGradingLockService.acquire(attemptId, adminId, sessionId);
+        // Return full grading payload with lock info.
+        return buildAttemptResult(attempt, lock);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AttemptLockResponse heartbeatManualGrading(String attemptId, String adminId, String sessionId) {
+        // Renew lock or raise E425 if lost.
+        return manualGradingLockService.renew(attemptId, adminId, sessionId);
+    }
+
+    @Override
+    @Transactional
+    public AttemptLockResponse saveManualGrading(String attemptId,
+                                                 String adminId,
+                                                 String sessionId,
+                                                 AttemptManualGradingSaveRequest request) {
+        ExamAttempt attempt = loadAttemptOrThrow(attemptId);
+        if (ExamAttemptStatus.IN_PROGRESS.name().equalsIgnoreCase(attempt.getStatus())) {
+            throw new ApiException(ErrorCode.E420, ErrorCode.E420.message("Attempt is not gradable"));
+        }
+        AttemptLockResponse lock = manualGradingLockService.validate(attemptId, adminId, sessionId);
+
+        List<AttemptManualGradingSaveItem> items = request == null ? null : request.getItems();
+        if (items == null || items.isEmpty()) {
+            throw new ApiException(ErrorCode.E221, ErrorCode.E221.message("items is required"));
+        }
+        Set<String> questionIds = items.stream()
+                .map(AttemptManualGradingSaveItem::getExamVersionQuestionId)
+                .collect(Collectors.toSet());
 
         ExamVersion version = loadVersionOrThrow(attempt);
-        List<ExamVersionQuestion> mappings = resolveQuestionOrder(attempt, version);
-        Map<String, QuestionVersion> questionVersionMap = loadQuestionVersions(mappings);
-        Map<String, List<String>> optionOrderMap = resolveOptionOrderMap(attempt, version);
-        Map<String, UserAnswer> answerMap = loadAnswerMap(attempt.getId());
+        List<ExamVersionQuestion> mappings =
+                examVersionQuestionRepository.findByExamVersionIdAndDeletedFalseOrderByQuestionOrderAsc(version.getId());
+        Map<String, ExamVersionQuestion> mappingById = new HashMap<>();
+        for (ExamVersionQuestion mapping : mappings) {
+            mappingById.put(mapping.getId(), mapping);
+        }
+        for (String questionId : questionIds) {
+            if (!mappingById.containsKey(questionId)) {
+                throw new ApiException(ErrorCode.E221, ErrorCode.E221.message("Invalid examVersionQuestionId"));
+            }
+        }
+        Map<String, QuestionVersion> questionVersionById = loadQuestionVersions(mappings);
 
-        List<AttemptResultItemResponse> items = buildResultItems(mappings, questionVersionMap, optionOrderMap, answerMap);
+        List<UserAnswer> allAnswers = userAnswerRepository.findByAttemptIdAndDeletedFalse(attemptId);
+        Map<String, UserAnswer> answers = new HashMap<>();
+        for (UserAnswer answer : allAnswers) {
+            answers.put(answer.getExamVersionQuestionId(), answer);
+        }
+        for (String questionId : questionIds) {
+            if (!answers.containsKey(questionId)) {
+                throw new ApiException(ErrorCode.E221, ErrorCode.E221.message("Invalid examVersionQuestionId"));
+            }
+        }
 
-        return AttemptResultResponse.builder()
-                .attemptId(attempt.getId())
-                .examId(attempt.getExamId())
-                .examVersionId(attempt.getExamVersionId())
-                .status(attempt.getStatus())
-                .gradingStatus(attempt.getGradingStatus())
-                .name(version.getName())
-                .description(version.getDescription())
-                .durationMinutes(version.getDurationMinutes())
-                .startTime(attempt.getStartTime())
-                .endTime(attempt.getEndTime())
-                .score(attempt.getScore())
-                .maxScore(attempt.getMaxScore())
-                .percent(attempt.getPercent())
-                .items(items)
-                .build();
+        Instant now = Instant.now();
+        List<UserAnswer> updatedAnswers = new ArrayList<>();
+        Set<String> updatedAnswerIds = new HashSet<>();
+        for (AttemptManualGradingSaveItem item : items) {
+            UserAnswer answer = answers.get(item.getExamVersionQuestionId());
+            if (answer == null) {
+                continue;
+            }
+            ExamVersionQuestion mapping = mappingById.get(item.getExamVersionQuestionId());
+            if (mapping == null) {
+                throw new ApiException(ErrorCode.E221,
+                        ErrorCode.E221.message("Invalid examVersionQuestionId"));
+            }
+            QuestionVersion questionVersion = questionVersionById.get(mapping.getQuestionVersionId());
+            BigDecimal maxPoints = null;
+            if (questionVersion != null && questionVersion.getGradingRules() != null) {
+                maxPoints = questionVersion.getGradingRules().getMaxPoints();
+            }
+            if (maxPoints != null
+                    && item.getEarnedPoints() != null
+                    && item.getEarnedPoints().compareTo(maxPoints) > 0) {
+                throw new ApiException(ErrorCode.E221,
+                        ErrorCode.E221.message("earnedPoints exceeds maxPoints for " + item.getExamVersionQuestionId()));
+            }
+            answer.setEarnedPoints(item.getEarnedPoints());
+            answer.setGraderComment(item.getGraderComment());
+            answer.setGraderId(adminId);
+            answer.setGradedAt(now);
+            answer.setGradingStatus(UserAnswerGradingStatus.FINALIZED.name());
+            if (answer.getId() != null && updatedAnswerIds.add(answer.getId())) {
+                updatedAnswers.add(answer);
+            }
+        }
+        if (!updatedAnswers.isEmpty()) {
+            userAnswerRepository.saveAll(updatedAnswers);
+        }
+
+        BigDecimal totalMax = BigDecimal.ZERO;
+        BigDecimal totalScore = BigDecimal.ZERO;
+        boolean manualPending = false;
+        for (ExamVersionQuestion mapping : mappings) {
+            QuestionVersion questionVersion = questionVersionById.get(mapping.getQuestionVersionId());
+            if (questionVersion == null) {
+                continue;
+            }
+            GradingRules rules = questionVersion.getGradingRules();
+            BigDecimal maxPoints = rules == null || rules.getMaxPoints() == null
+                    ? BigDecimal.ZERO
+                    : rules.getMaxPoints();
+            totalMax = totalMax.add(maxPoints);
+
+            UserAnswer answer = answers.get(mapping.getId());
+            if (answer == null) {
+                continue;
+            }
+            if (answer.getEarnedPoints() != null) {
+                totalScore = totalScore.add(answer.getEarnedPoints());
+            }
+            if (UserAnswerGradingStatus.MANUAL_PENDING.name().equalsIgnoreCase(answer.getGradingStatus())) {
+                manualPending = true;
+            }
+        }
+
+        attempt.setScore(totalScore);
+        attempt.setMaxScore(totalMax);
+        if (totalMax.compareTo(BigDecimal.ZERO) > 0) {
+            attempt.setPercent(totalScore
+                    .multiply(BigDecimal.valueOf(100))
+                    .divide(totalMax, 2, RoundingMode.HALF_UP));
+        } else {
+            attempt.setPercent(null);
+        }
+        attempt.setGradingStatus(manualPending
+                ? ExamAttemptGradingStatus.MANUAL_GRADING.name()
+                : ExamAttemptGradingStatus.GRADED.name());
+
+        return lock;
     }
 
     private ExamAttempt loadAttemptOrThrow(String attemptId) {
@@ -187,21 +388,6 @@ public class AttemptQueryServiceImpl implements AttemptQueryService {
     private ExamVersion loadVersionOrThrow(ExamAttempt attempt) {
         return examVersionRepository.findByIdAndDeletedFalse(attempt.getExamVersionId())
                 .orElseThrow(() -> new ApiException(ErrorCode.E420, ErrorCode.E420.message("Exam version does not exist")));
-    }
-
-    private List<AttemptAnswerResponse> loadAnswers(String attemptId) {
-        return userAnswerRepository.findByAttemptIdAndDeletedFalse(attemptId).stream()
-                .map(this::toAnswerResponse)
-                .toList();
-    }
-
-    private Map<String, UserAnswer> loadAnswerMap(String attemptId) {
-        List<UserAnswer> answers = userAnswerRepository.findByAttemptIdAndDeletedFalse(attemptId);
-        Map<String, UserAnswer> map = new HashMap<>();
-        for (UserAnswer answer : answers) {
-            map.put(answer.getExamVersionQuestionId(), answer);
-        }
-        return map;
     }
 
     private Long computeRemainingSeconds(ExamAttempt attempt, ExamVersion version) {
@@ -339,6 +525,7 @@ public class AttemptQueryServiceImpl implements AttemptQueryService {
                     .answerJson(answer == null ? null : answer.getAnswerJson())
                     .earnedPoints(answer == null ? null : answer.getEarnedPoints())
                     .answerGradingStatus(answer == null ? null : answer.getGradingStatus())
+                    .graderComment(answer == null ? null : answer.getGraderComment())
                     .build());
         }
         return items;
@@ -380,10 +567,33 @@ public class AttemptQueryServiceImpl implements AttemptQueryService {
                 .build();
     }
 
-    private AttemptAnswerResponse toAnswerResponse(UserAnswer answer) {
-        return AttemptAnswerResponse.builder()
-                .examVersionQuestionId(answer.getExamVersionQuestionId())
-                .answerJson(answer.getAnswerJson())
+    private AttemptResultResponse buildAttemptResult(ExamAttempt attempt, AttemptLockResponse lock) {
+        ExamVersion version = loadVersionOrThrow(attempt);
+        List<ExamVersionQuestion> mappings = resolveQuestionOrder(attempt, version);
+        Map<String, QuestionVersion> questionVersionMap = loadQuestionVersions(mappings);
+        Map<String, List<String>> optionOrderMap = resolveOptionOrderMap(attempt, version);
+        List<UserAnswer> answerList = userAnswerRepository.findByAttemptIdAndDeletedFalse(attempt.getId());
+        Map<String, UserAnswer> answerMap = new HashMap<>();
+        for (UserAnswer answer : answerList) {
+            answerMap.put(answer.getExamVersionQuestionId(), answer);
+        }
+        List<AttemptResultItemResponse> items = buildResultItems(mappings, questionVersionMap, optionOrderMap, answerMap);
+        return AttemptResultResponse.builder()
+                .attemptId(attempt.getId())
+                .examId(attempt.getExamId())
+                .examVersionId(attempt.getExamVersionId())
+                .status(attempt.getStatus())
+                .gradingStatus(attempt.getGradingStatus())
+                .name(version.getName())
+                .description(version.getDescription())
+                .durationMinutes(version.getDurationMinutes())
+                .startTime(attempt.getStartTime())
+                .endTime(attempt.getEndTime())
+                .score(attempt.getScore())
+                .maxScore(attempt.getMaxScore())
+                .percent(attempt.getPercent())
+                .items(items)
+                .lock(lock)
                 .build();
     }
 }

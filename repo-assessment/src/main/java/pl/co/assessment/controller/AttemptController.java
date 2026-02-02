@@ -12,7 +12,7 @@ import pl.co.assessment.dto.AttemptPageResponse;
 import pl.co.assessment.dto.AttemptResultResponse;
 import pl.co.assessment.dto.AttemptStartResponse;
 import pl.co.assessment.service.AttemptAnswerService;
-import pl.co.assessment.service.AttemptQueryService;
+import pl.co.assessment.service.AttemptService;
 import pl.co.assessment.service.AttemptStartService;
 import pl.co.assessment.service.AttemptSubmissionService;
 import pl.co.common.dto.ApiResponse;
@@ -25,7 +25,7 @@ import java.time.Instant;
 public class AttemptController {
 
     private final AttemptAnswerService attemptAnswerService;
-    private final AttemptQueryService attemptQueryService;
+    private final AttemptService attemptService;
     private final AttemptStartService attemptStartService;
     private final AttemptSubmissionService attemptSubmissionService;
 
@@ -40,14 +40,14 @@ public class AttemptController {
     public ApiResponse<AttemptDetailResponse> getAttempt(@PathVariable("attemptId") String attemptId,
                                                          Authentication authentication) {
         String userId = AuthUtils.resolveUserId(authentication);
-        return ApiResponse.ok(attemptQueryService.getAttempt(attemptId, userId));
+        return ApiResponse.ok(attemptService.getAttempt(attemptId, userId));
     }
 
     @GetMapping("/{attemptId}/result")
     public ApiResponse<AttemptResultResponse> getAttemptResult(@PathVariable("attemptId") String attemptId,
                                                                Authentication authentication) {
         String userId = AuthUtils.resolveUserId(authentication);
-        return ApiResponse.ok(attemptQueryService.getAttemptResult(attemptId, userId));
+        return ApiResponse.ok(attemptService.getAttemptResult(attemptId, userId));
     }
 
     @GetMapping
@@ -61,7 +61,7 @@ public class AttemptController {
                                                          @RequestParam(value = "size", required = false) Integer size,
                                                          Authentication authentication) {
         String userId = AuthUtils.resolveUserId(authentication);
-        return ApiResponse.ok(attemptQueryService.listAttempts(userId, status, gradingStatus, from, to, page, size));
+        return ApiResponse.ok(attemptService.listAttempts(userId, status, gradingStatus, from, to, page, size));
     }
 
     @PutMapping("/{attemptId}/answers")
