@@ -53,6 +53,9 @@ public class UserAnswer extends BaseEntity {
     @Column(name = "grader_id", length = 100)
     private String graderId;
 
+    @Column(name = "grader_comment", columnDefinition = "text")
+    private String graderComment;
+
     @Column(name = "graded_at")
     private Instant gradedAt;
 }

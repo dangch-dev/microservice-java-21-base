@@ -76,6 +76,10 @@ public interface ExamRepository extends JpaRepository<Exam, String> {
                 OR LOWER(ev.name) LIKE LOWER(CONCAT('%', :searchValue, '%'))
                 OR LOWER(COALESCE(ev.description, '')) LIKE LOWER(CONCAT('%', :searchValue, '%'))
               )
+              AND (
+                :enabled IS NULL
+                OR e.enabled = :enabled
+              )
             """,
             countQuery = """
             SELECT COUNT(e)
@@ -95,8 +99,58 @@ public interface ExamRepository extends JpaRepository<Exam, String> {
                 OR LOWER(ev.name) LIKE LOWER(CONCAT('%', :searchValue, '%'))
                 OR LOWER(COALESCE(ev.description, '')) LIKE LOWER(CONCAT('%', :searchValue, '%'))
               )
+              AND (
+                :enabled IS NULL
+                OR e.enabled = :enabled
+              )
             """)
     Page<ExamListRow> findExamList(@Param("searchValue") String searchValue,
                                    @Param("categoryId") String categoryId,
+                                   @Param("enabled") Boolean enabled,
                                    Pageable pageable);
+
+    @Query(value = """
+            SELECT
+                e.id AS examId,
+                ev.id AS examVersionId,
+                c.name AS categoryName,
+                ev.name AS name,
+                ev.description AS description,
+                ev.status AS status,
+                ev.durationMinutes AS durationMinutes,
+                ev.shuffleQuestions AS shuffleQuestions,
+                ev.shuffleOptions AS shuffleOptions,
+                e.enabled AS enabled
+            FROM Exam e
+            JOIN ExamVersion ev
+              ON ev.id = e.publishedExamVersionId
+             AND ev.deleted = false
+             AND ev.status = 'PUBLISHED'
+            LEFT JOIN Category c
+              ON c.id = e.categoryId
+             AND c.deleted = false
+            WHERE e.deleted = false
+              AND e.enabled = true
+              AND (
+                :searchValue IS NULL
+                OR :searchValue = ''
+                OR LOWER(ev.name) LIKE LOWER(CONCAT('%', :searchValue, '%'))
+              )
+            """,
+            countQuery = """
+            SELECT COUNT(e)
+            FROM Exam e
+            JOIN ExamVersion ev
+              ON ev.id = e.publishedExamVersionId
+             AND ev.deleted = false
+             AND ev.status = 'PUBLISHED'
+            WHERE e.deleted = false
+              AND e.enabled = true
+              AND (
+                :searchValue IS NULL
+                OR :searchValue = ''
+                OR LOWER(ev.name) LIKE LOWER(CONCAT('%', :searchValue, '%'))
+              )
+            """)
+    Page<ExamListRow> findPublicExamList(@Param("searchValue") String searchValue, Pageable pageable);
 }

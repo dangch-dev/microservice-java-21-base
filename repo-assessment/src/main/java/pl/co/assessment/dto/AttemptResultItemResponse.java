@@ -20,4 +20,5 @@ public class AttemptResultItemResponse {
     private final AnswerJson answerJson;
     private final BigDecimal earnedPoints;
     private final String answerGradingStatus;
+    private final String graderComment;
 }

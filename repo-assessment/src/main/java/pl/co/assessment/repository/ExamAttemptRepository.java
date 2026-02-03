@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.query.Param;
 import pl.co.assessment.entity.ExamAttempt;
 import pl.co.assessment.projection.AttemptListRow;
+import pl.co.assessment.projection.AttemptManagementListRow;
 
 import java.time.Instant;
 import java.util.List;
@@ -127,5 +128,100 @@ public interface ExamAttemptRepository extends JpaRepository<ExamAttempt, String
                                          @Param("fromTime") Instant fromTime,
                                          @Param("toTime") Instant toTime,
                                          Pageable pageable);
+
+    @Query(value = """
+            SELECT
+                ea.id AS attemptId,
+                ea.examId AS examId,
+                ea.examVersionId AS examVersionId,
+                ea.createdBy AS createdBy,
+                ev.name AS name,
+                ev.description AS description,
+                ev.durationMinutes AS durationMinutes,
+                ea.status AS status,
+                ea.gradingStatus AS gradingStatus,
+                ea.startTime AS startTime,
+                ea.endTime AS endTime,
+                ea.score AS score,
+                ea.maxScore AS maxScore,
+                ea.percent AS percent
+            FROM ExamAttempt ea
+            JOIN ExamVersion ev
+              ON ev.id = ea.examVersionId
+             AND ev.deleted = false
+            WHERE ea.deleted = false
+              AND (
+                :status IS NULL
+                OR :status = ''
+                OR ea.status = :status
+              )
+              AND (
+                :gradingStatus IS NULL
+                OR :gradingStatus = ''
+                OR ea.gradingStatus = :gradingStatus
+              )
+              AND (
+                :examId IS NULL
+                OR :examId = ''
+                OR ea.examId = :examId
+              )
+              AND (
+                :userId IS NULL
+                OR :userId = ''
+                OR ea.createdBy = :userId
+              )
+              AND (
+                :fromTime IS NULL
+                OR ea.startTime >= :fromTime
+              )
+              AND (
+                :toTime IS NULL
+                OR ea.startTime <= :toTime
+              )
+            ORDER BY ea.startTime DESC
+            """,
+            countQuery = """
+            SELECT COUNT(ea)
+            FROM ExamAttempt ea
+            JOIN ExamVersion ev
+              ON ev.id = ea.examVersionId
+             AND ev.deleted = false
+            WHERE ea.deleted = false
+              AND (
+                :status IS NULL
+                OR :status = ''
+                OR ea.status = :status
+              )
+              AND (
+                :gradingStatus IS NULL
+                OR :gradingStatus = ''
+                OR ea.gradingStatus = :gradingStatus
+              )
+              AND (
+                :examId IS NULL
+                OR :examId = ''
+                OR ea.examId = :examId
+              )
+              AND (
+                :userId IS NULL
+                OR :userId = ''
+                OR ea.createdBy = :userId
+              )
+              AND (
+                :fromTime IS NULL
+                OR ea.startTime >= :fromTime
+              )
+              AND (
+                :toTime IS NULL
+                OR ea.startTime <= :toTime
+              )
+            """)
+    Page<AttemptManagementListRow> findManagementAttemptList(@Param("status") String status,
+                                                             @Param("gradingStatus") String gradingStatus,
+                                                             @Param("examId") String examId,
+                                                             @Param("userId") String userId,
+                                                             @Param("fromTime") Instant fromTime,
+                                                             @Param("toTime") Instant toTime,
+                                                             Pageable pageable);
 
 }
