@@ -13,6 +13,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.filter.CommonsRequestLoggingFilter;
 import pl.co.common.filter.BearerTokenAuthenticationFilter;
+import pl.co.common.filter.EmailVerifiedFilter;
 import pl.co.common.util.RsaKeyUtil;
 import pl.co.common.web.AccessDeniedHandler;
 import pl.co.common.web.AuthenticationEntryPoint;
@@ -29,6 +30,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
                                                    BearerTokenAuthenticationFilter bearerTokenAuthenticationFilter,
+                                                   EmailVerifiedFilter emailVerifiedFilter,
                                                    AuthenticationEntryPoint authenticationEntryPoint,
                                                    AccessDeniedHandler accessDeniedHandler) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
@@ -37,16 +39,27 @@ public class SecurityConfig {
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/exams").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(commonRequestContextFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(bearerTokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(emailVerifiedFilter, UsernamePasswordAuthenticationFilter.class)
                 .httpBasic(Customizer.withDefaults());
         return http.build();
     }
 
     @Bean
     public BearerTokenAuthenticationFilter bearerTokenAuthenticationFilter(RSAPublicKey jwtPublicKey) {
-        return new BearerTokenAuthenticationFilter(jwtPublicKey, List.of());
+        return new BearerTokenAuthenticationFilter(jwtPublicKey, List.of(
+                "/exams"
+        ));
+    }
+
+    @Bean
+    public EmailVerifiedFilter emailVerifiedFilter() {
+        return new EmailVerifiedFilter(List.of(
+                "/exams"
+        ));
     }
 
     @Bean

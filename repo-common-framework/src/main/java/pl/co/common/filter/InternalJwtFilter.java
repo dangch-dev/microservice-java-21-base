@@ -50,7 +50,7 @@ public class InternalJwtFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
-        return protectedPatterns.stream().noneMatch(p -> matcher.match(p, path) || path.startsWith(p));
+        return protectedPatterns.stream().noneMatch(p -> matcher.match(p, path));
     }
 
     @Override

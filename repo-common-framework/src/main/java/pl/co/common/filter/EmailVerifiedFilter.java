@@ -34,7 +34,7 @@ public class EmailVerifiedFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
-        return skipPatterns.stream().anyMatch(p -> matcher.match(p, path) || path.startsWith(p));
+        return skipPatterns.stream().anyMatch(p -> matcher.match(p, path));
     }
 
     @Override
