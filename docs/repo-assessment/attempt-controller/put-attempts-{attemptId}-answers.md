@@ -46,7 +46,7 @@
             }
           ] | null,
           "files": [
-            { "file_id": string, "name": string | null, "mime": string | null, "size": integer | null }
+            { "fileId": string, "filename": string | null, "mimeType": string | null, "sizeBytes": integer | null }
           ] | null
         }
       }
@@ -96,3 +96,4 @@
 - answerJson = null clears the stored answer.
 - Answers are blocked when attempt status is TIMEOUT.
 - `schema_version` and `type` are optional; the server uses questionVersion type to validate.
+- `files` uses `FileMeta` format.

@@ -9,8 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import pl.co.common.dto.ApiResponse;
+import pl.co.common.file.FileMeta;
 import pl.co.storage.dto.FileDownload;
-import pl.co.storage.dto.FileResponse;
 import pl.co.storage.service.FileService;
 
 @RestController
@@ -21,7 +21,7 @@ public class FileController {
     private final FileService fileService;
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ApiResponse<FileResponse> upload(@RequestParam("file") MultipartFile file) {
+    public ApiResponse<FileMeta> upload(@RequestParam("file") MultipartFile file) {
         return ApiResponse.ok(fileService.upload(file));
     }
 

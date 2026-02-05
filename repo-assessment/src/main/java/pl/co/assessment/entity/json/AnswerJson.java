@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import pl.co.common.file.FileMeta;
 
 import java.util.List;
 
@@ -36,7 +37,7 @@ public class AnswerJson {
         private String text;
         private List<Pair> pairs;
         private List<BlankAnswer> blanks;
-        private List<FileAnswer> files;
+        private List<FileMeta> files;
     }
 
     @Getter
@@ -63,19 +64,5 @@ public class AnswerJson {
         private String kind;
         private String value;
         private List<String> selectedOptionIds;
-    }
-
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Builder
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-    public static class FileAnswer {
-        private String fileId;
-        private String name;
-        private String mime;
-        private Long size;
     }
 }

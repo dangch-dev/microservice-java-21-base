@@ -3,6 +3,7 @@
 
 ## Summary
 - Upload a file and return its metadata.
+ - Response `data` follows `FileMeta` format.
 
 
 ## Description
