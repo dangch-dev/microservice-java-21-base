@@ -15,6 +15,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.filter.CommonsRequestLoggingFilter;
 import pl.co.common.filter.BearerTokenAuthenticationFilter;
+import pl.co.common.filter.EmailVerifiedFilter;
 import pl.co.common.util.RsaKeyUtil;
 import pl.co.common.web.AccessDeniedHandler;
 import pl.co.common.web.AuthenticationEntryPoint;
@@ -33,7 +34,8 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
                                                    AuthenticationEntryPoint restAuthenticationEntryPoint,
                                                    AccessDeniedHandler restAccessDeniedHandler,
-                                                   BearerTokenAuthenticationFilter bearerTokenAuthenticationFilter) throws Exception {
+                                                   BearerTokenAuthenticationFilter bearerTokenAuthenticationFilter,
+                                                   EmailVerifiedFilter emailVerifiedFilter) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(ex -> ex
@@ -46,6 +48,7 @@ public class SecurityConfig {
                         .anyRequest().permitAll())
                 .addFilterBefore(commonRequestContextFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(bearerTokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(emailVerifiedFilter, UsernamePasswordAuthenticationFilter.class)
                 .httpBasic(Customizer.withDefaults());
         return http.build();
     }
@@ -59,6 +62,19 @@ public class SecurityConfig {
                 "/logout",
                 "/password/**",
                 "/oauth/**"
+        ));
+    }
+
+    @Bean
+    public EmailVerifiedFilter emailVerifiedFilter() {
+        return new EmailVerifiedFilter(List.of(
+                "/signup",
+                "/login",
+                "/refresh",
+                "/logout",
+                "/password/**",
+                "/oauth/**",
+                "/email/**"
         ));
     }
 

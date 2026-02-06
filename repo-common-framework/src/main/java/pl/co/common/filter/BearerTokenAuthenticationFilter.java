@@ -101,7 +101,7 @@ public class BearerTokenAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private boolean matches(String path, List<String> patterns) {
-        return patterns.stream().anyMatch(p -> matcher.match(p, path) || path.startsWith(p));
+        return patterns.stream().anyMatch(p -> matcher.match(p, path));
     }
 
 }

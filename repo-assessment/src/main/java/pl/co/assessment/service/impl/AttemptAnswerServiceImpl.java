@@ -22,6 +22,7 @@ import pl.co.assessment.repository.UserAnswerRepository;
 import pl.co.assessment.service.AttemptAnswerService;
 import pl.co.common.exception.ApiException;
 import pl.co.common.exception.ErrorCode;
+import pl.co.common.file.FileMeta;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -369,11 +370,11 @@ public class AttemptAnswerServiceImpl implements AttemptAnswerService {
         if (maxFiles != null && payload.getFiles().size() > maxFiles) {
             throw new ApiException(ErrorCode.E221, ErrorCode.E221.message("Exceeded max files"));
         }
-        for (AnswerJson.FileAnswer file : payload.getFiles()) {
-            if (file.getFileId() == null || file.getFileId().isBlank()) {
+        for (FileMeta file : payload.getFiles()) {
+            if (file.fileId() == null || file.fileId().isBlank()) {
                 throw new ApiException(ErrorCode.E221, ErrorCode.E221.message("fileId is required"));
             }
-            if (allowedTypes != null && file.getMime() != null && !allowedTypes.contains(file.getMime())) {
+            if (allowedTypes != null && file.mimeType() != null && !allowedTypes.contains(file.mimeType())) {
                 throw new ApiException(ErrorCode.E221, ErrorCode.E221.message("Invalid file mime"));
             }
         }
