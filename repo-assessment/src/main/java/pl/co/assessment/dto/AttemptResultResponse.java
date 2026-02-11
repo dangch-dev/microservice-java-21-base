@@ -3,12 +3,14 @@ package pl.co.assessment.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
 @Getter
+@Setter
 @Builder
 public class AttemptResultResponse {
     private final String attemptId;
@@ -24,7 +26,7 @@ public class AttemptResultResponse {
     private final BigDecimal score;
     private final BigDecimal maxScore;
     private final BigDecimal percent;
-    private final List<AttemptResultItemResponse> items;
+    private List<AttemptResultItemResponse> items;
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private final AttemptLockResponse lock;
 }

@@ -27,6 +27,7 @@ import pl.co.assessment.entity.ExamVersionQuestion;
 import pl.co.assessment.entity.QuestionVersion;
 import pl.co.assessment.entity.UserAnswer;
 import pl.co.assessment.entity.UserAnswerGradingStatus;
+import pl.co.assessment.entity.json.AnswerJson;
 import pl.co.assessment.entity.json.QuestionContent;
 import pl.co.assessment.entity.json.GradingRules;
 import pl.co.assessment.repository.AttemptOptionOrderRepository;
@@ -237,10 +238,20 @@ public class AttemptServiceImpl implements AttemptService {
         if (ExamAttemptStatus.IN_PROGRESS.name().equalsIgnoreCase(attempt.getStatus())) {
             throw new ApiException(ErrorCode.E420, ErrorCode.E420.message("Attempt is not gradable"));
         }
+        if (ExamAttemptGradingStatus.AUTO_GRADING.name().equalsIgnoreCase(attempt.getGradingStatus())) {
+            throw new ApiException(ErrorCode.E420, ErrorCode.E420.message("Attempt is auto grading"));
+        }
         // Acquire or renew the manual grading lock.
         AttemptLockResponse lock = manualGradingLockService.acquire(attemptId, adminId, sessionId);
-        // Return full grading payload with lock info.
-        return buildAttemptResult(attempt, lock);
+        // Return grading payload with lock info (answered items only).
+        AttemptResultResponse response = buildAttemptResult(attempt, lock);
+        List<AttemptResultItemResponse> items = response.getItems() == null
+                ? List.of()
+                : response.getItems().stream()
+                .filter(this::hasAnswer)
+                .toList();
+        response.setItems(items);
+        return response;
     }
 
     @Override
@@ -595,5 +606,19 @@ public class AttemptServiceImpl implements AttemptService {
                 .items(items)
                 .lock(lock)
                 .build();
+    }
+
+    private boolean hasAnswer(AttemptResultItemResponse item) {
+        AnswerJson answerJson = item.getAnswerJson();
+        if (answerJson == null || answerJson.getPayload() == null) {
+            return false;
+        }
+        AnswerJson.Payload payload = answerJson.getPayload();
+        boolean hasSelected = payload.getSelectedOptionIds() != null && !payload.getSelectedOptionIds().isEmpty();
+        boolean hasText = payload.getText() != null && !payload.getText().isBlank();
+        boolean hasPairs = payload.getPairs() != null && !payload.getPairs().isEmpty();
+        boolean hasBlanks = payload.getBlanks() != null && !payload.getBlanks().isEmpty();
+        boolean hasFiles = payload.getFiles() != null && !payload.getFiles().isEmpty();
+        return hasSelected || hasText || hasPairs || hasBlanks || hasFiles;
     }
 }

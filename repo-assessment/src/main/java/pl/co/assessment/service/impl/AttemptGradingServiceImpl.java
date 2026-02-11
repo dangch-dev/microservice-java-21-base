@@ -128,6 +128,10 @@ public class AttemptGradingServiceImpl implements AttemptGradingService {
                 }
                 case ESSAY, FILE_UPLOAD -> {
                     // Manual types by default; optional auto_mode is TODO
+                    if (answerJson == null || !hasAnswer(answerJson)) {
+                        // Skip manual grading when user did not submit an answer.
+                        continue;
+                    }
                     GradingRules.Manual manual = rules == null ? null : rules.getManual();
                     boolean autoMode = manual != null && Boolean.TRUE.equals(manual.getAutoMode());
                     if (autoMode) {
@@ -387,6 +391,19 @@ public class AttemptGradingServiceImpl implements AttemptGradingService {
         }
         String trimmed = value.trim().toLowerCase(Locale.ROOT);
         return trimmed.replaceAll("\\s+", " ");
+    }
+
+    private boolean hasAnswer(AnswerJson answerJson) {
+        if (answerJson == null || answerJson.getPayload() == null) {
+            return false;
+        }
+        AnswerJson.Payload payload = answerJson.getPayload();
+        boolean hasSelected = payload.getSelectedOptionIds() != null && !payload.getSelectedOptionIds().isEmpty();
+        boolean hasText = payload.getText() != null && !payload.getText().isBlank();
+        boolean hasPairs = payload.getPairs() != null && !payload.getPairs().isEmpty();
+        boolean hasBlanks = payload.getBlanks() != null && !payload.getBlanks().isEmpty();
+        boolean hasFiles = payload.getFiles() != null && !payload.getFiles().isEmpty();
+        return hasSelected || hasText || hasPairs || hasBlanks || hasFiles;
     }
 
     private BigDecimal calculatePercent(BigDecimal score, BigDecimal maxScore) {
