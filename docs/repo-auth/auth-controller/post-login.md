@@ -2,13 +2,13 @@
 
 
 ## Summary
-- Authenticate with email and password and return access and refresh tokens.
+- Authenticate with email and password and set HttpOnly access/refresh cookies.
 
 
 ## Description
 1. Validate request body (email/password present and format correct).
 2. Find user by email and verify password.
-3. If valid, issue access + refresh tokens and return expiry in seconds.
+3. If valid, issue access + refresh tokens and set cookies.
 
 ## Auth & Permissions
 - PUBLIC
@@ -38,14 +38,13 @@
   "success": boolean,
   "errorCode": string | null,
   "errorMessage": string | null,
-  "data": {
-    "accessToken": string,
-    "refreshToken": string,
-    "acssessExpireIn": integer,
-    "refreshExpireIn": integer
-  }
+  "data": null
 }
 ```
+
+### Headers
+- Set-Cookie: access_token=...; HttpOnly; Path=/; SameSite=...
+- Set-Cookie: refresh_token=...; HttpOnly; Path=/; SameSite=...
 
 ### Errors
 - (400 Bad Request) - errorCode: 243 when required fields are missing (email, password).
@@ -65,4 +64,4 @@
 
 
 ## Notes
-- Token expiry values are in seconds.
+- Token expiry values are managed by cookie TTL.

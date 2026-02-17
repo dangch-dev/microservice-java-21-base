@@ -2,7 +2,7 @@
 
 
 ## Summary
-- Rotate refresh token and return a new token pair.
+- Rotate refresh token and set new cookies.
 
 
 ## Description
@@ -16,7 +16,7 @@
 
 
 ## Request
-### Body
+### Body (optional for non-browser clients)
 ```
 {
   "refreshToken": string
@@ -27,7 +27,7 @@
 ## Required
 | field | location | required |
 | --- | --- | --- |
-| refreshToken | body | x |
+| refreshToken | body |  |
 
 
 ## Response
@@ -37,18 +37,16 @@
   "success": boolean,
   "errorCode": string | null,
   "errorMessage": string | null,
-  "data": {
-    "accessToken": string,
-    "refreshToken": string,
-    "acssessExpireIn": integer,
-    "refreshExpireIn": integer
-  }
+  "data": null
 }
 ```
 
+### Headers
+- Set-Cookie: access_token=...; HttpOnly; Path=/; SameSite=...
+- Set-Cookie: refresh_token=...; HttpOnly; Path=/; SameSite=...
+
 ### Errors
-- (400 Bad Request) - errorCode: 243 when 
-efreshToken is missing.
+- (400 Bad Request) - errorCode: 243 when refresh token is missing (no cookie and no body).
 - (400 Bad Request) - errorCode: 202 when request body has invalid data type or JSON.
 - (401 Unauthorized) - errorCode: UNAUTHORIZED when refresh token is invalid.
 - (401 Unauthorized) - errorCode: 234 when refresh token is expired.

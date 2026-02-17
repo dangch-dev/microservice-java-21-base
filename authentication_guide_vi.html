@@ -19,12 +19,15 @@
   <div class="card">
     <h2>1) Khóa / Secret cần cấu hình</h2>
     <ul>
-      <li><b>JWT HS256 secret</b>: <code>security.external-jwt.secret</code> (dùng chung gateway & identity).</li>
+      <li><b>JWT RSA keys</b>: <code>security.external-jwt.public-key-path</code> / <code>private-key-path</code>.</li>
       <li><b>Access TTL</b>: <code>security.external-jwt.access-ttl</code> (mặc định 5 phút).</li>
       <li><b>Refresh TTL</b>: <code>security.external-jwt.refresh-ttl</code> (mặc định 7 ngày).</li>
       <li><b>Redis</b>: host/port/password cho refresh token + token xác minh email / đặt lại mật khẩu.</li>
       <li><b>MySQL</b>: URL, username, password cho bảng user & role.</li>
       <li><b>Eureka</b>: <code>eureka.client.service-url.defaultZone</code> (gateway & identity đăng ký ở đây).</li>
+      <li><b>Google OAuth2 client</b>: <code>spring.security.oauth2.client.registration.google.*</code></li>
+      <li><b>FE callback</b>: <code>app.frontend.oauth-callback-url</code></li>
+      <li><b>Cookie auth</b>: <code>app.security.cookies.*</code> (name, domain, same-site, secure).</li>
     </ul>
   </div>
 
@@ -32,10 +35,10 @@
     <h2>2) Chức năng chính</h2>
     <ul>
       <li><b>Signup</b>: tạo tài khoản, email ban đầu chưa xác minh.</li>
-      <li><b>Login</b>: yêu cầu email đã xác minh; trả về access + refresh token.</li>
-      <li><b>Refresh token</b>: xoay refresh, cấp access mới.</li>
-      <li><b>Logout</b>: thu hồi refresh token.</li>
-      <li><b>Xác minh email</b>: gửi token qua email, xác minh để mở khóa login.</li>
+      <li><b>Login</b>: yêu cầu email đã xác minh; set cookie HttpOnly access + refresh.</li>
+      <li><b>Refresh token</b>: xoay refresh và set cookie mới.</li>
+      <li><b>Logout</b>: thu hồi refresh token và xóa cookie.</li>
+      <li><b>Xác minh email</b>: gửi token qua email, xác minh OTP để mở khóa login và set cookie.</li>
       <li><b>Quên / Đặt lại mật khẩu</b>: gửi token qua email, đặt lại không cần mật khẩu cũ.</li>
       <li><b>Hồ sơ</b>: xem/cập nhật thông tin cá nhân.</li>
       <li><b>Quản lý người dùng (Admin)</b>: danh sách (lọc/phân trang), chi tiết, tạo/cập nhật, active/block.</li>
@@ -53,12 +56,12 @@
   <div class="card">
     <h2>4) Luồng xác thực (happy path)</h2>
     <ol>
-      <li><b>Signup</b>: POST <code>/auth/signup</code> → trả token, <code>emailVerified=false</code>.</li>
-      <li><b>Yêu cầu OTP email</b>: POST <code>/auth/email/otp/send</code> (cần đăng nhập, dùng email từ token).</li>
-      <li><b>Xác minh OTP email</b>: POST <code>/auth/email/otp/verify</code> với otp → <code>emailVerified=true</code> và trả về access/refresh token.</li>
-      <li><b>Login</b>: POST <code>/auth/login</code> → access/refresh token (sau khi đã xác minh email).</li>
-      <li><b>Refresh</b>: POST <code>/auth/refresh</code> với refresh token.</li>
-      <li><b>Logout</b>: POST <code>/auth/logout</code> với refresh token.</li>
+      <li><b>Signup</b>: POST <code>/auth/signup</code> → set cookie, <code>emailVerified=false</code>.</li>
+      <li><b>Yêu cầu OTP email</b>: POST <code>/auth/email/otp/send</code> (cần đăng nhập).</li>
+      <li><b>Xác minh OTP email</b>: POST <code>/auth/email/otp/verify</code> với otp → <code>emailVerified=true</code> và set cookie.</li>
+      <li><b>Login</b>: POST <code>/auth/login</code> → set cookie (sau khi đã xác minh email).</li>
+      <li><b>Refresh</b>: POST <code>/auth/refresh</code> (dùng refresh cookie; body tùy chọn cho non-browser).</li>
+      <li><b>Logout</b>: POST <code>/auth/logout</code> (dùng refresh cookie; body tùy chọn cho non-browser).</li>
     </ol>
   </div>
 
@@ -75,7 +78,8 @@
   <div class="card">
     <h2>6) Header cần dùng</h2>
     <ul>
-      <li><code>Authorization: Bearer &lt;access_token&gt;</code> (API bảo vệ).</li>
+      <li>Trình duyệt: cookie HttpOnly <code>access_token</code> và <code>refresh_token</code> (gửi kèm <code>withCredentials</code>).</li>
+      <li>Non-browser: <code>Authorization: Bearer &lt;access_token&gt;</code>.</li>
       <li>Gateway thêm cho downstream: <code>X-User-Id</code>, <code>X-Roles</code> từ JWT.</li>
       <li>Gợi ý: <code>X-Request-Id</code> (theo dõi request).</li>
     </ul>
@@ -104,16 +108,25 @@ POST http://localhost:8080/api/id/auth/login
 { "email":"user@local", "password":"Admin@123" }
 
 POST http://localhost:8080/api/id/auth/refresh
-{ "refreshToken":"&lt;refresh&gt;" }
+(không body; dùng refresh cookie)
 
 POST http://localhost:8080/api/id/auth/logout
-{ "refreshToken":"&lt;refresh&gt;" }
+(không body; dùng refresh cookie)
 
 POST http://localhost:8080/api/id/auth/forgot-password
 { "email":"user@local" }
 
 POST http://localhost:8080/api/id/auth/reset-password
 { "token":"&lt;resetToken&gt;", "newPassword":"NewPass@123" }</pre>
+  </div>
+
+  <div class="card">
+    <h2>9) OAuth2 (Google) login</h2>
+    <ul>
+      <li>Bắt đầu: <code>GET /oauth2/authorization/google</code></li>
+      <li>Callback: <code>GET /login/oauth2/code/google</code> (auth-service xử lý)</li>
+      <li>Thành công: set cookie và redirect về FE callback URL.</li>
+    </ul>
   </div>
 </body>
 </html>

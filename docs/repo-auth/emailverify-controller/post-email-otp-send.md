@@ -15,13 +15,15 @@
 
 ## Request
 ### Headers
-- Authorization: string (Bearer token)
+- Authorization: string (Bearer token) (optional for non-browser)
+  or
+- Cookie: access_token=... (browser)
 
 
 ## Required
 | field | location | required |
 | --- | --- | --- |
-| Authorization | header | x |
+| Authorization | header |  |
 
 
 ## Response
@@ -51,5 +53,4 @@
 
 ## Notes
 - OTP TTL is 10 minutes.
-
 

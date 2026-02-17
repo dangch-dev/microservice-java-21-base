@@ -3,6 +3,14 @@ spring:
     time-zone: UTC
     serialization:
       write-dates-as-timestamps: false
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id:
+            client-secret:
+            scope: openid,profile,email
   sql:
     init:
       mode: always
@@ -58,7 +66,15 @@ logging:
 
 app:
   frontend:
-    reset-password-url: http://localhost:5173/
+    reset-password-url: https://simes.io.vn/reset-password
+    oauth-callback-url: https://simes.io.vn
+  security:
+    cookies:
+      access-token-name: access_token
+      refresh-token-name: refresh_token
+      domain: .simes.io.vn
+      same-site: None
+      secure: true
 
 # Required declarations (But it doesn't need to have value.)
 internal:

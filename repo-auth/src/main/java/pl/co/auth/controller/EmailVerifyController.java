@@ -10,9 +10,10 @@ import org.springframework.web.bind.annotation.RestController;
 import pl.co.auth.dto.TokenResponse;
 import pl.co.auth.dto.VerifyEmailOtpRequest;
 import pl.co.auth.service.EmailVerificationService;
-import pl.co.auth.service.JwtTokenService;
 import pl.co.common.dto.ApiResponse;
 import pl.co.common.security.AuthUtils;
+import jakarta.servlet.http.HttpServletResponse;
+import pl.co.auth.oauth.AuthCookieService;
 
 @RestController
 @RequestMapping("/email")
@@ -20,7 +21,7 @@ import pl.co.common.security.AuthUtils;
 public class EmailVerifyController {
 
     private final EmailVerificationService emailVerificationService;
-    private final JwtTokenService jwtTokenService;
+    private final AuthCookieService authCookieService;
 
     @PostMapping("/otp/send")
     public ApiResponse<Void> sendOtp(Authentication authentication) {
@@ -30,9 +31,12 @@ public class EmailVerifyController {
     }
 
     @PostMapping("/otp/verify")
-    public ApiResponse<TokenResponse> verifyOtp(Authentication authentication,
-                                       @Valid @RequestBody VerifyEmailOtpRequest request) {
+    public ApiResponse<Void> verifyOtp(Authentication authentication,
+                                       @Valid @RequestBody VerifyEmailOtpRequest request,
+                                       HttpServletResponse response) {
         String userId = AuthUtils.resolveUserId(authentication);
-        return ApiResponse.ok(emailVerificationService.verifyOtp(userId, request.getOtp()));
+        TokenResponse tokens = emailVerificationService.verifyOtp(userId, request.getOtp());
+        authCookieService.setTokens(response, tokens);
+        return ApiResponse.ok(null);
     }
 }

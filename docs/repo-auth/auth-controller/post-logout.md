@@ -2,19 +2,20 @@
 
 
 ## Summary
-- Revoke a refresh token.
+- Revoke refresh token and clear auth cookies.
 
 
 ## Description
-1. Validate request payload.
+1. Resolve refresh token from cookie (or request body for non-browser clients).
 2. Revoke the provided refresh token if it exists.
+3. Clear auth cookies.
 
 ## Auth & Permissions
 - PUBLIC
 
 
 ## Request
-### Body
+### Body (optional for non-browser clients)
 ```
 {
   "refreshToken": string
@@ -25,7 +26,7 @@
 ## Required
 | field | location | required |
 | --- | --- | --- |
-| refreshToken | body | x |
+| refreshToken | body |  |
 
 
 ## Response
@@ -39,9 +40,12 @@
 }
 ```
 
+### Headers
+- Set-Cookie: access_token=; Max-Age=0
+- Set-Cookie: refresh_token=; Max-Age=0
+
 ### Errors
-- (400 Bad Request) - errorCode: 243 when 
-efreshToken is missing.
+- (400 Bad Request) - errorCode: 243 when refresh token is missing (no cookie and no body).
 - (400 Bad Request) - errorCode: 202 when request body has invalid data type or JSON.
 ```
 {

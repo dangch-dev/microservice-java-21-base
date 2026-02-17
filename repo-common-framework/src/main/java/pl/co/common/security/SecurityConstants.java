@@ -10,6 +10,8 @@ public final class SecurityConstants {
     public static final String HEADER_SESSION_ID = "X-Session-Id";
     public static final String HEADER_INTERNAL_TOKEN = "X-Internal-Token";
 
+    public static final String COOKIE_ACCESS_TOKEN = "access_token";
+
     public static final String CLAIM_USER_ID = "uid";
     public static final String CLAIM_ROLES = "roles";
     public static final String CLAIM_EMAIL_VERIFIED = "email_verified";

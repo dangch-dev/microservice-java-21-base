@@ -1,6 +1,7 @@
 package pl.co.auth.config;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,6 +14,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.web.filter.CommonsRequestLoggingFilter;
 import pl.co.common.filter.BearerTokenAuthenticationFilter;
 import pl.co.common.filter.EmailVerifiedFilter;
@@ -20,6 +22,9 @@ import pl.co.common.util.RsaKeyUtil;
 import pl.co.common.web.AccessDeniedHandler;
 import pl.co.common.web.AuthenticationEntryPoint;
 import pl.co.common.web.RequestContextFilter;
+import pl.co.auth.oauth.HttpCookieOAuth2AuthorizationRequestRepository;
+import pl.co.auth.oauth.OAuth2AuthenticationFailureHandler;
+import pl.co.auth.oauth.OAuth2AuthenticationSuccessHandler;
 
 import java.util.List;
 import java.security.interfaces.RSAPrivateKey;
@@ -35,7 +40,11 @@ public class SecurityConfig {
                                                    AuthenticationEntryPoint restAuthenticationEntryPoint,
                                                    AccessDeniedHandler restAccessDeniedHandler,
                                                    BearerTokenAuthenticationFilter bearerTokenAuthenticationFilter,
-                                                   EmailVerifiedFilter emailVerifiedFilter) throws Exception {
+                                                   EmailVerifiedFilter emailVerifiedFilter,
+                                                   OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler,
+                                                   OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler,
+                                                   HttpCookieOAuth2AuthorizationRequestRepository authorizationRequestRepository,
+                                                   ObjectProvider<ClientRegistrationRepository> clientRegistrationRepository) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(ex -> ex
@@ -44,12 +53,19 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/email/**").authenticated()
                         .requestMatchers("/signup", "/login", "/refresh", "/logout").permitAll()
-                        .requestMatchers("/password/**", "/oauth/**").permitAll()
+                        .requestMatchers("/password/**", "/oauth/**", "/oauth2/**", "/login/oauth2/**").permitAll()
                         .anyRequest().permitAll())
                 .addFilterBefore(commonRequestContextFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(bearerTokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(emailVerifiedFilter, UsernamePasswordAuthenticationFilter.class)
                 .httpBasic(Customizer.withDefaults());
+
+        if (clientRegistrationRepository.getIfAvailable() != null) {
+            http.oauth2Login(oauth -> oauth
+                    .authorizationEndpoint(a -> a.authorizationRequestRepository(authorizationRequestRepository))
+                    .successHandler(oAuth2AuthenticationSuccessHandler)
+                    .failureHandler(oAuth2AuthenticationFailureHandler));
+        }
         return http.build();
     }
 
@@ -61,7 +77,9 @@ public class SecurityConfig {
                 "/refresh",
                 "/logout",
                 "/password/**",
-                "/oauth/**"
+                "/oauth/**",
+                "/oauth2/**",
+                "/login/oauth2/**"
         ));
     }
 
@@ -74,6 +92,8 @@ public class SecurityConfig {
                 "/logout",
                 "/password/**",
                 "/oauth/**",
+                "/oauth2/**",
+                "/login/oauth2/**",
                 "/email/**"
         ));
     }
@@ -86,6 +106,11 @@ public class SecurityConfig {
     @Bean
     public RequestContextFilter commonRequestContextFilter() {
         return new RequestContextFilter();
+    }
+
+    @Bean
+    public HttpCookieOAuth2AuthorizationRequestRepository authorizationRequestRepository() {
+        return new HttpCookieOAuth2AuthorizationRequestRepository();
     }
 
     @Bean
@@ -108,4 +133,3 @@ public class SecurityConfig {
         return RsaKeyUtil.loadPrivateKey(privateKeyPath);
     }
 }
-
