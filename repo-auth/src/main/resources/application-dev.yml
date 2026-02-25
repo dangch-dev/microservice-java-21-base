@@ -39,6 +39,7 @@ spring:
 
 server:
   port: 58082
+  forward-headers-strategy: framework
 
 security:
   external-jwt:
@@ -72,7 +73,7 @@ app:
     cookies:
       access-token-name: access_token
       refresh-token-name: refresh_token
-      domain: .simes.io.vn
+      domain: simes.io.vn
       same-site: None
       secure: true
 

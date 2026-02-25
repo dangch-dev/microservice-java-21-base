@@ -9,7 +9,7 @@ spring:
         registration:
           google:
             client-id:
-            client-secret:
+            client-secret: 
             scope: openid,profile,email
   sql:
     init:
@@ -72,7 +72,7 @@ app:
     cookies:
       access-token-name: access_token
       refresh-token-name: refresh_token
-      domain:
+      domain: localhost
       same-site: Lax
       secure: false
 
