@@ -22,6 +22,7 @@ spring:
 
 server:
   port: 58761
+  forward-headers-strategy: framework
 
 eureka:
   client:

@@ -32,9 +32,9 @@ public class AuthController {
         return ApiResponse.ok(null);
     }
 
-    @PostMapping("/login")
-    public ApiResponse<Void> login(@Valid @RequestBody LoginRequest request,
-                                   HttpServletResponse response) {
+    @PostMapping("/signin")
+    public ApiResponse<Void> signin(@Valid @RequestBody LoginRequest request,
+                                    HttpServletResponse response) {
         TokenResponse tokens = authService.login(request);
         authCookieService.setTokens(response, tokens);
         return ApiResponse.ok(null);
@@ -50,10 +50,10 @@ public class AuthController {
         return ApiResponse.ok(null);
     }
 
-    @PostMapping("/logout")
-    public ApiResponse<Void> logout(@RequestBody(required = false) RefreshTokenRequest request,
-                                    HttpServletRequest httpServletRequest,
-                                    HttpServletResponse response) {
+    @PostMapping("/signout")
+    public ApiResponse<Void> signout(@RequestBody(required = false) RefreshTokenRequest request,
+                                     HttpServletRequest httpServletRequest,
+                                     HttpServletResponse response) {
         String refreshToken = request != null ? request.getRefreshToken() : null;
         if (refreshToken == null || refreshToken.isBlank()) {
             refreshToken = authCookieService.getRefreshTokenIfPresent(httpServletRequest);

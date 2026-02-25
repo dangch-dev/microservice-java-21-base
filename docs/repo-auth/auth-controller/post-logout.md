@@ -1,8 +1,8 @@
-# POST /api/auth/logout
+# POST /api/auth/signout
 
 
 ## Summary
-- Revoke refresh token and clear auth cookies.
+- Sign out and clear auth cookies.
 
 
 ## Description
@@ -58,4 +58,4 @@
 
 
 ## Notes
-- Logout is idempotent for unknown tokens.
+- Signout is idempotent for unknown tokens.

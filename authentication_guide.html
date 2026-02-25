@@ -35,9 +35,9 @@
     <h2>2) Main functions</h2>
     <ul>
       <li><b>Signup</b>: create account, email starts as unverified.</li>
-      <li><b>Login</b>: requires verified email; sets HttpOnly access + refresh cookies.</li>
+      <li><b>Signin</b>: requires verified email; sets HttpOnly access + refresh cookies.</li>
       <li><b>Refresh token</b>: rotate refresh and set new cookies.</li>
-      <li><b>Logout</b>: revoke refresh token and clear cookies.</li>
+      <li><b>Signout</b>: revoke refresh token and clear cookies.</li>
       <li><b>Email verification</b>: request token via email, verify OTP to unlock login and set cookies.</li>
       <li><b>Forgot / Reset password</b>: request reset token via email, reset without old password.</li>
       <li><b>Profile</b>: get/update current user.</li>
@@ -59,9 +59,9 @@
       <li><b>Signup</b>: POST <code>/auth/signup</code> → sets cookies + emailVerified=false.</li>
       <li><b>Request email OTP</b>: POST <code>/auth/email/otp/send</code> (requires auth).</li>
       <li><b>Verify email OTP</b>: POST <code>/auth/email/otp/verify</code> with otp → emailVerified=true and sets cookies.</li>
-      <li><b>Login</b>: POST <code>/auth/login</code> → sets cookies (after email verification).</li>
+      <li><b>Signin</b>: POST <code>/auth/signin</code> → sets cookies (after email verification).</li>
       <li><b>Refresh</b>: POST <code>/auth/refresh</code> (uses refresh cookie; body optional for non-browser clients).</li>
-      <li><b>Logout</b>: POST <code>/auth/logout</code> (uses refresh cookie; body optional for non-browser clients).</li>
+      <li><b>Signout</b>: POST <code>/auth/signout</code> (uses refresh cookie; body optional for non-browser clients).</li>
     </ol>
   </div>
 
@@ -104,13 +104,13 @@ POST http://localhost:8080/api/auth/email/otp/send
 POST http://localhost:8080/api/auth/email/otp/verify
 { "otp":"&lt;otp&gt;" }
 
-POST http://localhost:8080/api/id/auth/login
+POST http://localhost:8080/api/id/auth/signin
 { "email":"user@local", "password":"Admin@123" }
 
 POST http://localhost:8080/api/id/auth/refresh
 (no body; uses refresh cookie)
 
-POST http://localhost:8080/api/id/auth/logout
+POST http://localhost:8080/api/id/auth/signout
 (no body; uses refresh cookie)
 
 POST http://localhost:8080/api/id/auth/forgot-password

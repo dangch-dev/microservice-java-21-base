@@ -1,8 +1,8 @@
-# POST /api/auth/login
+# POST /api/auth/signin
 
 
 ## Summary
-- Authenticate with email and password and set HttpOnly access/refresh cookies.
+- Sign in with email and password and set HttpOnly access/refresh cookies.
 
 
 ## Description

@@ -35,9 +35,9 @@
     <h2>2) Chức năng chính</h2>
     <ul>
       <li><b>Signup</b>: tạo tài khoản, email ban đầu chưa xác minh.</li>
-      <li><b>Login</b>: yêu cầu email đã xác minh; set cookie HttpOnly access + refresh.</li>
+      <li><b>Signin</b>: yêu cầu email đã xác minh; set cookie HttpOnly access + refresh.</li>
       <li><b>Refresh token</b>: xoay refresh và set cookie mới.</li>
-      <li><b>Logout</b>: thu hồi refresh token và xóa cookie.</li>
+      <li><b>Signout</b>: thu hồi refresh token và xóa cookie.</li>
       <li><b>Xác minh email</b>: gửi token qua email, xác minh OTP để mở khóa login và set cookie.</li>
       <li><b>Quên / Đặt lại mật khẩu</b>: gửi token qua email, đặt lại không cần mật khẩu cũ.</li>
       <li><b>Hồ sơ</b>: xem/cập nhật thông tin cá nhân.</li>
@@ -59,9 +59,9 @@
       <li><b>Signup</b>: POST <code>/auth/signup</code> → set cookie, <code>emailVerified=false</code>.</li>
       <li><b>Yêu cầu OTP email</b>: POST <code>/auth/email/otp/send</code> (cần đăng nhập).</li>
       <li><b>Xác minh OTP email</b>: POST <code>/auth/email/otp/verify</code> với otp → <code>emailVerified=true</code> và set cookie.</li>
-      <li><b>Login</b>: POST <code>/auth/login</code> → set cookie (sau khi đã xác minh email).</li>
+      <li><b>Signin</b>: POST <code>/auth/signin</code> → set cookie (sau khi đã xác minh email).</li>
       <li><b>Refresh</b>: POST <code>/auth/refresh</code> (dùng refresh cookie; body tùy chọn cho non-browser).</li>
-      <li><b>Logout</b>: POST <code>/auth/logout</code> (dùng refresh cookie; body tùy chọn cho non-browser).</li>
+      <li><b>Signout</b>: POST <code>/auth/signout</code> (dùng refresh cookie; body tùy chọn cho non-browser).</li>
     </ol>
   </div>
 
@@ -104,13 +104,13 @@ POST http://localhost:8080/api/auth/email/otp/send
 POST http://localhost:8080/api/auth/email/otp/verify
 { "otp":"&lt;otp&gt;" }
 
-POST http://localhost:8080/api/id/auth/login
+POST http://localhost:8080/api/id/auth/signin
 { "email":"user@local", "password":"Admin@123" }
 
 POST http://localhost:8080/api/id/auth/refresh
 (không body; dùng refresh cookie)
 
-POST http://localhost:8080/api/id/auth/logout
+POST http://localhost:8080/api/id/auth/signout
 (không body; dùng refresh cookie)
 
 POST http://localhost:8080/api/id/auth/forgot-password

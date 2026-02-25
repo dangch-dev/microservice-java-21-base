@@ -17,19 +17,19 @@ import java.time.Duration;
 @Component
 public class AuthCookieService {
 
-    @Value("${app.security.cookies.access-token-name:access_token}")
+    @Value("${app.security.cookies.access-token-name}")
     private String accessTokenCookieName;
 
-    @Value("${app.security.cookies.refresh-token-name:refresh_token}")
+    @Value("${app.security.cookies.refresh-token-name}")
     private String refreshTokenCookieName;
 
-    @Value("${app.security.cookies.domain:}")
+    @Value("${app.security.cookies.domain}")
     private String cookieDomain;
 
-    @Value("${app.security.cookies.same-site:Lax}")
+    @Value("${app.security.cookies.same-site}")
     private String sameSite;
 
-    @Value("${app.security.cookies.secure:false}")
+    @Value("${app.security.cookies.secure}")
     private boolean secure;
 
     public void setTokens(HttpServletResponse response, TokenResponse tokens) {

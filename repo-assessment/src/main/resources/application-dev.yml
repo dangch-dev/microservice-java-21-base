@@ -37,6 +37,7 @@ spring:
 
 server:
   port: 58087
+  forward-headers-strategy: framework
 
 security:
   external-jwt:
