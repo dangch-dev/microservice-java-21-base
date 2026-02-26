@@ -24,6 +24,8 @@ import pl.co.common.jpa.BaseEntity;
                 columnList = "exam_version_id, question_version_id, deleted", unique = true),
         @Index(name = "idx_exam_version_questions_version_deleted",
                 columnList = "exam_version_id, deleted"),
+        @Index(name = "idx_exam_version_questions_version_group_deleted",
+                columnList = "exam_version_id, group_version_id, deleted"),
         @Index(name = "idx_exam_version_questions_deleted", columnList = "deleted")
 })
 public class ExamVersionQuestion extends BaseEntity {
@@ -39,4 +41,7 @@ public class ExamVersionQuestion extends BaseEntity {
 
     @Column(name = "question_order", nullable = false)
     private Integer questionOrder;
+
+    @Column(name = "group_version_id", length = 26)
+    private String groupVersionId;
 }
