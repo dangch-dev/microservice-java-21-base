@@ -6,9 +6,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import pl.co.assessment.dto.ExamCreateRequest;
 import pl.co.assessment.dto.ExamCreateResponse;
 import pl.co.assessment.dto.ExamDraftChangeRequest;
+import pl.co.assessment.dto.ExamDraftGroupRequest;
 import pl.co.assessment.dto.ExamDraftSaveRequest;
 import pl.co.assessment.dto.ExamEditorMetadata;
 import pl.co.assessment.dto.ExamEditorQuestion;
@@ -21,7 +23,11 @@ import pl.co.assessment.entity.ExamVersion;
 import pl.co.assessment.entity.ExamVersionStatus;
 import pl.co.assessment.entity.ExamVersionQuestion;
 import pl.co.assessment.entity.Question;
+import pl.co.assessment.entity.QuestionGroup;
+import pl.co.assessment.entity.QuestionGroupItem;
+import pl.co.assessment.entity.QuestionGroupVersion;
 import pl.co.assessment.entity.QuestionVersion;
+import pl.co.assessment.entity.json.GroupPromptContent;
 import pl.co.assessment.entity.json.QuestionContent;
 import pl.co.assessment.projection.ExamEditorQuestionRow;
 import pl.co.assessment.projection.ExamListRow;
@@ -29,8 +35,12 @@ import pl.co.assessment.repository.ExamRepository;
 import pl.co.assessment.repository.ExamVersionQuestionRepository;
 import pl.co.assessment.repository.ExamVersionRepository;
 import pl.co.assessment.repository.QuestionRepository;
+import pl.co.assessment.repository.QuestionGroupItemRepository;
+import pl.co.assessment.repository.QuestionGroupRepository;
+import pl.co.assessment.repository.QuestionGroupVersionRepository;
 import pl.co.assessment.repository.QuestionVersionRepository;
 import pl.co.assessment.service.ExamService;
+import pl.co.assessment.service.QuestionGroupService;
 import pl.co.assessment.service.QuestionService;
 import pl.co.common.exception.ApiException;
 import pl.co.common.exception.ErrorCode;
@@ -42,7 +52,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -53,8 +65,13 @@ public class ExamServiceImpl implements ExamService {
     private final ExamVersionQuestionRepository examVersionQuestionRepository;
     private final QuestionRepository questionRepository;
     private final QuestionVersionRepository questionVersionRepository;
+    private final QuestionGroupRepository questionGroupRepository;
+    private final QuestionGroupVersionRepository questionGroupVersionRepository;
+    private final QuestionGroupItemRepository questionGroupItemRepository;
     private final QuestionService questionService;
+    private final QuestionGroupService questionGroupService;
     private final EventPublisher eventPublisher;
+    private final ObjectMapper objectMapper;
 
     @Value("${kafka.topics.file}")
     private String fileTopic;
@@ -211,6 +228,7 @@ public class ExamServiceImpl implements ExamService {
                                     .questionId(item.getQuestionId())
                                     .questionVersionId(item.getQuestionVersionId())
                                     .questionOrder(item.getQuestionOrder())
+                                    .groupVersionId(item.getGroupVersionId())
                                     .build())
                             .toList();
                     examVersionQuestionRepository.saveAll(draftQuestions);
@@ -247,11 +265,16 @@ public class ExamServiceImpl implements ExamService {
             ));
         }
 
+        List<ExamVersionQuestion> mappings =
+                examVersionQuestionRepository.findByExamVersionIdAndDeletedFalseOrderByQuestionOrderAsc(editorVersion.getId());
+        var groups = questionGroupService.buildGroups(mappings);
+
         // TODO: lock exam
 
         return new ExamEditorResponse(
                 metadata,
-                questions
+                questions,
+                groups
         );
     }
 
@@ -261,7 +284,8 @@ public class ExamServiceImpl implements ExamService {
         // Check Change
         boolean hasMetadata = request.getMetadata() != null;
         boolean hasChanges = request.getQuestionChanges() != null && !request.getQuestionChanges().isEmpty();
-        if (!hasMetadata && !hasChanges) {
+        boolean hasGroups = request.getGroups() != null;
+        if (!hasMetadata && !hasChanges && !hasGroups) {
             return;
         }
 
@@ -518,6 +542,10 @@ public class ExamServiceImpl implements ExamService {
             }
         }
 
+        if (hasGroups) {
+            applyGroupChanges(request.getGroups(), mapQuestionByQuestionId);
+        }
+
         // Apply metadata updates to draft
         if (hasMetadata) {
             var metadata = request.getMetadata();
@@ -567,6 +595,14 @@ public class ExamServiceImpl implements ExamService {
         publishFiles(files);
     }
 
+    private void publishGroupFiles(ExamDraftGroupRequest group) {
+        if (group == null || group.getPromptContent() == null || group.getPromptContent().getPrompt() == null) {
+            return;
+        }
+        List<FileMeta> files = group.getPromptContent().getPrompt().getFiles();
+        publishFiles(files);
+    }
+
     private void addFiles(List<FileMeta> target, List<FileMeta> files) {
         if (files == null || files.isEmpty()) {
             return;
@@ -586,6 +622,187 @@ public class ExamServiceImpl implements ExamService {
             return;
         }
         eventPublisher.publish(fileTopic, null, fileIds);
+    }
+
+    private void applyGroupChanges(List<ExamDraftGroupRequest> groups,
+                                   Map<String, ExamVersionQuestion> mapQuestionByQuestionId) {
+        if (groups == null) {
+            return;
+        }
+        // Full replace: when groups is provided, only questions in groups will keep assignments.
+        if (groups.isEmpty()) {
+            List<ExamVersionQuestion> updates = new ArrayList<>();
+            for (ExamVersionQuestion mapping : mapQuestionByQuestionId.values()) {
+                if (mapping.getGroupVersionId() != null) {
+                    mapping.setGroupVersionId(null);
+                    updates.add(mapping);
+                }
+            }
+            if (!updates.isEmpty()) {
+                examVersionQuestionRepository.saveAll(updates);
+            }
+            return;
+        }
+
+        Set<String> usedQuestionIds = new HashSet<>();
+        Set<String> usedGroupIds = new HashSet<>();
+        Map<String, String> desiredGroupVersionByQuestionId = new HashMap<>();
+        List<QuestionGroupItem> newGroupItems = new ArrayList<>();
+
+        Set<String> requestGroupIds = groups.stream()
+                .map(ExamDraftGroupRequest::getGroupId)
+                .collect(Collectors.toSet());
+        Map<String, QuestionGroup> existingGroups = questionGroupRepository.findAllById(requestGroupIds).stream()
+                .collect(Collectors.toMap(QuestionGroup::getId, item -> item));
+        List<QuestionGroup> groupUpserts = new ArrayList<>();
+        for (String groupId : requestGroupIds) {
+            QuestionGroup group = existingGroups.get(groupId);
+            if (group == null) {
+                QuestionGroup created = new QuestionGroup();
+                created.setId(groupId);
+                groupUpserts.add(created);
+            } else if (group.isDeleted()) {
+                group.setDeleted(false);
+                groupUpserts.add(group);
+            }
+        }
+        if (!groupUpserts.isEmpty()) {
+            questionGroupRepository.saveAll(groupUpserts);
+        }
+
+        List<String> existingGroupVersionIds = mapQuestionByQuestionId.values().stream()
+                .map(ExamVersionQuestion::getGroupVersionId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        Map<String, QuestionGroupVersion> groupVersionById = new HashMap<>();
+        Map<String, List<QuestionGroupItem>> groupItemsByVersion = new HashMap<>();
+        Map<String, String> groupIdToGroupVersionId = new HashMap<>();
+        Set<String> inconsistentGroupIds = new HashSet<>();
+        if (!existingGroupVersionIds.isEmpty()) {
+            List<QuestionGroupVersion> versions =
+                    questionGroupVersionRepository.findByIdInAndDeletedFalse(existingGroupVersionIds);
+            List<String> matchingGroupVersionIds = new ArrayList<>();
+            for (QuestionGroupVersion version : versions) {
+                if (!requestGroupIds.contains(version.getQuestionGroupId())) {
+                    continue;
+                }
+                groupVersionById.put(version.getId(), version);
+                matchingGroupVersionIds.add(version.getId());
+                String groupId = version.getQuestionGroupId();
+                String existing = groupIdToGroupVersionId.putIfAbsent(groupId, version.getId());
+                if (existing != null && !existing.equals(version.getId())) {
+                    inconsistentGroupIds.add(groupId);
+                }
+            }
+            if (!matchingGroupVersionIds.isEmpty()) {
+                List<QuestionGroupItem> items =
+                        questionGroupItemRepository.findByQuestionGroupVersionIdInAndDeletedFalseOrderByItemOrderAsc(matchingGroupVersionIds);
+                groupItemsByVersion = items.stream()
+                        .collect(Collectors.groupingBy(QuestionGroupItem::getQuestionGroupVersionId));
+            }
+        }
+
+        for (ExamDraftGroupRequest group : groups) {
+            String groupId = group.getGroupId();
+            if (!usedGroupIds.add(groupId)) {
+                throw new ApiException(ErrorCode.E220,
+                        ErrorCode.E220.message("Duplicate groupId, groupId: " + groupId));
+            }
+            Integer previousOrder = null;
+            List<String> desiredQuestionVersionIds = new ArrayList<>();
+            for (String questionId : group.getQuestionIds()) {
+                if (!usedQuestionIds.add(questionId)) {
+                    throw new ApiException(ErrorCode.E220,
+                            ErrorCode.E220.message("Question already grouped, questionId: " + questionId));
+                }
+                ExamVersionQuestion mapping = mapQuestionByQuestionId.get(questionId);
+                if (mapping == null) {
+                    throw new ApiException(ErrorCode.E221,
+                            ErrorCode.E221.message("Invalid questionId, questionId: " + questionId));
+                }
+                Integer order = mapping.getQuestionOrder();
+                if (order == null || order <= 0) {
+                    throw new ApiException(ErrorCode.E221,
+                            ErrorCode.E221.message("Invalid questionOrder, questionId: " + questionId));
+                }
+                if (previousOrder != null && order != previousOrder + 1) {
+                    throw new ApiException(ErrorCode.E221,
+                            ErrorCode.E221.message("Group questions must be consecutive, groupId: " + groupId));
+                }
+                previousOrder = order;
+
+                desiredQuestionVersionIds.add(mapping.getQuestionVersionId());
+            }
+
+            String currentGroupVersionId = groupIdToGroupVersionId.get(groupId);
+            boolean unchanged = false;
+            if (currentGroupVersionId != null && !inconsistentGroupIds.contains(groupId)) {
+                QuestionGroupVersion currentVersion = groupVersionById.get(currentGroupVersionId);
+                List<QuestionGroupItem> currentItems = groupItemsByVersion.get(currentGroupVersionId);
+                if (currentVersion != null && currentItems != null) {
+                    List<String> currentQuestionVersionIds = currentItems.stream()
+                            .map(QuestionGroupItem::getQuestionVersionId)
+                            .toList();
+                    boolean samePrompt = samePromptContent(currentVersion.getPromptContent(), group.getPromptContent());
+                    if (samePrompt && currentQuestionVersionIds.equals(desiredQuestionVersionIds)) {
+                        unchanged = true;
+                    }
+                }
+            }
+
+            String targetGroupVersionId;
+            if (unchanged) {
+                targetGroupVersionId = currentGroupVersionId;
+            } else {
+                QuestionGroupVersion groupVersion = QuestionGroupVersion.builder()
+                        .questionGroupId(groupId)
+                        .promptContent(group.getPromptContent())
+                        .build();
+                QuestionGroupVersion savedVersion = questionGroupVersionRepository.save(groupVersion);
+                publishGroupFiles(group);
+                targetGroupVersionId = savedVersion.getId();
+                int newItemOrder = 1;
+                for (String questionVersionId : desiredQuestionVersionIds) {
+                    newGroupItems.add(QuestionGroupItem.builder()
+                            .questionGroupVersionId(targetGroupVersionId)
+                            .questionVersionId(questionVersionId)
+                            .itemOrder(newItemOrder++)
+                            .build());
+                }
+            }
+
+            for (String questionId : group.getQuestionIds()) {
+                desiredGroupVersionByQuestionId.put(questionId, targetGroupVersionId);
+            }
+        }
+
+        List<ExamVersionQuestion> mappingUpdates = new ArrayList<>();
+        for (ExamVersionQuestion mapping : mapQuestionByQuestionId.values()) {
+            String target = desiredGroupVersionByQuestionId.get(mapping.getQuestionId());
+            if (!Objects.equals(mapping.getGroupVersionId(), target)) {
+                mapping.setGroupVersionId(target);
+                mappingUpdates.add(mapping);
+            }
+        }
+
+        if (!newGroupItems.isEmpty()) {
+            questionGroupItemRepository.saveAll(newGroupItems);
+        }
+        if (!mappingUpdates.isEmpty()) {
+            examVersionQuestionRepository.saveAll(mappingUpdates);
+        }
+    }
+
+    private boolean samePromptContent(GroupPromptContent current, GroupPromptContent incoming) {
+        if (current == incoming) {
+            return true;
+        }
+        if (current == null || incoming == null) {
+            return false;
+        }
+        return objectMapper.valueToTree(current).equals(objectMapper.valueToTree(incoming));
     }
 
     @Override

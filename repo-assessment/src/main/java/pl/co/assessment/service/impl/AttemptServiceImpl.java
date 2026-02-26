@@ -40,6 +40,7 @@ import pl.co.assessment.repository.UserAnswerRepository;
 import pl.co.assessment.service.AttemptService;
 import pl.co.assessment.service.AttemptSubmissionService;
 import pl.co.assessment.service.ManualGradingLockService;
+import pl.co.assessment.service.QuestionGroupService;
 import pl.co.assessment.projection.AttemptListRow;
 import pl.co.assessment.projection.AttemptManagementListRow;
 import pl.co.common.exception.ApiException;
@@ -71,6 +72,7 @@ public class AttemptServiceImpl implements AttemptService {
     private final UserAnswerRepository userAnswerRepository;
     private final AttemptSubmissionService attemptSubmissionService;
     private final ManualGradingLockService manualGradingLockService;
+    private final QuestionGroupService questionGroupService;
 
     @Override
     @Transactional
@@ -97,6 +99,7 @@ public class AttemptServiceImpl implements AttemptService {
                             .build())
                     .toList();
         }
+        var groups = questionGroupService.buildGroups(mappings);
 
         return AttemptDetailResponse.builder()
                 .attemptId(attempt.getId())
@@ -110,6 +113,7 @@ public class AttemptServiceImpl implements AttemptService {
                 .timeRemainingSeconds(remainingSeconds)
                 .questions(questions)
                 .answers(answers)
+                .groups(groups)
                 .build();
     }
 
@@ -504,6 +508,7 @@ public class AttemptServiceImpl implements AttemptService {
             questions.add(AttemptQuestionResponse.builder()
                     .order(displayOrder++)
                     .examVersionQuestionId(mapping.getId())
+                    .questionId(mapping.getQuestionId())
                     .questionVersionId(qv.getId())
                     .type(qv.getType())
                     .questionContent(resolvedContent)
@@ -529,6 +534,7 @@ public class AttemptServiceImpl implements AttemptService {
             items.add(AttemptResultItemResponse.builder()
                     .order(displayOrder++)
                     .examVersionQuestionId(mapping.getId())
+                    .questionId(mapping.getQuestionId())
                     .questionVersionId(qv.getId())
                     .type(qv.getType())
                     .questionContent(resolvedContent)
@@ -589,6 +595,7 @@ public class AttemptServiceImpl implements AttemptService {
             answerMap.put(answer.getExamVersionQuestionId(), answer);
         }
         List<AttemptResultItemResponse> items = buildResultItems(mappings, questionVersionMap, optionOrderMap, answerMap);
+        var groups = questionGroupService.buildGroups(mappings);
         return AttemptResultResponse.builder()
                 .attemptId(attempt.getId())
                 .examId(attempt.getExamId())
@@ -604,6 +611,7 @@ public class AttemptServiceImpl implements AttemptService {
                 .maxScore(attempt.getMaxScore())
                 .percent(attempt.getPercent())
                 .items(items)
+                .groups(groups)
                 .lock(lock)
                 .build();
     }

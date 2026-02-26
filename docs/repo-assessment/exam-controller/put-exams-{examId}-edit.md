@@ -8,7 +8,7 @@
 ## Description
 1. Load exam; if draft pointer invalid, clear it.
 2. If no draft exists, create a new draft (empty or cloned from published).
-3. Load questions for draft version and return metadata + questions.
+3. Load questions and groups for draft version and return metadata + questions + groups.
 
 ## Auth & Permissions
 - ADMIN
@@ -176,6 +176,27 @@
             ]
           }
         }
+      }
+    ],
+    "groups": [
+      {
+        "groupId": string,
+        "groupVersionId": string,
+        "promptContent": {
+          "schema_version": integer,
+          "prompt": {
+            "content": string,
+            "files": [
+              {
+                "fileId": string,
+                "filename": string,
+                "mimeType": string,
+                "sizeBytes": integer
+              }
+            ]
+          }
+        },
+        "questionIds": [string]
       }
     ]
   }

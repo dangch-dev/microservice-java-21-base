@@ -8,7 +8,7 @@
 ## Description
 1. Load exam version by id (deleted = false).
 2. Load questions by `question_order` and join question versions.
-3. Return metadata and full question payload.
+3. Return metadata, questions, and groups.
 
 ## Auth & Permissions
 - ADMIN
@@ -177,6 +177,27 @@
             ]
           }
         }
+      }
+    ],
+    "groups": [
+      {
+        "groupId": string,
+        "groupVersionId": string,
+        "promptContent": {
+          "schema_version": integer,
+          "prompt": {
+            "content": string,
+            "files": [
+              {
+                "fileId": string,
+                "filename": string,
+                "mimeType": string,
+                "sizeBytes": integer
+              }
+            ]
+          }
+        },
+        "questionIds": [string]
       }
     ]
   }

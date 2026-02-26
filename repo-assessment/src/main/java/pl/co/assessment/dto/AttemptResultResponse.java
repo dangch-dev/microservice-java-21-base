@@ -27,6 +27,7 @@ public class AttemptResultResponse {
     private final BigDecimal maxScore;
     private final BigDecimal percent;
     private List<AttemptResultItemResponse> items;
+    private final List<QuestionGroupResponse> groups;
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private final AttemptLockResponse lock;
 }

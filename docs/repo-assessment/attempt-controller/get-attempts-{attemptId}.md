@@ -52,6 +52,7 @@
       {
         "order": integer,
         "examVersionQuestionId": string,
+        "questionId": string,
         "questionVersionId": string,
         "type": string,
         "questionContent": {
@@ -138,6 +139,27 @@
         }
       }
     ] | null,
+    "groups": [
+      {
+        "groupId": string,
+        "groupVersionId": string,
+        "promptContent": {
+          "schema_version": integer,
+          "prompt": {
+            "content": string,
+            "files": [
+              {
+                "fileId": string,
+                "filename": string,
+                "mimeType": string,
+                "sizeBytes": integer
+              }
+            ]
+          }
+        },
+        "questionIds": [string]
+      }
+    ],
     "answers": [
       {
         "examVersionQuestionId": string,

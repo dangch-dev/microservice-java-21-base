@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 public class AttemptResultItemResponse {
     private final Integer order;
     private final String examVersionQuestionId;
+    private final String questionId;
     private final String questionVersionId;
     private final String type;
     private final QuestionContent questionContent;

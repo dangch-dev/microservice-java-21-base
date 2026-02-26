@@ -56,6 +56,7 @@
       {
         "order": integer,
         "examVersionQuestionId": string,
+        "questionId": string,
         "questionVersionId": string,
         "type": string,
         "questionContent": {
@@ -186,6 +187,27 @@
         "answerJson": object | null,
         "earnedPoints": number | null,
         "answerGradingStatus": string | null
+      }
+    ],
+    "groups": [
+      {
+        "groupId": string,
+        "groupVersionId": string,
+        "promptContent": {
+          "schema_version": integer,
+          "prompt": {
+            "content": string,
+            "files": [
+              {
+                "fileId": string,
+                "filename": string,
+                "mimeType": string,
+                "sizeBytes": integer
+              }
+            ]
+          }
+        },
+        "questionIds": [string]
       }
     ]
   }

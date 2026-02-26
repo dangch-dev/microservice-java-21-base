@@ -13,4 +13,6 @@ public class ExamDraftSaveRequest {
     private ExamDraftMetadataRequest metadata;
     @Valid
     private List<ExamDraftChangeRequest> questionChanges;
+    @Valid
+    private List<ExamDraftGroupRequest> groups;
 }
