@@ -94,6 +94,7 @@
 ## Notes
 - Invalid examVersionQuestionId is ignored.
 - answerJson = null clears the stored answer.
+- Empty payload (all fields null/empty) is treated as `answerJson = null` and clears the answer.
 - Answers are blocked when attempt status is TIMEOUT.
 - `schema_version` and `type` are optional; the server uses questionVersion type to validate.
 - `files` uses `FileMeta` format.

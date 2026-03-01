@@ -24,6 +24,7 @@ spring:
 
 server:
   port: 58083
+  forward-headers-strategy: framework
 
 security:
   external-jwt:
@@ -46,7 +47,7 @@ eureka:
 
 sendgrid:
   api-key:
-  from:
+  from: no-reply@simes.io.vn
 
 logging:
   level:

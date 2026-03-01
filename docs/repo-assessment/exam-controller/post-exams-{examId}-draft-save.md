@@ -2,18 +2,19 @@
 
 
 ## Summary
-- Save draft metadata and question changes (add/edit/delete/reorder-only).
+- Save draft metadata, question changes (add/edit/delete/reorder-only), and question groups.
 
 
 ## Description
-1. Validate input: must have `metadata` or `questionChanges`.
+1. Validate input: must have `metadata` or `questionChanges` or `groups`.
 2. Load exam + draft (must be DRAFT).
 3. Classify changes: delete, reorder-only, edit, add.
 4. Validate orders: unique and continuous from 1..N.
 5. Apply delete ? update mappings.
 6. Apply reorder-only ? update questionOrder only.
 7. Apply edit/add ? create new QuestionVersion and update mappings.
-8. Update draft metadata if provided.
+8. Apply group changes if `groups` is provided (full replace).
+9. Update draft metadata if provided.
 
 ## Auth & Permissions
 - ADMIN
@@ -168,6 +169,26 @@
         }
       }
     }
+  ],
+  "groups": [
+    {
+      "groupId": string,
+      "promptContent": {
+        "schema_version": integer,
+        "prompt": {
+          "content": string,
+          "files": [
+            {
+              "fileId": string,
+              "filename": string,
+              "mimeType": string,
+              "sizeBytes": integer
+            }
+          ]
+        }
+      },
+      "questionIds": [string]
+    }
   ]
 }
 ```
@@ -196,8 +217,8 @@
 - (400 Bad Request) - errorCode: 202 when request body has invalid data type/JSON.
 - (404 Not Found) - errorCode: 227 when exam not found.
 - (422 Unprocessable Entity) - errorCode: 420 when draft exam version does not exist or status is not DRAFT.
-- (409 Conflict) - errorCode: 220 when duplicate `questionId` or duplicate `questionOrder`.
-- (400 Bad Request) - errorCode: 221 when request data is invalid (missing `metadata` and `questionChanges`, invalid `questionOrder`, non-continuous order, invalid `questionId`, missing `type/questionContent/gradingRules`).
+- (409 Conflict) - errorCode: 220 when duplicate `questionId` or duplicate `questionOrder` or duplicate `groupId`.
+- (400 Bad Request) - errorCode: 221 when request data is invalid (missing `metadata`/`questionChanges`/`groups`, invalid `questionOrder`, non-continuous order, invalid `questionId`, missing `type/questionContent/gradingRules`, group questions not consecutive, or a question appears in multiple groups).
 - (400 Bad Request) - errorCode: 204 when `questionContent`/`gradingRules` validation fails.
 - (401 Unauthorized) - errorCode: UNAUTHORIZED when access token is missing/invalid.
 - (401 Unauthorized) - errorCode: 234 when access token is expired.
@@ -219,6 +240,10 @@
 - If `questionId` does not exist => ADD, must provide all `type/content/rules`.
 - `questionContent` and `gradingRules` are required for ADD/EDIT; required subfields depend on `type`.
 - `gradingRules.fill_blanks.input_kind` is auto-copied from `questionContent.blanks.input_kind`.
+- `groups` is optional. If omitted, existing groups are unchanged.
+- If `groups` is provided (including empty list), it replaces all current group assignments in the draft.
+- A question can belong to at most one group.
+- `questionIds` must follow the same order as `questionOrder` and be consecutive.
 
 ### Type requirements
 | type | questionContent required | gradingRules required |

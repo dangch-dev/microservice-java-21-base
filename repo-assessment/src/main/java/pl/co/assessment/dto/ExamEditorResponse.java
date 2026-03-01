@@ -10,4 +10,5 @@ import java.util.List;
 public class ExamEditorResponse {
     private final ExamEditorMetadata metadata;
     private final List<ExamEditorQuestion> questions;
+    private final List<QuestionGroupResponse> groups;
 }

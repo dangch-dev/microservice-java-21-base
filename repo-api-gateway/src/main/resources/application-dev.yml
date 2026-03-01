@@ -39,6 +39,10 @@ spring:
             - Path=${config.api-prefix}/assessment/**
           filters:
             - StripPrefix=${config.strip-prefix}
+        - id: auth-oauth2
+          uri: lb://REPO-AUTH
+          predicates:
+            - Path=/oauth2/**,/login/oauth2/**
         - id: auth
           uri: lb://REPO-AUTH
           predicates:
@@ -80,6 +84,7 @@ spring:
 
 server:
   port: 58080
+  forward-headers-strategy: framework
 
 eureka:
   client:

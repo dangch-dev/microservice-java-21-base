@@ -8,9 +8,12 @@ import pl.co.assessment.dto.ExamEditorQuestion;
 import pl.co.assessment.dto.ExamEditorResponse;
 import pl.co.assessment.entity.Exam;
 import pl.co.assessment.entity.ExamVersion;
+import pl.co.assessment.entity.ExamVersionQuestion;
 import pl.co.assessment.projection.ExamEditorQuestionRow;
 import pl.co.assessment.repository.ExamRepository;
+import pl.co.assessment.repository.ExamVersionQuestionRepository;
 import pl.co.assessment.repository.ExamVersionRepository;
+import pl.co.assessment.service.QuestionGroupService;
 import pl.co.assessment.service.ExamVersionService;
 import pl.co.common.exception.ApiException;
 import pl.co.common.exception.ErrorCode;
@@ -24,6 +27,8 @@ public class ExamVersionServiceImpl implements ExamVersionService {
 
     private final ExamRepository examRepository;
     private final ExamVersionRepository examVersionRepository;
+    private final ExamVersionQuestionRepository examVersionQuestionRepository;
+    private final QuestionGroupService questionGroupService;
 
     @Override
     @Transactional(readOnly = true)
@@ -58,9 +63,14 @@ public class ExamVersionServiceImpl implements ExamVersionService {
             ));
         }
 
+        List<ExamVersionQuestion> mappings =
+                examVersionQuestionRepository.findByExamVersionIdAndDeletedFalseOrderByQuestionOrderAsc(version.getId());
+        var groups = questionGroupService.buildGroups(mappings);
+
         return new ExamEditorResponse(
                 metadata,
-                questions
+                questions,
+                groups
         );
     }
 }

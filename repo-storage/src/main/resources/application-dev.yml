@@ -3,6 +3,10 @@ spring:
     time-zone: UTC
     serialization:
       write-dates-as-timestamps: false
+  servlet:
+    multipart:
+      max-file-size: 25MB
+      max-request-size: 25MB
   datasource:
     url: jdbc:mysql://dangch-mysql:53306/storage_mysql_database?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: root
@@ -28,6 +32,7 @@ spring:
 
 server:
   port: 58086
+  forward-headers-strategy: framework
 
 security:
   external-jwt:

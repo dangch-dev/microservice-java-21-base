@@ -2,13 +2,13 @@
 
 
 ## Summary
-- Register a new user and return access and refresh tokens.
+- Register a new user and set HttpOnly access/refresh cookies.
 
 
 ## Description
 1. Validate request payload.
 2. Check duplicate email and resolve default role.
-3. Create user with ROLE_USER and issue tokens.
+3. Create user with ROLE_USER and issue tokens (cookies).
 
 ## Auth & Permissions
 - PUBLIC
@@ -43,14 +43,13 @@
   "success": boolean,
   "errorCode": string | null,
   "errorMessage": string | null,
-  "data": {
-    "accessToken": string,
-    "refreshToken": string,
-    "acssessExpireIn": integer,
-    "refreshExpireIn": integer
-  }
+  "data": null
 }
 ```
+
+### Headers
+- Set-Cookie: access_token=...; HttpOnly; Path=/; SameSite=...
+- Set-Cookie: refresh_token=...; HttpOnly; Path=/; SameSite=...
 
 ### Errors
 - (400 Bad Request) - errorCode: 243 when required fields are missing (email, password, ullName).

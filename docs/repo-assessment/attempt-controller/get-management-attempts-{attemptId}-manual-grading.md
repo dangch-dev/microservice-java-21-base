@@ -7,11 +7,11 @@
 
 ## Description
 1. Validate attempt exists (deleted = false).
-2. Reject if attempt is IN_PROGRESS (not gradable).
+2. Reject if attempt is IN_PROGRESS or gradingStatus is AUTO_GRADING (not gradable).
 3. Acquire/refresh manual grading lock by `attemptId + adminId + sessionId`.
 4. Load exam version and resolve question order.
 5. Load question versions and user answers.
-6. Return attempt totals and per-question result payload + lock info.
+6. Return attempt totals and per-question result payload (answered only) + lock info.
 
 ## Auth & Permissions
 - ADMIN
@@ -64,6 +64,7 @@
       {
         "order": integer,
         "examVersionQuestionId": string,
+        "questionId": string,
         "questionVersionId": string,
         "type": string,
         "questionContent": object,
@@ -72,6 +73,14 @@
         "earnedPoints": number | null,
         "answerGradingStatus": string | null
       }
+    ],
+    "groups": [
+      {
+        "groupId": string,
+        "groupVersionId": string,
+        "promptContent": object,
+        "questionIds": [string]
+      }
     ]
   }
 }
@@ -79,7 +88,7 @@
 
 ### Errors
 - (404 Not Found) - errorCode: 227 when attempt not found.
-- (422 Unprocessable Entity) - errorCode: 420 when attempt is still IN_PROGRESS.
+- (422 Unprocessable Entity) - errorCode: 420 when attempt is still IN_PROGRESS or AUTO_GRADING.
 - (409 Conflict) - errorCode: 423 when attempt is locked by another admin (returns lock info).
 - (409 Conflict) - errorCode: 424 when same admin opens another session/tab (returns lock info).
 - (400 Bad Request) - errorCode: 221 when `X-Session-Id` is missing/invalid.

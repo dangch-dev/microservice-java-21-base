@@ -20,4 +20,5 @@ public class AttemptDetailResponse {
     private final Long timeRemainingSeconds;
     private final List<AttemptQuestionResponse> questions;
     private final List<AttemptAnswerResponse> answers;
+    private final List<QuestionGroupResponse> groups;
 }

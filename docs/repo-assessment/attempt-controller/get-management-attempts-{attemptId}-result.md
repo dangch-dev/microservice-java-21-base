@@ -56,6 +56,7 @@
       {
         "order": integer,
         "examVersionQuestionId": string,
+        "questionId": string,
         "questionVersionId": string,
         "type": string,
         "questionContent": object,
@@ -63,6 +64,14 @@
         "answerJson": object | null,
         "earnedPoints": number | null,
         "answerGradingStatus": string | null
+      }
+    ],
+    "groups": [
+      {
+        "groupId": string,
+        "groupVersionId": string,
+        "promptContent": object,
+        "questionIds": [string]
       }
     ]
   }

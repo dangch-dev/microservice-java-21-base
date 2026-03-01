@@ -27,6 +27,7 @@ import pl.co.assessment.entity.ExamVersionQuestion;
 import pl.co.assessment.entity.QuestionVersion;
 import pl.co.assessment.entity.UserAnswer;
 import pl.co.assessment.entity.UserAnswerGradingStatus;
+import pl.co.assessment.entity.json.AnswerJson;
 import pl.co.assessment.entity.json.QuestionContent;
 import pl.co.assessment.entity.json.GradingRules;
 import pl.co.assessment.repository.AttemptOptionOrderRepository;
@@ -39,6 +40,7 @@ import pl.co.assessment.repository.UserAnswerRepository;
 import pl.co.assessment.service.AttemptService;
 import pl.co.assessment.service.AttemptSubmissionService;
 import pl.co.assessment.service.ManualGradingLockService;
+import pl.co.assessment.service.QuestionGroupService;
 import pl.co.assessment.projection.AttemptListRow;
 import pl.co.assessment.projection.AttemptManagementListRow;
 import pl.co.common.exception.ApiException;
@@ -70,6 +72,7 @@ public class AttemptServiceImpl implements AttemptService {
     private final UserAnswerRepository userAnswerRepository;
     private final AttemptSubmissionService attemptSubmissionService;
     private final ManualGradingLockService manualGradingLockService;
+    private final QuestionGroupService questionGroupService;
 
     @Override
     @Transactional
@@ -96,6 +99,7 @@ public class AttemptServiceImpl implements AttemptService {
                             .build())
                     .toList();
         }
+        var groups = questionGroupService.buildGroups(mappings);
 
         return AttemptDetailResponse.builder()
                 .attemptId(attempt.getId())
@@ -109,6 +113,7 @@ public class AttemptServiceImpl implements AttemptService {
                 .timeRemainingSeconds(remainingSeconds)
                 .questions(questions)
                 .answers(answers)
+                .groups(groups)
                 .build();
     }
 
@@ -237,10 +242,20 @@ public class AttemptServiceImpl implements AttemptService {
         if (ExamAttemptStatus.IN_PROGRESS.name().equalsIgnoreCase(attempt.getStatus())) {
             throw new ApiException(ErrorCode.E420, ErrorCode.E420.message("Attempt is not gradable"));
         }
+        if (ExamAttemptGradingStatus.AUTO_GRADING.name().equalsIgnoreCase(attempt.getGradingStatus())) {
+            throw new ApiException(ErrorCode.E420, ErrorCode.E420.message("Attempt is auto grading"));
+        }
         // Acquire or renew the manual grading lock.
         AttemptLockResponse lock = manualGradingLockService.acquire(attemptId, adminId, sessionId);
-        // Return full grading payload with lock info.
-        return buildAttemptResult(attempt, lock);
+        // Return grading payload with lock info (answered items only).
+        AttemptResultResponse response = buildAttemptResult(attempt, lock);
+        List<AttemptResultItemResponse> items = response.getItems() == null
+                ? List.of()
+                : response.getItems().stream()
+                .filter(this::hasAnswer)
+                .toList();
+        response.setItems(items);
+        return response;
     }
 
     @Override
@@ -493,6 +508,7 @@ public class AttemptServiceImpl implements AttemptService {
             questions.add(AttemptQuestionResponse.builder()
                     .order(displayOrder++)
                     .examVersionQuestionId(mapping.getId())
+                    .questionId(mapping.getQuestionId())
                     .questionVersionId(qv.getId())
                     .type(qv.getType())
                     .questionContent(resolvedContent)
@@ -518,6 +534,7 @@ public class AttemptServiceImpl implements AttemptService {
             items.add(AttemptResultItemResponse.builder()
                     .order(displayOrder++)
                     .examVersionQuestionId(mapping.getId())
+                    .questionId(mapping.getQuestionId())
                     .questionVersionId(qv.getId())
                     .type(qv.getType())
                     .questionContent(resolvedContent)
@@ -578,6 +595,7 @@ public class AttemptServiceImpl implements AttemptService {
             answerMap.put(answer.getExamVersionQuestionId(), answer);
         }
         List<AttemptResultItemResponse> items = buildResultItems(mappings, questionVersionMap, optionOrderMap, answerMap);
+        var groups = questionGroupService.buildGroups(mappings);
         return AttemptResultResponse.builder()
                 .attemptId(attempt.getId())
                 .examId(attempt.getExamId())
@@ -593,7 +611,22 @@ public class AttemptServiceImpl implements AttemptService {
                 .maxScore(attempt.getMaxScore())
                 .percent(attempt.getPercent())
                 .items(items)
+                .groups(groups)
                 .lock(lock)
                 .build();
+    }
+
+    private boolean hasAnswer(AttemptResultItemResponse item) {
+        AnswerJson answerJson = item.getAnswerJson();
+        if (answerJson == null || answerJson.getPayload() == null) {
+            return false;
+        }
+        AnswerJson.Payload payload = answerJson.getPayload();
+        boolean hasSelected = payload.getSelectedOptionIds() != null && !payload.getSelectedOptionIds().isEmpty();
+        boolean hasText = payload.getText() != null && !payload.getText().isBlank();
+        boolean hasPairs = payload.getPairs() != null && !payload.getPairs().isEmpty();
+        boolean hasBlanks = payload.getBlanks() != null && !payload.getBlanks().isEmpty();
+        boolean hasFiles = payload.getFiles() != null && !payload.getFiles().isEmpty();
+        return hasSelected || hasText || hasPairs || hasBlanks || hasFiles;
     }
 }

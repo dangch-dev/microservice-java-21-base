@@ -2,13 +2,13 @@
 
 
 ## Summary
-- Verify OTP and issue new access and refresh tokens.
+- Verify OTP and set new access/refresh cookies.
 
 
 ## Description
 1. Resolve user from access token.
 2. Validate OTP and mark email verified.
-3. Issue new tokens.
+3. Issue new tokens (cookies).
 
 ## Auth & Permissions
 - USER
@@ -16,7 +16,9 @@
 
 ## Request
 ### Headers
-- Authorization: string (Bearer token)
+- Authorization: string (Bearer token) (optional for non-browser)
+  or
+- Cookie: access_token=... (browser)
 
 ### Body
 ```
@@ -30,7 +32,7 @@
 | field | location | required |
 | --- | --- | --- |
 | otp | body | x |
-| Authorization | header | x |
+| Authorization | header |  |
 
 
 ## Response
@@ -40,14 +42,13 @@
   "success": boolean,
   "errorCode": string | null,
   "errorMessage": string | null,
-  "data": {
-    "accessToken": string,
-    "refreshToken": string,
-    "acssessExpireIn": integer,
-    "refreshExpireIn": integer
-  }
+  "data": null
 }
 ```
+
+### Headers
+- Set-Cookie: access_token=...; HttpOnly; Path=/; SameSite=...
+- Set-Cookie: refresh_token=...; HttpOnly; Path=/; SameSite=...
 
 ### Errors
 - (400 Bad Request) - errorCode: 243 when otp is missing.
@@ -69,5 +70,4 @@
 
 ## Notes
 - Max attempts is 5.
-
 

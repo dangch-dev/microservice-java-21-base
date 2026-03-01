@@ -15,5 +15,8 @@ docker compose up -d api-gateway
 docker compose build identity
 docker compose up -d identity
 
+docker compose build auth
+docker compose up -d auth
+
 docker compose build assessment
 docker compose up -d assessment

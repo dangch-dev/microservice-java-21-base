@@ -75,6 +75,14 @@ public class AttemptAnswerServiceImpl implements AttemptAnswerService {
             return;
         }
 
+        // Treat empty payloads as "clear answer" to avoid storing empty answers.
+        for (AttemptAnswerSaveItem item : request.getAnswers()) {
+            AnswerJson answerJson = item.getAnswerJson();
+            if (answerJson != null && isEmptyAnswerJson(answerJson)) {
+                item.setAnswerJson(null);
+            }
+        }
+
         // Validate answerJson against question content + grading rules (fail-all)
         Map<String, QuestionVersion> questionVersionMap = loadQuestionVersionsForValidation(request.getAnswers(), validMappings);
         validateAnswers(request.getAnswers(), validMappings, questionVersionMap);
@@ -378,5 +386,21 @@ public class AttemptAnswerServiceImpl implements AttemptAnswerService {
                 throw new ApiException(ErrorCode.E221, ErrorCode.E221.message("Invalid file mime"));
             }
         }
+    }
+
+    private boolean isEmptyAnswerJson(AnswerJson answerJson) {
+        if (answerJson == null) {
+            return true;
+        }
+        AnswerJson.Payload payload = answerJson.getPayload();
+        if (payload == null) {
+            return true;
+        }
+        boolean hasSelected = payload.getSelectedOptionIds() != null && !payload.getSelectedOptionIds().isEmpty();
+        boolean hasText = payload.getText() != null && !payload.getText().isBlank();
+        boolean hasPairs = payload.getPairs() != null && !payload.getPairs().isEmpty();
+        boolean hasBlanks = payload.getBlanks() != null && !payload.getBlanks().isEmpty();
+        boolean hasFiles = payload.getFiles() != null && !payload.getFiles().isEmpty();
+        return !(hasSelected || hasText || hasPairs || hasBlanks || hasFiles);
     }
 }
