@@ -382,7 +382,10 @@ public class AttemptAnswerServiceImpl implements AttemptAnswerService {
             if (file.fileId() == null || file.fileId().isBlank()) {
                 throw new ApiException(ErrorCode.E221, ErrorCode.E221.message("fileId is required"));
             }
-            if (allowedTypes != null && file.mimeType() != null && !allowedTypes.contains(file.mimeType())) {
+            if (allowedTypes != null
+                    && !allowedTypes.contains("*/*")
+                    && file.mimeType() != null
+                    && !allowedTypes.contains(file.mimeType())) {
                 throw new ApiException(ErrorCode.E221, ErrorCode.E221.message("Invalid file mime"));
             }
         }

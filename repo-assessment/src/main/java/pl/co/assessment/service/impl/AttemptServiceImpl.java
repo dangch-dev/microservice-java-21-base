@@ -17,6 +17,7 @@ import pl.co.assessment.dto.AttemptPageResponse;
 import pl.co.assessment.dto.AttemptQuestionResponse;
 import pl.co.assessment.dto.AttemptResultItemResponse;
 import pl.co.assessment.dto.AttemptResultResponse;
+import pl.co.assessment.dto.UserLookupResponse;
 import pl.co.assessment.entity.AttemptOptionOrder;
 import pl.co.assessment.entity.AttemptQuestionOrder;
 import pl.co.assessment.entity.ExamAttempt;
@@ -41,6 +42,7 @@ import pl.co.assessment.service.AttemptService;
 import pl.co.assessment.service.AttemptSubmissionService;
 import pl.co.assessment.service.ManualGradingLockService;
 import pl.co.assessment.service.QuestionGroupService;
+import pl.co.assessment.service.IdentityLookupService;
 import pl.co.assessment.projection.AttemptListRow;
 import pl.co.assessment.projection.AttemptManagementListRow;
 import pl.co.common.exception.ApiException;
@@ -56,6 +58,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -73,6 +76,7 @@ public class AttemptServiceImpl implements AttemptService {
     private final AttemptSubmissionService attemptSubmissionService;
     private final ManualGradingLockService manualGradingLockService;
     private final QuestionGroupService questionGroupService;
+    private final IdentityLookupService identityLookupService;
 
     @Override
     @Transactional
@@ -215,8 +219,39 @@ public class AttemptServiceImpl implements AttemptService {
                         .percent(row.getPercent())
                         .build())
                 .toList();
+        Map<String, UserLookupResponse> users = identityLookupService.lookupByIds(
+                items.stream()
+                        .map(AttemptManagementListItemResponse::getCreatedBy)
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toSet())
+        );
+        List<AttemptManagementListItemResponse> enriched = items.stream()
+                .map(item -> {
+        UserLookupResponse user = users.get(item.getCreatedBy());
+                    return AttemptManagementListItemResponse.builder()
+                            .attemptId(item.getAttemptId())
+                            .examId(item.getExamId())
+                            .examVersionId(item.getExamVersionId())
+                            .createdBy(item.getCreatedBy())
+                            .creatorFullName(user == null ? null : user.getFullName())
+                            .creatorAvatarUrl(user == null ? null : user.getAvatarUrl())
+                            .creatorEmail(user == null ? null : user.getEmail())
+                            .creatorRoleName(user == null ? null : user.getRoleName())
+                            .name(item.getName())
+                            .description(item.getDescription())
+                            .durationMinutes(item.getDurationMinutes())
+                            .status(item.getStatus())
+                            .gradingStatus(item.getGradingStatus())
+                            .startTime(item.getStartTime())
+                            .endTime(item.getEndTime())
+                            .score(item.getScore())
+                            .maxScore(item.getMaxScore())
+                            .percent(item.getPercent())
+                            .build();
+                })
+                .toList();
         return AttemptManagementPageResponse.builder()
-                .items(items)
+                .items(enriched)
                 .totalElements(result.getTotalElements())
                 .totalPages(result.getTotalPages())
                 .page(result.getNumber())
@@ -247,8 +282,9 @@ public class AttemptServiceImpl implements AttemptService {
         }
         // Acquire or renew the manual grading lock.
         AttemptLockResponse lock = manualGradingLockService.acquire(attemptId, adminId, sessionId);
+        AttemptLockResponse enrichedLock = enrichLock(lock);
         // Return grading payload with lock info (answered items only).
-        AttemptResultResponse response = buildAttemptResult(attempt, lock);
+        AttemptResultResponse response = buildAttemptResult(attempt, enrichedLock);
         List<AttemptResultItemResponse> items = response.getItems() == null
                 ? List.of()
                 : response.getItems().stream()
@@ -262,7 +298,8 @@ public class AttemptServiceImpl implements AttemptService {
     @Transactional(readOnly = true)
     public AttemptLockResponse heartbeatManualGrading(String attemptId, String adminId, String sessionId) {
         // Renew lock or raise E425 if lost.
-        return manualGradingLockService.renew(attemptId, adminId, sessionId);
+        AttemptLockResponse lock = manualGradingLockService.renew(attemptId, adminId, sessionId);
+        return enrichLock(lock);
     }
 
     @Override
@@ -386,7 +423,27 @@ public class AttemptServiceImpl implements AttemptService {
                 ? ExamAttemptGradingStatus.MANUAL_GRADING.name()
                 : ExamAttemptGradingStatus.GRADED.name());
 
-        return lock;
+        return enrichLock(lock);
+    }
+
+    private AttemptLockResponse enrichLock(AttemptLockResponse lock) {
+        if (lock == null || lock.getOwnerId() == null || lock.getOwnerId().isBlank()) {
+            return lock;
+        }
+        Map<String, UserLookupResponse> users = identityLookupService.lookupByIds(Set.of(lock.getOwnerId()));
+        UserLookupResponse user = users.get(lock.getOwnerId());
+        if (user == null) {
+            return lock;
+        }
+        return AttemptLockResponse.builder()
+                .ownerId(lock.getOwnerId())
+                .ownerFullName(user.getFullName())
+                .ownerAvatarUrl(user.getAvatarUrl())
+                .ownerEmail(user.getEmail())
+                .ownerRoleName(user.getRoleName())
+                .sessionId(lock.getSessionId())
+                .ttlSeconds(lock.getTtlSeconds())
+                .build();
     }
 
     private ExamAttempt loadAttemptOrThrow(String attemptId) {
