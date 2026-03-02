@@ -29,7 +29,7 @@ public class IdentityLookupServiceImpl implements IdentityLookupService {
     @Value("${internal.service.identity-service}")
     private String identityService;
 
-    private final String lookupPath = "/users/lookup";
+    private final String lookupPath = "/internal/users/lookup";
 
     @Override
     public Map<String, UserLookupResponse> lookupByIds(Collection<String> userIds) {

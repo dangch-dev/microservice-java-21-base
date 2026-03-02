@@ -9,6 +9,9 @@ import pl.co.identity.entity.Role;
 import pl.co.identity.entity.User;
 import pl.co.identity.repository.UserRepository;
 import pl.co.identity.service.UserLookupService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.util.StringUtils;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -33,6 +36,36 @@ public class UserLookupServiceImpl implements UserLookupService {
             return List.of();
         }
         List<User> users = userRepository.findByIdIn(userIds);
+        return toLookupResponses(users);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public pl.co.identity.dto.UserLookupPageResponse search(String searchValue, Integer page, Integer size) {
+        String normalizedSearch = StringUtils.hasText(searchValue) ? searchValue.trim() : "";
+        int pageValue = Math.max(page == null ? 0 : page, 0);
+        int sizeValue = Math.max(size == null ? 20 : size, 1);
+        PageRequest pageRequest = PageRequest.of(pageValue, sizeValue);
+        Page<User> result;
+        result = userRepository.findByFullNameContainingIgnoreCaseOrEmailContainingIgnoreCase(
+                normalizedSearch,
+                normalizedSearch,
+                pageRequest
+        );
+        List<UserLookupResponse> items = toLookupResponses(result.getContent());
+        return pl.co.identity.dto.UserLookupPageResponse.builder()
+                .items(items)
+                .totalElements(result.getTotalElements())
+                .totalPages(result.getTotalPages())
+                .page(result.getNumber())
+                .size(result.getSize())
+                .build();
+    }
+
+    private List<UserLookupResponse> toLookupResponses(List<User> users) {
+        if (users == null || users.isEmpty()) {
+            return List.of();
+        }
         List<UserLookupResponse> result = new ArrayList<>();
         for (User user : users) {
             Set<String> roleNames = new HashSet<>();

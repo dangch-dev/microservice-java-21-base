@@ -8,22 +8,33 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import pl.co.common.dto.ApiResponse;
+import pl.co.identity.dto.UserLookupPageResponse;
 import pl.co.identity.dto.UserLookupRequest;
 import pl.co.identity.dto.UserLookupResponse;
+import pl.co.identity.dto.UserLookupSearchRequest;
 import pl.co.identity.service.UserLookupService;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/internal/users")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyAuthority(T(pl.co.common.security.RoleName).ROLE_INTERNAL.name())")
 public class UserLookupController {
 
     private final UserLookupService userLookupService;
 
-    @PostMapping("/lookup")
+    @PostMapping("/internal/users/lookup")
+    @PreAuthorize("hasAnyAuthority(T(pl.co.common.security.RoleName).ROLE_INTERNAL.name())")
     public ApiResponse<List<UserLookupResponse>> lookup(@Valid @RequestBody UserLookupRequest request) {
         return ApiResponse.ok(userLookupService.lookupByIds(request.getUserIds()));
+    }
+
+    @PostMapping("/users/lookup")
+    @PreAuthorize("hasAnyAuthority(T(pl.co.common.security.RoleName).ROLE_ADMIN.name())")
+    public ApiResponse<UserLookupPageResponse> search(@Valid @RequestBody UserLookupSearchRequest request) {
+        return ApiResponse.ok(userLookupService.search(
+                request.getSearchValue(),
+                request.getPage(),
+                request.getSize()
+        ));
     }
 }
