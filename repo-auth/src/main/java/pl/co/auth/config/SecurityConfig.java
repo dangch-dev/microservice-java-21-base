@@ -18,6 +18,7 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.web.filter.CommonsRequestLoggingFilter;
 import pl.co.common.filter.BearerTokenAuthenticationFilter;
 import pl.co.common.filter.EmailVerifiedFilter;
+import pl.co.common.filter.InternalJwtFilter;
 import pl.co.common.util.RsaKeyUtil;
 import pl.co.common.web.AccessDeniedHandler;
 import pl.co.common.web.AuthenticationEntryPoint;
@@ -40,6 +41,7 @@ public class SecurityConfig {
                                                    AuthenticationEntryPoint restAuthenticationEntryPoint,
                                                    AccessDeniedHandler restAccessDeniedHandler,
                                                    BearerTokenAuthenticationFilter bearerTokenAuthenticationFilter,
+                                                   InternalJwtFilter internalJwtFilter,
                                                    EmailVerifiedFilter emailVerifiedFilter,
                                                    OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler,
                                                    OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler,
@@ -56,6 +58,7 @@ public class SecurityConfig {
                         .requestMatchers("/password/**", "/oauth/**", "/oauth2/**", "/login/oauth2/**").permitAll()
                         .anyRequest().permitAll())
                 .addFilterBefore(commonRequestContextFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(internalJwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(bearerTokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(emailVerifiedFilter, UsernamePasswordAuthenticationFilter.class)
                 .httpBasic(Customizer.withDefaults());
@@ -96,6 +99,11 @@ public class SecurityConfig {
                 "/login/oauth2/**",
                 "/email/**"
         ));
+    }
+
+    @Bean
+    public InternalJwtFilter internalJwtFilter(RSAPublicKey jwtPublicKey) {
+        return new InternalJwtFilter(jwtPublicKey, List.of());
     }
 
     @Bean
