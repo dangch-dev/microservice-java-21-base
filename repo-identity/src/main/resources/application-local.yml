@@ -44,11 +44,12 @@ logging:
 
 # Required declarations (But it doesn't need to have value.)
 internal:
-  api:
-    auth-service: repo-auth
+  config:
     token-path: /oauth/token
     client-id: hMLksVQKhU5WsvacK7uIAvmB
     client-secret: pbfWXn0D4MmzzBbcCwRboSbmcT92eyPx
+  service:
+    auth-service: repo-auth
 
 kafka:
   topics:

@@ -56,11 +56,13 @@ eureka:
 
 # Required declarations (But it doesn't need to have value.)
 internal:
-  api:
-    auth-service: repo-auth
+  config:
     token-path: /oauth/token
     client-id: oRd1gWcf7Sx1z0NHHA1zwSPa
     client-secret: 4PHWqCA2CtcSjEf6pUpP7D9hVuvCOdRL
+  service:
+    auth-service: repo-auth
+    identity-service: repo-identity
 
 kafka:
   topics:

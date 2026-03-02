@@ -78,11 +78,12 @@ app:
 
 # Required declarations (But it doesn't need to have value.)
 internal:
-  api:
-    auth-service: repo-auth
+  config:
     token-path: /oauth/token
     client-id:
     client-secret:
+  service:
+    auth-service: repo-auth
 
 kafka:
   topics:
