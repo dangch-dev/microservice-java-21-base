@@ -11,6 +11,7 @@ import pl.co.identity.repository.UserRepository;
 import pl.co.identity.service.UserLookupService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.util.StringUtils;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -45,7 +46,7 @@ public class UserLookupServiceImpl implements UserLookupService {
         String normalizedSearch = StringUtils.hasText(searchValue) ? searchValue.trim() : "";
         int pageValue = Math.max(page == null ? 0 : page, 0);
         int sizeValue = Math.max(size == null ? 20 : size, 1);
-        PageRequest pageRequest = PageRequest.of(pageValue, sizeValue);
+        PageRequest pageRequest = PageRequest.of(pageValue, sizeValue, Sort.by("createdAt").descending());
         Page<User> result;
         result = userRepository.findByFullNameContainingIgnoreCaseOrEmailContainingIgnoreCase(
                 normalizedSearch,

@@ -77,6 +77,7 @@
 
 ## Notes
 - `page` is zero-based.
+- Sorted by `createdAt` DESC (newest first).
 
 
 

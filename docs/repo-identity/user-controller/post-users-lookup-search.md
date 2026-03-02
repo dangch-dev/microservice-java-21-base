@@ -9,7 +9,7 @@
 1. Normalize searchValue (trim).
 2. If searchValue is present, query by fullName/email (contains, case-insensitive).
 3. If searchValue is null/blank, return all users with paging.
-3. Return paged list with the same columns as lookup.
+4. Return paged list with the same columns as lookup.
 
 ## Auth & Permissions
 - AUTHENTICATED
@@ -78,3 +78,4 @@
 
 ## Notes
 - When `searchValue` is null/blank, returns all users with paging.
+- Sorted by `createdAt` DESC (newest first).

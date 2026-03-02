@@ -80,6 +80,7 @@ public interface ExamRepository extends JpaRepository<Exam, String> {
                 :enabled IS NULL
                 OR e.enabled = :enabled
               )
+            ORDER BY e.createdAt DESC
             """,
             countQuery = """
             SELECT COUNT(e)
