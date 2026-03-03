@@ -66,8 +66,8 @@ logging:
 
 app:
   frontend:
-    reset-password-url: http://localhost:5173/reset-password
-    oauth-callback-url: http://localhost:5173
+    base-url: http://localhost:5173
+    reset-password-path: /reset-password
   security:
     cookies:
       access-token-name: access_token

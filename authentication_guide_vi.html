@@ -1,8 +1,8 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>Hướng Dẫn Xác Thực</title>
+  <title>HÆ°á»›ng Dáº«n XÃ¡c Thá»±c</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 24px; line-height: 1.5; color: #0f172a; background: #f8fafc; }
     h1, h2, h3 { color: #0b3b73; }
@@ -13,88 +13,89 @@
   </style>
 </head>
 <body>
-  <h1>Hướng Dẫn Xác Thực</h1>
-  <p>Tóm tắt các khóa cần cấu hình, chức năng xác thực và cách gọi API.</p>
+  <h1>HÆ°á»›ng Dáº«n XÃ¡c Thá»±c</h1>
+  <p>TÃ³m táº¯t cÃ¡c khÃ³a cáº§n cáº¥u hÃ¬nh, chá»©c nÄƒng xÃ¡c thá»±c vÃ  cÃ¡ch gá»i API.</p>
 
   <div class="card">
-    <h2>1) Khóa / Secret cần cấu hình</h2>
+    <h2>1) KhÃ³a / Secret cáº§n cáº¥u hÃ¬nh</h2>
     <ul>
       <li><b>JWT RSA keys</b>: <code>security.external-jwt.public-key-path</code> / <code>private-key-path</code>.</li>
-      <li><b>Access TTL</b>: <code>security.external-jwt.access-ttl</code> (mặc định 5 phút).</li>
-      <li><b>Refresh TTL</b>: <code>security.external-jwt.refresh-ttl</code> (mặc định 7 ngày).</li>
-      <li><b>Redis</b>: host/port/password cho refresh token + token xác minh email / đặt lại mật khẩu.</li>
-      <li><b>MySQL</b>: URL, username, password cho bảng user & role.</li>
-      <li><b>Eureka</b>: <code>eureka.client.service-url.defaultZone</code> (gateway & identity đăng ký ở đây).</li>
+      <li><b>Access TTL</b>: <code>security.external-jwt.access-ttl</code> (máº·c Ä‘á»‹nh 5 phÃºt).</li>
+      <li><b>Refresh TTL</b>: <code>security.external-jwt.refresh-ttl</code> (máº·c Ä‘á»‹nh 7 ngÃ y).</li>
+      <li><b>Redis</b>: host/port/password cho refresh token + token xÃ¡c minh email / Ä‘áº·t láº¡i máº­t kháº©u.</li>
+      <li><b>MySQL</b>: URL, username, password cho báº£ng user & role.</li>
+      <li><b>Eureka</b>: <code>eureka.client.service-url.defaultZone</code> (gateway & identity Ä‘Äƒng kÃ½ á»Ÿ Ä‘Ã¢y).</li>
       <li><b>Google OAuth2 client</b>: <code>spring.security.oauth2.client.registration.google.*</code></li>
-      <li><b>FE callback</b>: <code>app.frontend.oauth-callback-url</code></li>
+      <li><b>FE base URL</b>: <code>app.frontend.base-url</code> (chá»‰ origin, dÃ¹ng Ä‘á»ƒ build redirect).</li>
+      <li><b>Reset password path</b>: <code>app.frontend.reset-password-path</code> (vÃ­ dá»¥ <code>/reset-password</code>).</li>
       <li><b>Cookie auth</b>: <code>app.security.cookies.*</code> (name, domain, same-site, secure).</li>
     </ul>
   </div>
 
   <div class="card">
-    <h2>2) Chức năng chính</h2>
+    <h2>2) Chá»©c nÄƒng chÃ­nh</h2>
     <ul>
-      <li><b>Signup</b>: tạo tài khoản, email ban đầu chưa xác minh.</li>
-      <li><b>Signin</b>: yêu cầu email đã xác minh; set cookie HttpOnly access + refresh.</li>
-      <li><b>Refresh token</b>: xoay refresh và set cookie mới.</li>
-      <li><b>Signout</b>: thu hồi refresh token và xóa cookie.</li>
-      <li><b>Xác minh email</b>: gửi token qua email, xác minh OTP để mở khóa login và set cookie.</li>
-      <li><b>Quên / Đặt lại mật khẩu</b>: gửi token qua email, đặt lại không cần mật khẩu cũ.</li>
-      <li><b>Hồ sơ</b>: xem/cập nhật thông tin cá nhân.</li>
-      <li><b>Quản lý người dùng (Admin)</b>: danh sách (lọc/phân trang), chi tiết, tạo/cập nhật, active/block.</li>
+      <li><b>Signup</b>: táº¡o tÃ i khoáº£n, email ban Ä‘áº§u chÆ°a xÃ¡c minh.</li>
+      <li><b>Signin</b>: yÃªu cáº§u email Ä‘Ã£ xÃ¡c minh; set cookie HttpOnly access + refresh.</li>
+      <li><b>Refresh token</b>: xoay refresh vÃ  set cookie má»›i.</li>
+      <li><b>Signout</b>: thu há»“i refresh token vÃ  xÃ³a cookie.</li>
+      <li><b>XÃ¡c minh email</b>: gá»­i token qua email, xÃ¡c minh OTP Ä‘á»ƒ má»Ÿ khÃ³a login vÃ  set cookie.</li>
+      <li><b>QuÃªn / Äáº·t láº¡i máº­t kháº©u</b>: gá»­i token qua email, Ä‘áº·t láº¡i khÃ´ng cáº§n máº­t kháº©u cÅ©.</li>
+      <li><b>Há»“ sÆ¡</b>: xem/cáº­p nháº­t thÃ´ng tin cÃ¡ nhÃ¢n.</li>
+      <li><b>Quáº£n lÃ½ ngÆ°á»i dÃ¹ng (Admin)</b>: danh sÃ¡ch (lá»c/phÃ¢n trang), chi tiáº¿t, táº¡o/cáº­p nháº­t, active/block.</li>
     </ul>
   </div>
 
   <div class="card">
     <h2>3) Base path API</h2>
     <ul>
-      <li><b>Đi thẳng Identity</b>: <code>http://localhost:8081</code>.</li>
-      <li><b>Qua API Gateway</b>: <code>http://localhost:8080/api/id</code> (gateway bỏ prefix <code>/api/id</code>).</li>
+      <li><b>Äi tháº³ng Identity</b>: <code>http://localhost:8081</code>.</li>
+      <li><b>Qua API Gateway</b>: <code>http://localhost:8080/api/id</code> (gateway bá» prefix <code>/api/id</code>).</li>
     </ul>
   </div>
 
   <div class="card">
-    <h2>4) Luồng xác thực (happy path)</h2>
+    <h2>4) Luá»“ng xÃ¡c thá»±c (happy path)</h2>
     <ol>
-      <li><b>Signup</b>: POST <code>/auth/signup</code> → set cookie, <code>emailVerified=false</code>.</li>
-      <li><b>Yêu cầu OTP email</b>: POST <code>/auth/email/otp/send</code> (cần đăng nhập).</li>
-      <li><b>Xác minh OTP email</b>: POST <code>/auth/email/otp/verify</code> với otp → <code>emailVerified=true</code> và set cookie.</li>
-      <li><b>Signin</b>: POST <code>/auth/signin</code> → set cookie (sau khi đã xác minh email).</li>
-      <li><b>Refresh</b>: POST <code>/auth/refresh</code> (dùng refresh cookie; body tùy chọn cho non-browser).</li>
-      <li><b>Signout</b>: POST <code>/auth/signout</code> (dùng refresh cookie; body tùy chọn cho non-browser).</li>
+      <li><b>Signup</b>: POST <code>/auth/signup</code> â†’ set cookie, <code>emailVerified=false</code>.</li>
+      <li><b>YÃªu cáº§u OTP email</b>: POST <code>/auth/email/otp/send</code> (cáº§n Ä‘Äƒng nháº­p).</li>
+      <li><b>XÃ¡c minh OTP email</b>: POST <code>/auth/email/otp/verify</code> vá»›i otp â†’ <code>emailVerified=true</code> vÃ  set cookie.</li>
+      <li><b>Signin</b>: POST <code>/auth/signin</code> â†’ set cookie (sau khi Ä‘Ã£ xÃ¡c minh email).</li>
+      <li><b>Refresh</b>: POST <code>/auth/refresh</code> (dÃ¹ng refresh cookie; body tÃ¹y chá»n cho non-browser).</li>
+      <li><b>Signout</b>: POST <code>/auth/signout</code> (dÃ¹ng refresh cookie; body tÃ¹y chá»n cho non-browser).</li>
     </ol>
   </div>
 
   <div class="card">
-    <h2>5) Luồng quên / đặt lại mật khẩu</h2>
+    <h2>5) Luá»“ng quÃªn / Ä‘áº·t láº¡i máº­t kháº©u</h2>
     <ol>
-      <li><b>Yêu cầu reset</b>: POST <code>/auth/forgot-password</code> với email (không cần login).</li>
-      <li><b>Kiểm tra token (tùy chọn)</b>: GET <code>/auth/reset-password/validate?token=...</code></li>
-      <li><b>Đặt lại</b>: POST <code>/auth/reset-password</code> với token + mật khẩu mới.</li>
-      <li><b>Login lại</b>: dùng mật khẩu mới.</li>
+      <li><b>YÃªu cáº§u reset</b>: POST <code>/auth/forgot-password</code> vá»›i email (khÃ´ng cáº§n login).</li>
+      <li><b>Kiá»ƒm tra token (tÃ¹y chá»n)</b>: GET <code>/auth/reset-password/validate?token=...</code></li>
+      <li><b>Äáº·t láº¡i</b>: POST <code>/auth/reset-password</code> vá»›i token + máº­t kháº©u má»›i.</li>
+      <li><b>Login láº¡i</b>: dÃ¹ng máº­t kháº©u má»›i.</li>
     </ol>
   </div>
 
   <div class="card">
-    <h2>6) Header cần dùng</h2>
+    <h2>6) Header cáº§n dÃ¹ng</h2>
     <ul>
-      <li>Trình duyệt: cookie HttpOnly <code>access_token</code> và <code>refresh_token</code> (gửi kèm <code>withCredentials</code>).</li>
+      <li>TrÃ¬nh duyá»‡t: cookie HttpOnly <code>access_token</code> vÃ  <code>refresh_token</code> (gá»­i kÃ¨m <code>withCredentials</code>).</li>
       <li>Non-browser: <code>Authorization: Bearer &lt;access_token&gt;</code>.</li>
-      <li>Gateway thêm cho downstream: <code>X-User-Id</code>, <code>X-Roles</code> từ JWT.</li>
-      <li>Gợi ý: <code>X-Request-Id</code> (theo dõi request).</li>
+      <li>Gateway thÃªm cho downstream: <code>X-User-Id</code>, <code>X-Roles</code> tá»« JWT.</li>
+      <li>Gá»£i Ã½: <code>X-Request-Id</code> (theo dÃµi request).</li>
     </ul>
   </div>
 
   <div class="card">
-    <h2>7) Xử lý lỗi</h2>
+    <h2>7) Xá»­ lÃ½ lá»—i</h2>
     <ul>
       <li>Format: <code>{"success": false, "errorCode": "...", "errorMessage": "...", "data": null}</code>.</li>
-      <li>Ví dụ: <code>E233</code> (Email chưa xác minh), <code>E255</code> (Email đã tồn tại), <code>E239</code> (Sai mật khẩu), <code>E241</code> (Token không hợp lệ), <code>E248</code> (Refresh token không hợp lệ), <code>E243</code> (Thiếu tham số).</li>
+      <li>VÃ­ dá»¥: <code>E233</code> (Email chÆ°a xÃ¡c minh), <code>E255</code> (Email Ä‘Ã£ tá»“n táº¡i), <code>E239</code> (Sai máº­t kháº©u), <code>E241</code> (Token khÃ´ng há»£p lá»‡), <code>E248</code> (Refresh token khÃ´ng há»£p lá»‡), <code>E243</code> (Thiáº¿u tham sá»‘).</li>
     </ul>
   </div>
 
   <div class="card">
-    <h2>8) Ví dụ nhanh (qua Gateway)</h2>
+    <h2>8) VÃ­ dá»¥ nhanh (qua Gateway)</h2>
 <pre>POST http://localhost:8080/api/id/auth/signup
 { "email":"user@local", "password":"Admin@123", "fullName":"User Local" }
 
@@ -108,10 +109,10 @@ POST http://localhost:8080/api/id/auth/signin
 { "email":"user@local", "password":"Admin@123" }
 
 POST http://localhost:8080/api/id/auth/refresh
-(không body; dùng refresh cookie)
+(khÃ´ng body; dÃ¹ng refresh cookie)
 
 POST http://localhost:8080/api/id/auth/signout
-(không body; dùng refresh cookie)
+(khÃ´ng body; dÃ¹ng refresh cookie)
 
 POST http://localhost:8080/api/id/auth/forgot-password
 { "email":"user@local" }
@@ -123,10 +124,15 @@ POST http://localhost:8080/api/id/auth/reset-password
   <div class="card">
     <h2>9) OAuth2 (Google) login</h2>
     <ul>
-      <li>Bắt đầu: <code>GET /oauth2/authorization/google</code></li>
-      <li>Callback: <code>GET /login/oauth2/code/google</code> (auth-service xử lý)</li>
-      <li>Thành công: set cookie và redirect về FE callback URL.</li>
+      <li>Báº¯t Ä‘áº§u: <code>GET /oauth2/authorization/google</code></li>
+      <li>Callback path tÃ¹y chá»n: <code>GET /oauth2/authorization/google?callback=/home</code> (chá»‰ path; BE tá»± ghÃ©p base URL)</li>
+      <li>Xin thÃªm scope: <code>GET /oauth2/authorization/google?scope=https://www.googleapis.com/auth/drive.file</code></li>
+      <li>Cháº¿ Ä‘á»™ connect (giá»¯ session app hiá»‡n táº¡i): thÃªm <code>&amp;mode=connect</code></li>
+      <li>Ã‰p consent khi cáº§n: thÃªm <code>&amp;force_consent=true</code></li>
+      <li>Callback: <code>GET /login/oauth2/code/google</code> (auth-service xá»­ lÃ½)</li>
+      <li>ThÃ nh cÃ´ng: set cookie vÃ  redirect vá» FE callback URL.</li>
     </ul>
   </div>
 </body>
 </html>
+

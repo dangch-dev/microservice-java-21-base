@@ -67,8 +67,8 @@ logging:
 
 app:
   frontend:
-    reset-password-url: https://simes.io.vn/reset-password
-    oauth-callback-url: https://simes.io.vn
+    base-url: https://simes.io.vn
+    reset-password-path: /reset-password
   security:
     cookies:
       access-token-name: access_token

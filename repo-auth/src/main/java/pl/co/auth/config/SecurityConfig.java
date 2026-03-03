@@ -15,6 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.web.filter.CommonsRequestLoggingFilter;
 import pl.co.common.filter.BearerTokenAuthenticationFilter;
 import pl.co.common.filter.EmailVerifiedFilter;
@@ -24,6 +25,7 @@ import pl.co.common.web.AccessDeniedHandler;
 import pl.co.common.web.AuthenticationEntryPoint;
 import pl.co.common.web.RequestContextFilter;
 import pl.co.auth.oauth.HttpCookieOAuth2AuthorizationRequestRepository;
+import pl.co.auth.oauth.GoogleOfflineAuthorizationRequestResolver;
 import pl.co.auth.oauth.OAuth2AuthenticationFailureHandler;
 import pl.co.auth.oauth.OAuth2AuthenticationSuccessHandler;
 
@@ -46,6 +48,7 @@ public class SecurityConfig {
                                                    OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler,
                                                    OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler,
                                                    HttpCookieOAuth2AuthorizationRequestRepository authorizationRequestRepository,
+                                                   OAuth2AuthorizationRequestResolver authorizationRequestResolver,
                                                    ObjectProvider<ClientRegistrationRepository> clientRegistrationRepository) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -65,7 +68,8 @@ public class SecurityConfig {
 
         if (clientRegistrationRepository.getIfAvailable() != null) {
             http.oauth2Login(oauth -> oauth
-                    .authorizationEndpoint(a -> a.authorizationRequestRepository(authorizationRequestRepository))
+                    .authorizationEndpoint(a -> a.authorizationRequestRepository(authorizationRequestRepository)
+                            .authorizationRequestResolver(authorizationRequestResolver))
                     .successHandler(oAuth2AuthenticationSuccessHandler)
                     .failureHandler(oAuth2AuthenticationFailureHandler));
         }
@@ -117,8 +121,15 @@ public class SecurityConfig {
     }
 
     @Bean
-    public HttpCookieOAuth2AuthorizationRequestRepository authorizationRequestRepository() {
-        return new HttpCookieOAuth2AuthorizationRequestRepository();
+    public HttpCookieOAuth2AuthorizationRequestRepository authorizationRequestRepository(
+            pl.co.auth.repository.OAuthCallbackStateRepository callbackStateRepository) {
+        return new HttpCookieOAuth2AuthorizationRequestRepository(callbackStateRepository);
+    }
+
+    @Bean
+    public OAuth2AuthorizationRequestResolver authorizationRequestResolver(
+            ClientRegistrationRepository clientRegistrationRepository) {
+        return new GoogleOfflineAuthorizationRequestResolver(clientRegistrationRepository);
     }
 
     @Bean
