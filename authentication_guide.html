@@ -127,7 +127,6 @@ POST http://localhost:8080/api/id/auth/reset-password
       <li>Start login: <code>GET /oauth2/authorization/google</code></li>
       <li>Optional callback path: <code>GET /oauth2/authorization/google?callback=/home</code> (path only; BE prepends FE base URL)</li>
       <li>Request extra scope: <code>GET /oauth2/authorization/google?scope=https://www.googleapis.com/auth/drive.file</code></li>
-      <li>Connect mode (keep current app session): add <code>&amp;mode=connect</code></li>
       <li>Force consent when needed: add <code>&amp;force_consent=true</code></li>
       <li>Callback: <code>GET /login/oauth2/code/google</code> (handled by auth-service)</li>
       <li>On success: cookies are set and user is redirected to FE callback URL.</li>

@@ -24,57 +24,64 @@ public class GoogleOfflineAuthorizationRequestResolver implements OAuth2Authoriz
 
     @Override
     public OAuth2AuthorizationRequest resolve(HttpServletRequest request) {
-        return customize(request, defaultResolver.resolve(request));
+        return buildAuthorizationRequest(request, defaultResolver.resolve(request));
     }
 
     @Override
     public OAuth2AuthorizationRequest resolve(HttpServletRequest request, String clientRegistrationId) {
-        return customize(request, defaultResolver.resolve(request, clientRegistrationId));
+        return buildAuthorizationRequest(request, defaultResolver.resolve(request, clientRegistrationId));
     }
 
-    private OAuth2AuthorizationRequest customize(HttpServletRequest httpRequest,
-                                                 OAuth2AuthorizationRequest request) {
-        if (request == null || httpRequest == null) {
+    private OAuth2AuthorizationRequest buildAuthorizationRequest(HttpServletRequest httpRequest,
+                                                                 OAuth2AuthorizationRequest baseRequest) {
+        if (httpRequest == null || baseRequest == null) {
             return null;
         }
-        String registrationId = request.getAttribute(OAuth2ParameterNames.REGISTRATION_ID);
+        String registrationId = baseRequest.getAttribute(OAuth2ParameterNames.REGISTRATION_ID);
         if (!"google".equals(registrationId)) {
-            return request;
+            return baseRequest;
         }
 
-        Set<String> scopes = new LinkedHashSet<>(request.getScopes());
-        String rawScope = httpRequest.getParameter("scope");
-        if (StringUtils.hasText(rawScope)) {
-            String[] tokens = StringUtils.tokenizeToStringArray(rawScope, " ,");
-            if (tokens != null) {
-                for (String token : tokens) {
-                    if (!StringUtils.hasText(token)) {
-                        continue;
-                    }
-                    scopes.add(token.trim());
-                }
-            }
-        }
+        Set<String> scopes = mergeScopes(baseRequest, httpRequest);
+        Map<String, Object> parameters = buildAdditionalParameters(baseRequest, httpRequest);
 
-        Map<String, Object> parameters = new LinkedHashMap<>(request.getAdditionalParameters());
-        parameters.put("access_type", "offline");
-        parameters.put("include_granted_scopes", "true");
-
-        String forceConsent = httpRequest.getParameter("force_consent");
-        if ("true".equalsIgnoreCase(forceConsent)) {
-            parameters.put("prompt", "consent");
-        }
-
-        String mode = httpRequest.getParameter("mode");
-        if (StringUtils.hasText(mode)) {
-            parameters.put("mode", mode);
-        }
-
-        OAuth2AuthorizationRequest.Builder builder = OAuth2AuthorizationRequest.from(request)
+        OAuth2AuthorizationRequest.Builder builder = OAuth2AuthorizationRequest.from(baseRequest)
                 .additionalParameters(parameters);
         if (!scopes.isEmpty()) {
             builder.scopes(scopes);
         }
         return builder.build();
+    }
+
+    private Set<String> mergeScopes(OAuth2AuthorizationRequest baseRequest, HttpServletRequest httpRequest) {
+        Set<String> scopes = new LinkedHashSet<>(baseRequest.getScopes());
+        String rawScope = httpRequest.getParameter("scope");
+        if (!StringUtils.hasText(rawScope)) {
+            return scopes;
+        }
+        String[] tokens = StringUtils.tokenizeToStringArray(rawScope, " ,");
+        if (tokens == null) {
+            return scopes;
+        }
+        for (String token : tokens) {
+            if (!StringUtils.hasText(token)) {
+                continue;
+            }
+            scopes.add(token.trim());
+        }
+        return scopes;
+    }
+
+    private Map<String, Object> buildAdditionalParameters(OAuth2AuthorizationRequest baseRequest,
+                                                          HttpServletRequest httpRequest) {
+        Map<String, Object> parameters = new LinkedHashMap<>(baseRequest.getAdditionalParameters());
+        parameters.put("access_type", "offline");
+        parameters.put("include_granted_scopes", "true");
+
+        if ("true".equalsIgnoreCase(httpRequest.getParameter("force_consent"))) {
+            parameters.put("prompt", "consent");
+        }
+
+        return parameters;
     }
 }

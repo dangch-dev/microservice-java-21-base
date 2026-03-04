@@ -56,23 +56,8 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         }
 
         try {
-            boolean connectRequested = callbackState != null
-                    && "connect".equalsIgnoreCase(callbackState.getMode());
-            boolean hasUserId = callbackState != null && StringUtils.hasText(callbackState.getUserId());
-
-            if (connectRequested && !hasUserId) {
-                if (StringUtils.hasText(targetUrl)) {
-                    response.sendRedirect(appendError(targetUrl, "connect_requires_login"));
-                    return;
-                }
-                writeError(response, ErrorCode.UNAUTHORIZED, "Connect requires login");
-                return;
-            }
-
-            if (!connectRequested) {
-                TokenResponse tokens = oAuthLoginService.loginWithGoogle(oidcUser);
-                authCookieService.setTokens(response, tokens);
-            }
+            TokenResponse tokens = oAuthLoginService.loginWithGoogle(oidcUser);
+            authCookieService.setTokens(response, tokens);
             if (StringUtils.hasText(targetUrl)) {
                 response.sendRedirect(targetUrl);
                 return;
@@ -98,7 +83,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
 
     private String resolveTargetUrl(OAuthCallbackState callbackState) {
         if (callbackState != null && StringUtils.hasText(callbackState.getCallback())) {
-            String resolved = buildRedirectUrl(callbackState.getCallback());
+            String resolved = OAuthRedirectUtils.buildRedirectUrl(callbackState.getCallback(), frontendBaseUrl);
             if (StringUtils.hasText(resolved)) {
                 return resolved;
             }
@@ -110,88 +95,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
     }
 
     private String appendError(String targetUrl, String code) {
-        String separator = targetUrl.contains("?") ? "&" : "?";
-        return targetUrl + separator + "oauth_error=" + code;
+        return OAuthRedirectUtils.appendError(targetUrl, code);
     }
 
-    private String buildRedirectUrl(String callback) {
-        if (!StringUtils.hasText(callback)) {
-            return null;
-        }
-        if (isAbsoluteUrl(callback)) {
-            return isAuthorizedRedirectUri(callback) ? callback : null;
-        }
-        String baseOrigin = resolveBaseOrigin();
-        if (!StringUtils.hasText(baseOrigin)) {
-            return null;
-        }
-        String path = callback.startsWith("/") ? callback : "/" + callback;
-        return baseOrigin + path;
-    }
-
-    private boolean isAuthorizedRedirectUri(String uri) {
-        if (!StringUtils.hasText(frontendBaseUrl)) {
-            return false;
-        }
-        try {
-            java.net.URI client = java.net.URI.create(uri);
-            java.net.URI base = java.net.URI.create(frontendBaseUrl);
-            return sameOrigin(client, base);
-        } catch (Exception ex) {
-            return false;
-        }
-    }
-
-    private boolean isAbsoluteUrl(String value) {
-        return value.startsWith("http://") || value.startsWith("https://");
-    }
-
-    private String resolveBaseOrigin() {
-        if (!StringUtils.hasText(frontendBaseUrl)) {
-            return null;
-        }
-        try {
-            java.net.URI base = java.net.URI.create(frontendBaseUrl);
-            if (!StringUtils.hasText(base.getScheme()) || !StringUtils.hasText(base.getHost())) {
-                return null;
-            }
-            StringBuilder sb = new StringBuilder();
-            sb.append(base.getScheme()).append("://").append(base.getHost());
-            if (base.getPort() != -1) {
-                sb.append(":").append(base.getPort());
-            }
-            return sb.toString();
-        } catch (Exception ex) {
-            return null;
-        }
-    }
-
-    private boolean sameOrigin(java.net.URI a, java.net.URI b) {
-        if (a == null || b == null) {
-            return false;
-        }
-        String schemeA = a.getScheme();
-        String schemeB = b.getScheme();
-        String hostA = a.getHost();
-        String hostB = b.getHost();
-        int portA = normalizedPort(a);
-        int portB = normalizedPort(b);
-        return StringUtils.hasText(schemeA) && StringUtils.hasText(schemeB)
-                && StringUtils.hasText(hostA) && StringUtils.hasText(hostB)
-                && schemeA.equalsIgnoreCase(schemeB)
-                && hostA.equalsIgnoreCase(hostB)
-                && portA == portB;
-    }
-
-    private int normalizedPort(java.net.URI uri) {
-        int port = uri.getPort();
-        if (port != -1) {
-            return port;
-        }
-        String scheme = uri.getScheme();
-        if ("https".equalsIgnoreCase(scheme)) {
-            return 443;
-        }
-        return 80;
-    }
 }
