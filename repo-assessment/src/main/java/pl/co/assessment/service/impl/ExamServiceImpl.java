@@ -728,7 +728,7 @@ public class ExamServiceImpl implements ExamService {
         List<String> imageUrls = takeImageUrls(pendingImages,
                 item.path("questionItem").path("image"),
                 question.path("image"));
-        String prompt = buildPrompt(title, description, null);
+        String prompt = buildPromptText(title, description);
         List<FileMeta> promptFiles = resolveImageFiles(imageUrls, imageCache, warnings);
 
         JsonNode grading = question.path("grading");
@@ -769,7 +769,7 @@ public class ExamServiceImpl implements ExamService {
         List<String> imageUrls = takeImageUrls(pendingImages,
                 item.path("questionGroupItem").path("image"),
                 rowQuestion.path("image"));
-        String prompt = buildPrompt(joinTitle(groupTitle, rowTitle), null, null);
+        String prompt = buildPromptText(joinTitle(groupTitle, rowTitle), null);
         List<FileMeta> promptFiles = resolveImageFiles(imageUrls, imageCache, warnings);
 
         JsonNode grading = rowQuestion.path("grading");
@@ -806,14 +806,12 @@ public class ExamServiceImpl implements ExamService {
             OptionPayload payload = optionsPayload.get(i);
             String value = payload.value;
             valueToId.put(value, id);
-            List<FileMeta> optionFiles = resolveImageFiles(payload.imageUrl == null
-                    ? List.of()
-                    : List.of(payload.imageUrl), imageCache, warnings);
+            List<FileMeta> optionFiles = resolveImageFiles(singletonImage(payload.imageUrl), imageCache, warnings);
             String optionContent = value;
             options.add(QuestionContent.Option.builder()
                     .id(id)
                     .content(optionContent)
-                    .files(optionFiles == null || optionFiles.isEmpty() ? null : optionFiles)
+                    .files(nullIfEmpty(optionFiles))
                     .build());
         }
 
@@ -824,10 +822,7 @@ public class ExamServiceImpl implements ExamService {
         }
 
         QuestionContent content = QuestionContent.builder()
-                .prompt(QuestionContent.Prompt.builder()
-                        .content(prompt)
-                        .files(promptFiles == null || promptFiles.isEmpty() ? null : promptFiles)
-                        .build())
+                .prompt(buildPromptContent(prompt, promptFiles))
                 .options(options)
                 .build();
 
@@ -851,10 +846,7 @@ public class ExamServiceImpl implements ExamService {
                                                      List<String> warnings) {
         List<String> accepted = readCorrectAnswers(grading);
         QuestionContent content = QuestionContent.builder()
-                .prompt(QuestionContent.Prompt.builder()
-                        .content(prompt)
-                        .files(promptFiles == null || promptFiles.isEmpty() ? null : promptFiles)
-                        .build())
+                .prompt(buildPromptContent(prompt, promptFiles))
                 .build();
         if (!accepted.isEmpty()) {
             GradingRules rules = GradingRules.builder()
@@ -944,10 +936,7 @@ public class ExamServiceImpl implements ExamService {
             return null;
         }
         String contentUri = readText(imageNode, "contentUri");
-        if (contentUri != null && !contentUri.isBlank()) {
-            return contentUri;
-        }
-        return null;
+        return (contentUri == null || contentUri.isBlank()) ? null : contentUri;
     }
 
     private List<String> takeImageUrls(List<String> pendingImages, JsonNode... imageNodes) {
@@ -967,7 +956,7 @@ public class ExamServiceImpl implements ExamService {
         return imageUrls;
     }
 
-    private String buildPrompt(String title, String description, List<String> imageUrls) {
+    private String buildPromptText(String title, String description) {
         StringBuilder sb = new StringBuilder();
         if (title != null && !title.isBlank()) {
             sb.append(title.trim());
@@ -982,6 +971,27 @@ public class ExamServiceImpl implements ExamService {
             return "Untitled";
         }
         return sb.toString();
+    }
+
+    private QuestionContent.Prompt buildPromptContent(String content, List<FileMeta> files) {
+        return QuestionContent.Prompt.builder()
+                .content(content)
+                .files(nullIfEmpty(files))
+                .build();
+    }
+
+    private List<FileMeta> nullIfEmpty(List<FileMeta> files) {
+        if (files == null || files.isEmpty()) {
+            return null;
+        }
+        return files;
+    }
+
+    private List<String> singletonImage(String imageUrl) {
+        if (imageUrl == null || imageUrl.isBlank()) {
+            return List.of();
+        }
+        return List.of(imageUrl);
     }
 
     private String joinTitle(String groupTitle, String rowTitle) {
@@ -1018,29 +1028,33 @@ public class ExamServiceImpl implements ExamService {
         }
         List<FileMeta> files = new ArrayList<>();
         for (String imageUrl : imageUrls) {
-            if (imageUrl == null || imageUrl.isBlank()) {
+            if (imageUrl == null) {
                 continue;
             }
-            FileMeta cached = cache.get(imageUrl);
+            String normalizedUrl = imageUrl.trim();
+            if (normalizedUrl.isBlank()) {
+                continue;
+            }
+            FileMeta cached = cache.get(normalizedUrl);
             if (cached != null) {
                 files.add(cached);
                 continue;
             }
             try {
-                ImagePayload payload = downloadImage(imageUrl);
+                ImagePayload payload = downloadImage(normalizedUrl);
                 if (payload == null) {
-                    warnings.add("Failed to download image: " + imageUrl);
+                    warnings.add("Failed to download image: " + normalizedUrl);
                     continue;
                 }
                 FileMeta uploaded = uploadImageToStorage(payload);
                 if (uploaded != null) {
-                    cache.put(imageUrl, uploaded);
+                    cache.put(normalizedUrl, uploaded);
                     files.add(uploaded);
                 } else {
-                    warnings.add("Failed to upload image: " + imageUrl);
+                    warnings.add("Failed to upload image: " + normalizedUrl);
                 }
             } catch (Exception ex) {
-                warnings.add("Failed to import image: " + imageUrl + " (" + ex.getMessage() + ")");
+                warnings.add("Failed to import image: " + normalizedUrl + " (" + ex.getMessage() + ")");
             }
         }
         return files;
