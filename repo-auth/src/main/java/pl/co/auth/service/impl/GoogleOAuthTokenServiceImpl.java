@@ -66,6 +66,10 @@ public class GoogleOAuthTokenServiceImpl implements GoogleOAuthTokenService {
 
     @Override
     public void deleteByUserId(String userId) {
+        GoogleOAuthToken token = repository.findFirstByUserId(userId).orElse(null);
+        if (token != null && token.getId() != null) {
+            repository.deleteById(token.getId());
+        }
         repository.deleteByUserId(userId);
     }
 

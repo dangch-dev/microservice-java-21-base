@@ -86,9 +86,9 @@ public class SecurityConfig {
                 "/refresh",
                 "/signout",
                 "/password/**",
-                "/oauth/**",
-                "/oauth2/**",
-                "/login/oauth2/**"
+                "/oauth/**", // internal login
+                "/oauth2/**", // login with google
+                "/login/oauth2/**" // google oauth2 callback
         ));
     }
 

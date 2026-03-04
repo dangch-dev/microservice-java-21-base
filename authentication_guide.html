@@ -132,6 +132,7 @@ POST http://localhost:8080/api/id/auth/reset-password
       <li>On success: cookies are set and user is redirected to FE callback URL.</li>
       <li>Connect Google (no app session change): <code>GET /oauth2/authorization/google-connect?callback=/path</code></li>
       <li>Get Google access token: <code>GET /api/auth/google/connect/token</code> (auto refresh if expired; returns Google account info + token if connected)</li>
+      <li>Disconnect Google: <code>POST /api/auth/google/disconnect</code></li>
     </ul>
   </div>
 </body>
