@@ -130,6 +130,8 @@ POST http://localhost:8080/api/id/auth/reset-password
       <li>Ã‰p consent khi cáº§n: thÃªm <code>&amp;force_consent=true</code></li>
       <li>Callback: <code>GET /login/oauth2/code/google</code> (auth-service xá»­ lÃ½)</li>
       <li>ThÃ nh cÃ´ng: set cookie vÃ  redirect vá» FE callback URL.</li>
+      <li>Káº¿t ná»‘i Google (khÃ´ng Ä‘á»•i session app): <code>GET /oauth2/authorization/google-connect?callback=/path</code></li>
+      <li>Láº¥y Google access token: <code>GET /api/auth/google/connect/token</code> (tá»± refresh khi háº¿t háº¡n; tráº£ thÃ´ng tin tÃ i khoáº£n Google + token náº¿u Ä‘Ã£ connect)</li>
     </ul>
   </div>
 </body>

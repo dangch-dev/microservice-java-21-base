@@ -2,11 +2,13 @@ package pl.co.auth.oauth;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.util.StringUtils;
 import pl.co.auth.entity.OAuthCallbackState;
 import pl.co.auth.repository.OAuthCallbackStateRepository;
+import pl.co.common.security.AuthUtils;
 
 public class HttpCookieOAuth2AuthorizationRequestRepository
         implements AuthorizationRequestRepository<OAuth2AuthorizationRequest> {
@@ -42,12 +44,17 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
         String callback = request.getParameter(REDIRECT_URI_PARAM_NAME);
         boolean hasCallback = StringUtils.hasText(callback);
         String state = authorizationRequest.getState();
-        if (!StringUtils.hasText(state) || !hasCallback) {
+        if (!StringUtils.hasText(state)) {
+            return;
+        }
+        String userId = resolveUserIdIfAuthenticated();
+        if (!hasCallback && !StringUtils.hasText(userId)) {
             return;
         }
         OAuthCallbackState savedState = OAuthCallbackState.builder()
                 .id(state)
                 .callback(callback)
+                .userId(userId)
                 .ttlSeconds((long) COOKIE_EXPIRE_SECONDS)
                 .build();
         callbackStateRepository.save(savedState);
@@ -79,6 +86,14 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
         }
         callbackStateRepository.deleteById(state);
         return stored;
+    }
+
+    private String resolveUserIdIfAuthenticated() {
+        try {
+            return AuthUtils.resolveUserId(SecurityContextHolder.getContext().getAuthentication());
+        } catch (Exception ex) {
+            return null;
+        }
     }
 
 }

@@ -130,6 +130,8 @@ POST http://localhost:8080/api/id/auth/reset-password
       <li>Force consent when needed: add <code>&amp;force_consent=true</code></li>
       <li>Callback: <code>GET /login/oauth2/code/google</code> (handled by auth-service)</li>
       <li>On success: cookies are set and user is redirected to FE callback URL.</li>
+      <li>Connect Google (no app session change): <code>GET /oauth2/authorization/google-connect?callback=/path</code></li>
+      <li>Get Google access token: <code>GET /api/auth/google/connect/token</code> (auto refresh if expired; returns Google account info + token if connected)</li>
     </ul>
   </div>
 </body>

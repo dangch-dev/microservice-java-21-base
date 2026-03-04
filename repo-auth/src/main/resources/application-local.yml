@@ -9,6 +9,11 @@ spring:
         registration:
           google:
             client-id:
+            client-secret:
+            scope: openid,profile,email
+          google-connect:
+            provider: google
+            client-id:
             client-secret: 
             scope: openid,profile,email
   sql:

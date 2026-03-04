@@ -16,7 +16,9 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter;
 import org.springframework.web.filter.CommonsRequestLoggingFilter;
+import pl.co.auth.repository.OAuthCallbackStateRepository;
 import pl.co.common.filter.BearerTokenAuthenticationFilter;
 import pl.co.common.filter.EmailVerifiedFilter;
 import pl.co.common.filter.InternalJwtFilter;
@@ -62,7 +64,7 @@ public class SecurityConfig {
                         .anyRequest().permitAll())
                 .addFilterBefore(commonRequestContextFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(internalJwtFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(bearerTokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(bearerTokenAuthenticationFilter, OAuth2AuthorizationRequestRedirectFilter.class)
                 .addFilterBefore(emailVerifiedFilter, UsernamePasswordAuthenticationFilter.class)
                 .httpBasic(Customizer.withDefaults());
 
@@ -122,7 +124,7 @@ public class SecurityConfig {
 
     @Bean
     public HttpCookieOAuth2AuthorizationRequestRepository authorizationRequestRepository(
-            pl.co.auth.repository.OAuthCallbackStateRepository callbackStateRepository) {
+            OAuthCallbackStateRepository callbackStateRepository) {
         return new HttpCookieOAuth2AuthorizationRequestRepository(callbackStateRepository);
     }
 

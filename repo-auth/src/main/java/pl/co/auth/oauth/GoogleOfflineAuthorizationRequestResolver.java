@@ -38,7 +38,7 @@ public class GoogleOfflineAuthorizationRequestResolver implements OAuth2Authoriz
             return null;
         }
         String registrationId = baseRequest.getAttribute(OAuth2ParameterNames.REGISTRATION_ID);
-        if (!"google".equals(registrationId)) {
+        if (!isGoogleRegistration(registrationId)) {
             return baseRequest;
         }
 
@@ -83,5 +83,9 @@ public class GoogleOfflineAuthorizationRequestResolver implements OAuth2Authoriz
         }
 
         return parameters;
+    }
+
+    private boolean isGoogleRegistration(String registrationId) {
+        return "google".equals(registrationId) || "google-connect".equals(registrationId);
     }
 }

@@ -22,6 +22,7 @@ public class OAuthCallbackState implements Serializable {
     private String id; // state
 
     private String callback;
+    private String userId;
 
     @TimeToLive
     private Long ttlSeconds;
