@@ -3,6 +3,7 @@ package pl.co.assessment.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import pl.co.assessment.dto.UserLookupApiResponse;
@@ -50,6 +51,7 @@ public class IdentityLookupServiceImpl implements IdentityLookupService {
                 identityService,
                 lookupPath,
                 HttpMethod.POST,
+                MediaType.APPLICATION_JSON,
                 null,
                 null,
                 request,

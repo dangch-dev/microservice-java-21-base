@@ -21,6 +21,11 @@ public class ManagementExamController {
         return ApiResponse.ok(examService.create(request));
     }
 
+    @PostMapping("/form/import")
+    public ApiResponse<ExamFormImportResponse> importForm(@RequestBody ExamFormImportRequest request) {
+        return ApiResponse.ok(examService.importFromForm(request));
+    }
+
     @GetMapping
     public ApiResponse<ExamPageResponse> list(@RequestParam(value = "searchValue", required = false) String searchValue,
                                               @RequestParam(value = "categoryId", required = false) String categoryId,

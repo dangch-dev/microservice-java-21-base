@@ -71,6 +71,7 @@ public class InternalApiClient {
     public <T> ResponseEntity<T> send(String serviceName,
                                       String path,
                                       HttpMethod method,
+                                      MediaType contentType,
                                       Map<String, String> headers,
                                       Map<String, ?> queryParams,
                                       Object body,
@@ -82,7 +83,7 @@ public class InternalApiClient {
             queryParams.forEach(builder::queryParam);
         }
         HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+        httpHeaders.setContentType(contentType == null ? MediaType.APPLICATION_JSON : contentType);
         if (!CollectionUtils.isEmpty(headers)) {
             headers.forEach(httpHeaders::set);
         }
@@ -94,6 +95,7 @@ public class InternalApiClient {
         HttpEntity<?> entity = body == null ? new HttpEntity<>(httpHeaders) : new HttpEntity<>(body, httpHeaders);
         return executeWithRetry(() -> restTemplate.exchange(builder.toUriString(), method, entity, responseType));
     }
+
 
     private String getAccessToken() {
         CachedToken current = cachedToken;

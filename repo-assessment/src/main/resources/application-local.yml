@@ -62,6 +62,7 @@ internal:
   service:
     auth-service: repo-auth
     identity-service: repo-identity
+    storage-service: repo-storage
 
 kafka:
   topics:
