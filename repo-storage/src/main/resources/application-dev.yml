@@ -8,7 +8,7 @@ spring:
       max-file-size: 25MB
       max-request-size: 25MB
   datasource:
-    url: jdbc:mysql://dangch-mysql:53306/storage_mysql_database?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    url: jdbc:mysql://dangch-mysql:53306/storage_mysql_database?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: root
     password: mysql_root_password
     hikari:
