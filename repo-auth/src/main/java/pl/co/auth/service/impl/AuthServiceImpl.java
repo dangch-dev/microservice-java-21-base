@@ -40,8 +40,8 @@ public class AuthServiceImpl implements AuthService {
             if (!isGuest) {
                 throw new ApiException(ErrorCode.E255, "Email already in use");
             }
-            Role userRole = roleRepository.findByName(RoleName.ROLE_USER.name())
-                    .orElseThrow(() -> new ApiException(ErrorCode.E221, "Role not found data: ROLE_USER"));
+            Role userRole = roleRepository.findByName(RoleName.ROLE_MEMBER.name())
+                    .orElseThrow(() -> new ApiException(ErrorCode.E221, "Role not found data: ROLE_MEMBER"));
             existing.setPassword(passwordEncoder.encode(request.getPassword()));
             existing.setFullName(request.getFullName());
             existing.setPhoneNumber(request.getPhoneNumber());
@@ -55,8 +55,8 @@ public class AuthServiceImpl implements AuthService {
             emailVerificationService.sendOtp(upgraded);
             return jwtTokenService.issueExternalTokens(upgraded);
         }
-        Role userRole = roleRepository.findByName(RoleName.ROLE_USER.name())
-                .orElseThrow(() -> new ApiException(ErrorCode.E221, "Role not found data: ROLE_USER"));
+        Role userRole = roleRepository.findByName(RoleName.ROLE_MEMBER.name())
+                .orElseThrow(() -> new ApiException(ErrorCode.E221, "Role not found data: ROLE_MEMBER"));
         User user = User.builder()
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))

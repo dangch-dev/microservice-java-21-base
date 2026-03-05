@@ -106,8 +106,8 @@ public class OAuthLoginServiceImpl implements OAuthLoginService {
     }
 
     private User createUser(OidcUser oidcUser, String email) {
-        Role userRole = roleRepository.findByName(RoleName.ROLE_USER.name())
-                .orElseThrow(() -> new ApiException(ErrorCode.E221, "Role not found data: ROLE_USER"));
+        Role userRole = roleRepository.findByName(RoleName.ROLE_MEMBER.name())
+                .orElseThrow(() -> new ApiException(ErrorCode.E221, "Role not found data: ROLE_MEMBER"));
 
         String fullName = resolveFullName(oidcUser, email);
         String password = passwordEncoder.encode(java.util.UUID.randomUUID().toString());

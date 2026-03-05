@@ -25,7 +25,7 @@ public class UserLookupServiceImpl implements UserLookupService {
     private static final List<String> ROLE_PRIORITY = List.of(
             RoleName.ROLE_ADMIN.name(),
             RoleName.ROLE_MANAGER.name(),
-            RoleName.ROLE_USER.name()
+            RoleName.ROLE_MEMBER.name()
     );
 
     private final UserRepository userRepository;

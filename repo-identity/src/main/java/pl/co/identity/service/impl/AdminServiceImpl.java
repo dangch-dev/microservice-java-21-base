@@ -78,8 +78,8 @@ public class AdminServiceImpl implements AdminService {
         }
         Set<Role> roles = resolveRolesById(request.getRoleIds());
         if (roles.isEmpty()) {
-            Role defaultRole = roleRepository.findByName(RoleName.ROLE_USER.name())
-                    .orElseThrow(() -> new ApiException(ErrorCode.E221, "Role not found data: ROLE_USER"));
+        Role defaultRole = roleRepository.findByName(RoleName.ROLE_MEMBER.name())
+                .orElseThrow(() -> new ApiException(ErrorCode.E221, "Role not found data: ROLE_MEMBER"));
             roles.add(defaultRole);
         }
         String status = validateUserStatus(request.getStatus());
