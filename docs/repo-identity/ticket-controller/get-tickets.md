@@ -10,7 +10,7 @@
 2. Return paged results.
 
 ## Auth & Permissions
-- USER
+- MEMBER | ADMIN | MANAGER
 
 
 ## Request
@@ -85,5 +85,4 @@
 
 ## Notes
 - page is zero based.
-
 

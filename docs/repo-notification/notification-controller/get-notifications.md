@@ -10,7 +10,7 @@
 2. Return items and unread count.
 
 ## Auth & Permissions
-- USER
+- MEMBER | ADMIN | MANAGER
 
 
 ## Request
@@ -77,5 +77,4 @@
 
 ## Notes
 - page is zero based.
-
 

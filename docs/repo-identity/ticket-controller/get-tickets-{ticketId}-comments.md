@@ -10,7 +10,7 @@
 2. Return comments sorted by created time.
 
 ## Auth & Permissions
-- USER
+- MEMBER | ADMIN | MANAGER
 
 
 ## Request

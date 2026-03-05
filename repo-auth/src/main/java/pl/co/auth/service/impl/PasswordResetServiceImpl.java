@@ -16,6 +16,7 @@ import pl.co.common.exception.ErrorCode;
 import pl.co.common.mail.MailMessage;
 import pl.co.common.event.EventPublisher;
 import pl.co.common.template.TemplateLoader;
+import pl.co.common.security.RoleName;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -50,6 +51,11 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     public String requestReset(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ApiException(ErrorCode.E238, "Username does not exist."));
+        boolean isGuest = user.getRoles() != null && user.getRoles().stream()
+                .anyMatch(role -> role != null && RoleName.ROLE_GUEST.name().equals(role.getName()));
+        if (isGuest) {
+            throw new ApiException(ErrorCode.E238, "Username does not exist.");
+        }
         // invalidate previous tokens
         passwordResetTokenRepository.deleteByUserId(user.getId());
 

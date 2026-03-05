@@ -57,6 +57,9 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
         if (user == null) {
             throw new ApiException(ErrorCode.E238);
         }
+        if (user.isEmailVerified()) {
+            throw new ApiException(ErrorCode.E220, ErrorCode.E220.message("Email already verified"));
+        }
 
         // Delete old OTP
         emailVerificationOTPRepository.deleteByUserId(user.getId());

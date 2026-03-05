@@ -11,7 +11,7 @@
 3. Update status to CANCELLED.
 
 ## Auth & Permissions
-- USER
+- MEMBER | ADMIN | MANAGER
 
 
 ## Request
