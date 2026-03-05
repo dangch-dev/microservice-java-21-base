@@ -2,10 +2,6 @@ INSERT INTO role(id, name, created_at, updated_at, deleted) VALUES
     ('01JFZC5Y3K1M7X9C6T2B4N8PQ', 'ROLE_ADMIN', NOW(), NOW(), false)
     ON DUPLICATE KEY UPDATE name = VALUES(name);
 
-INSERT INTO role(id, name, created_at, updated_at, deleted) VALUES
-    ('01JFZC5Y3K1M7X9C6T2B4N8PR', 'ROLE_USER', NOW(), NOW(), false)
-    ON DUPLICATE KEY UPDATE name = VALUES(name);
-
 INSERT INTO user(id, email, password, full_name, phone_number, avatar_url, address, status, email_verified, created_at, updated_at, deleted)
 SELECT '01JFZC5Y3K1M7X9C6T2B4N8PS',
        'admin@local',
