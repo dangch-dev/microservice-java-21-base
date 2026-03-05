@@ -33,8 +33,27 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     @Override
     public TokenResponse signup(SignupRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new ApiException(ErrorCode.E255, "Email already in use");
+        User existing = userRepository.findByEmail(request.getEmail()).orElse(null);
+        if (existing != null) {
+            boolean isGuest = existing.getRoles() != null && existing.getRoles().stream()
+                    .anyMatch(role -> role != null && RoleName.ROLE_GUEST.name().equals(role.getName()));
+            if (!isGuest) {
+                throw new ApiException(ErrorCode.E255, "Email already in use");
+            }
+            Role userRole = roleRepository.findByName(RoleName.ROLE_USER.name())
+                    .orElseThrow(() -> new ApiException(ErrorCode.E221, "Role not found data: ROLE_USER"));
+            existing.setPassword(passwordEncoder.encode(request.getPassword()));
+            existing.setFullName(request.getFullName());
+            existing.setPhoneNumber(request.getPhoneNumber());
+            existing.setAvatarUrl(request.getAvatarUrl());
+            existing.setAddress(request.getAddress());
+            existing.setStatus(UserStatus.ACTIVE.name());
+            existing.setEmailVerified(false);
+            existing.getRoles().add(userRole);
+            User upgraded = userRepository.save(existing);
+
+            emailVerificationService.sendOtp(upgraded);
+            return jwtTokenService.issueExternalTokens(upgraded);
         }
         Role userRole = roleRepository.findByName(RoleName.ROLE_USER.name())
                 .orElseThrow(() -> new ApiException(ErrorCode.E221, "Role not found data: ROLE_USER"));
