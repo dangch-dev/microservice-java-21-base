@@ -20,3 +20,6 @@ docker compose up -d auth
 
 docker compose build assessment
 docker compose up -d assessment
+
+docker compose build storage
+docker compose up -d storage

@@ -82,13 +82,17 @@ services:
           - dangch-mongodb
 
   minio:
-    image: minio/minio:latest
+    build:
+      context: .
+      dockerfile: docker/minio.Dockerfile
     container_name: dangch-minio
     restart: unless-stopped
-    command: server /data --address ":9000" --console-address ":9001"
     environment:
       MINIO_ROOT_USER: minio_root
       MINIO_ROOT_PASSWORD: minio_root_password
+      MINIO_APP_USER: app-user
+      MINIO_APP_SECRET: app-user-secret
+      MINIO_HOST: http://localhost:9000
     volumes:
       - dangch-minio_data:/data
     networks:
@@ -265,4 +269,3 @@ volumes:
   dangch-kafka_data:
   dangch-mongodb_data:
   dangch-minio_data:
-
