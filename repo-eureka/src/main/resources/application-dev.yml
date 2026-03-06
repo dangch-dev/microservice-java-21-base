@@ -21,7 +21,7 @@ spring:
       - org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration
 
 server:
-  port: 58761
+  port: 8761
   forward-headers-strategy: framework
 
 eureka:

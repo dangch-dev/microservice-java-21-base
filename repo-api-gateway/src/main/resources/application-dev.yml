@@ -83,7 +83,7 @@ spring:
           time_zone: UTC
 
 server:
-  port: 58080
+  port: 8080
   forward-headers-strategy: framework
 
 eureka:
@@ -91,7 +91,7 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: http://dangch-eureka:58761/eureka
+      defaultZone: http://dangch-eureka:8761/eureka
 
 config:
   api-prefix: /api

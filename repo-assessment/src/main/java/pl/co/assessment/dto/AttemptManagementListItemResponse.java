@@ -13,6 +13,10 @@ public class AttemptManagementListItemResponse {
     private final String examId;
     private final String examVersionId;
     private final String createdBy;
+    private final String creatorFullName;
+    private final String creatorAvatarUrl;
+    private final String creatorEmail;
+    private final String creatorRoleName;
     private final String name;
     private final String description;
     private final Integer durationMinutes;

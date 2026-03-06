@@ -9,7 +9,7 @@
 1. Mark all notifications as seen for the user.
 
 ## Auth & Permissions
-- USER
+- MEMBER | ADMIN | MANAGER
 
 
 ## Request

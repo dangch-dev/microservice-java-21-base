@@ -8,7 +8,7 @@ spring:
       max-file-size: 25MB
       max-request-size: 25MB
   datasource:
-    url: jdbc:mysql://localhost:3306/storage_mysql_database?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    url: jdbc:mysql://localhost:3306/storage_mysql_database?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: root
     password: mysql_root_password
     hikari:
@@ -68,11 +68,12 @@ logging:
 
 # Required declarations (But it doesn't need to have value.)
 internal:
-  api:
-    auth-service: repo-auth
+  config:
     token-path: /oauth/token
     client-id: cav1G2AuXQ7fonsdcI5g7kko
     client-secret: 6NxtVO2l9WYZ6uMfhRwT4dsl9q8fmSXN
+  service:
+    auth-service: repo-auth
 
 kafka:
   topics:

@@ -11,12 +11,17 @@ spring:
             client-id:
             client-secret:
             scope: openid,profile,email
+          google-connect:
+            provider: google
+            client-id:
+            client-secret:
+            scope: openid,profile,email
   sql:
     init:
       mode: always
       data-locations: classpath:init-data.sql
   datasource:
-    url: jdbc:mysql://dangch-mysql:53306/id_mysql_database?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    url: jdbc:mysql://dangch-mysql:3306/id_mysql_database?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: root
     password: mysql_root_password
   jpa:
@@ -32,13 +37,13 @@ spring:
   data:
     redis:
       host: dangch-redis
-      port: 56379
+      port: 6379
       password: redis_password
   kafka:
-    bootstrap-servers: dangch-kafka:59092
+    bootstrap-servers: dangch-kafka:9092
 
 server:
-  port: 58082
+  port: 8082
   forward-headers-strategy: framework
 
 security:
@@ -55,7 +60,7 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: http://dangch-eureka:58761/eureka
+      defaultZone: http://dangch-eureka:8761/eureka
   instance:
     prefer-ip-address: true
     hostname: dangch-auth
@@ -67,8 +72,8 @@ logging:
 
 app:
   frontend:
-    reset-password-url: https://simes.io.vn/reset-password
-    oauth-callback-url: https://simes.io.vn
+    base-url: https://simes.io.vn
+    reset-password-path: /reset-password
   security:
     cookies:
       access-token-name: access_token
@@ -79,11 +84,12 @@ app:
 
 # Required declarations (But it doesn't need to have value.)
 internal:
-  api:
-    auth-service: repo-auth
+  config:
     token-path: /oauth/token
     client-id:
     client-secret:
+  service:
+    auth-service: repo-auth
 
 kafka:
   topics:

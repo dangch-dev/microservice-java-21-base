@@ -10,7 +10,7 @@
 2. Mark it as seen.
 
 ## Auth & Permissions
-- USER
+- MEMBER | ADMIN | MANAGER
 
 
 ## Request

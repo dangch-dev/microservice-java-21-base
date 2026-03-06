@@ -3,6 +3,7 @@ package pl.co.assessment.projection;
 public interface ExamListRow {
     String getExamId();
     String getExamVersionId();
+    String getDraftExamVersionId();
     String getCategoryName();
     String getName();
     String getDescription();

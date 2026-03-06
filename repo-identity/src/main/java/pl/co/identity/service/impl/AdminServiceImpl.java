@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import pl.co.identity.service.AdminService;
 import pl.co.common.security.RoleName;
@@ -42,7 +43,11 @@ public class AdminServiceImpl implements AdminService {
     public AdminUserPageResponse listUsers(AdminUserFilterRequest filter) {
         int pageValue = filter.getPage() == null ? 0 : filter.getPage();
         int sizeValue = filter.getSize() == null ? 20 : filter.getSize();
-        PageRequest page = PageRequest.of(Math.max(pageValue, 0), Math.max(sizeValue, 1));
+        PageRequest page = PageRequest.of(
+                Math.max(pageValue, 0),
+                Math.max(sizeValue, 1),
+                Sort.by(Sort.Direction.DESC, "createdAt")
+        );
         Specification<User> spec = buildSpec(filter);
         Page<User> result = userRepository.findAll(spec, page);
         List<AdminUserResponse> items = result.getContent().stream()
@@ -73,8 +78,8 @@ public class AdminServiceImpl implements AdminService {
         }
         Set<Role> roles = resolveRolesById(request.getRoleIds());
         if (roles.isEmpty()) {
-            Role defaultRole = roleRepository.findByName(RoleName.ROLE_USER.name())
-                    .orElseThrow(() -> new ApiException(ErrorCode.E221, "Role not found data: ROLE_USER"));
+        Role defaultRole = roleRepository.findByName(RoleName.ROLE_MEMBER.name())
+                .orElseThrow(() -> new ApiException(ErrorCode.E221, "Role not found data: ROLE_MEMBER"));
             roles.add(defaultRole);
         }
         String status = validateUserStatus(request.getStatus());

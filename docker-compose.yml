@@ -1,17 +1,14 @@
 services:
   mysql:
-    image: dangch-mysql
-    build:
-      context: .
-      dockerfile: docker/infra/mysql.Dockerfile
+    image: mysql:8.0
     container_name: dangch-mysql
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: mysql_root_password
-      MYSQL_TCP_PORT: 53306
-    command: ["--port=53306"]
+      MYSQL_TCP_PORT: 3306
+    command: ["--port=3306"]
     ports:
-      - "53306:53306"
+      - "58002:3306"
     volumes:
       - dangch-mysql_data:/var/lib/mysql
     networks:
@@ -20,13 +17,10 @@ services:
           - dangch-mysql
 
   redis:
-    image: dangch-redis
-    build:
-      context: .
-      dockerfile: docker/infra/redis.Dockerfile
+    image: redis:7-alpine
     container_name: dangch-redis
     restart: unless-stopped
-    command: ["redis-server", "--requirepass", "redis_password", "--port", "56379"]
+    command: ["redis-server", "--requirepass", "redis_password", "--port", "6379"]
     volumes:
       - dangch-redis_data:/data
     networks:
@@ -35,14 +29,11 @@ services:
           - dangch-redis
 
   zookeeper:
-    image: dangch-zookeeper
-    build:
-      context: .
-      dockerfile: docker/infra/zookeeper.Dockerfile
+    image: confluentinc/cp-zookeeper:7.6.1
     container_name: dangch-zookeeper
     restart: unless-stopped
     environment:
-      ZOOKEEPER_CLIENT_PORT: 52181
+      ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
     volumes:
       - dangch-zookeeper_data:/var/lib/zookeeper/data
@@ -53,20 +44,17 @@ services:
           - dangch-zookeeper
 
   kafka:
-    image: dangch-kafka
-    build:
-      context: .
-      dockerfile: docker/infra/kafka.Dockerfile
+    image: confluentinc/cp-kafka:7.6.1
     container_name: dangch-kafka
     restart: unless-stopped
     depends_on:
       - zookeeper
     environment:
       KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: dangch-zookeeper:52181
+      KAFKA_ZOOKEEPER_CONNECT: dangch-zookeeper:2181
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://dangch-kafka:59092
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:59092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://dangch-kafka:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
@@ -80,10 +68,7 @@ services:
           - dangch-kafka
 
   mongodb:
-    image: dangch-mongodb
-    build:
-      context: .
-      dockerfile: docker/infra/mongodb.Dockerfile
+    image: mongo:7.0
     container_name: dangch-mongodb
     restart: unless-stopped
     environment:
@@ -97,18 +82,17 @@ services:
           - dangch-mongodb
 
   minio:
-    image: dangch-minio
     build:
       context: .
-      dockerfile: docker/infra/minio.Dockerfile
+      dockerfile: docker/minio.Dockerfile
     container_name: dangch-minio
     restart: unless-stopped
-    command: server /data --address ":59000" --console-address ":59001"
     environment:
       MINIO_ROOT_USER: minio_root
       MINIO_ROOT_PASSWORD: minio_root_password
-    ports:
-      - "59001:59001"
+      MINIO_APP_USER: app-user
+      MINIO_APP_SECRET: app-user-secret
+      MINIO_HOST: http://localhost:9000
     volumes:
       - dangch-minio_data:/data
     networks:
@@ -145,7 +129,7 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: dev
     ports:
-      - "58080:58080"
+      - "58001:8080"
     volumes:
       - ./secrets:/secrets:ro
     networks:
@@ -285,4 +269,3 @@ volumes:
   dangch-kafka_data:
   dangch-mongodb_data:
   dangch-minio_data:
-

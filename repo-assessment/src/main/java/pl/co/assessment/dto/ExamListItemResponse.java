@@ -8,6 +8,7 @@ import lombok.Getter;
 public class ExamListItemResponse {
     private final String examId;
     private final String examVersionId;
+    private final String draftExamVersionId;
     private final String categoryName;
     private final String name;
     private final String description;

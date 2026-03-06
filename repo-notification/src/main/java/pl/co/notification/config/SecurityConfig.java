@@ -11,6 +11,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import pl.co.common.filter.BearerTokenAuthenticationFilter;
 import pl.co.common.filter.EmailVerifiedFilter;
+import pl.co.common.filter.InternalJwtFilter;
 import pl.co.common.web.AccessDeniedHandler;
 import pl.co.common.web.AuthenticationEntryPoint;
 import pl.co.common.util.RsaKeyUtil;
@@ -23,6 +24,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
                                                    BearerTokenAuthenticationFilter bearerTokenAuthenticationFilter,
+                                                   InternalJwtFilter internalJwtFilter,
                                                    EmailVerifiedFilter emailVerifiedFilter,
                                                    AuthenticationEntryPoint authenticationEntryPoint,
                                                    AccessDeniedHandler accessDeniedHandler) throws Exception {
@@ -33,6 +35,7 @@ public class SecurityConfig {
                         .accessDeniedHandler(accessDeniedHandler))
                 .authorizeHttpRequests(auth -> auth
                         .anyRequest().authenticated())
+                .addFilterBefore(internalJwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(bearerTokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(emailVerifiedFilter, UsernamePasswordAuthenticationFilter.class)
                 .httpBasic(Customizer.withDefaults());
@@ -48,6 +51,11 @@ public class SecurityConfig {
     @Bean
     public EmailVerifiedFilter emailVerifiedFilter() {
         return new EmailVerifiedFilter(java.util.List.of());
+    }
+
+    @Bean
+    public InternalJwtFilter internalJwtFilter(RSAPublicKey jwtPublicKey) {
+        return new InternalJwtFilter(jwtPublicKey, java.util.List.of());
     }
 
     @Bean

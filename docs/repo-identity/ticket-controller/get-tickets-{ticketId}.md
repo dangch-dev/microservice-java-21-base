@@ -10,7 +10,7 @@
 2. Validate ownership and return ticket details.
 
 ## Auth & Permissions
-- USER
+- MEMBER | ADMIN | MANAGER
 
 
 ## Request

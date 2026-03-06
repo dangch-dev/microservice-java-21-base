@@ -14,10 +14,18 @@ import pl.co.identity.dto.TicketStatusUpdateRequest;
 import pl.co.identity.dto.TicketCommentRequest;
 import pl.co.identity.dto.TicketCommentResponse;
 import pl.co.identity.service.TicketUserService;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/tickets")
 @RequiredArgsConstructor
+@PreAuthorize("""
+        hasAnyAuthority(
+            T(pl.co.common.security.RoleName).ROLE_MEMBER.name(),
+            T(pl.co.common.security.RoleName).ROLE_ADMIN.name(),
+            T(pl.co.common.security.RoleName).ROLE_MANAGER.name()
+        )
+        """)
 public class TicketController {
 
     private final TicketUserService ticketUserService;

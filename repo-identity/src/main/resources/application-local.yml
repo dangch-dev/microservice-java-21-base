@@ -4,7 +4,7 @@ spring:
     serialization:
       write-dates-as-timestamps: false
   datasource:
-    url: jdbc:mysql://localhost:3306/id_mysql_database?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    url: jdbc:mysql://localhost:3306/id_mysql_database?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: root
     password: mysql_root_password
   jpa:
@@ -44,11 +44,12 @@ logging:
 
 # Required declarations (But it doesn't need to have value.)
 internal:
-  api:
-    auth-service: repo-auth
+  config:
     token-path: /oauth/token
     client-id: hMLksVQKhU5WsvacK7uIAvmB
     client-secret: pbfWXn0D4MmzzBbcCwRboSbmcT92eyPx
+  service:
+    auth-service: repo-auth
 
 kafka:
   topics:

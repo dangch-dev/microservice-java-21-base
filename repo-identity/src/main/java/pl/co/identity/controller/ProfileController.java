@@ -9,6 +9,7 @@ import pl.co.identity.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/users")
@@ -18,12 +19,27 @@ public class ProfileController {
     private final UserService userService;
 
     @GetMapping("/me")
+    @PreAuthorize("""
+        hasAnyAuthority(
+            T(pl.co.common.security.RoleName).ROLE_GUEST.name(),
+            T(pl.co.common.security.RoleName).ROLE_MEMBER.name(),
+            T(pl.co.common.security.RoleName).ROLE_ADMIN.name(),
+            T(pl.co.common.security.RoleName).ROLE_MANAGER.name()
+        )
+        """)
     public ApiResponse<ProfileResponse> me(Authentication authentication) {
         String userId = AuthUtils.resolveUserId(authentication);
         return ApiResponse.ok(userService.getProfile(userId));
     }
 
     @PutMapping("/me")
+    @PreAuthorize("""
+        hasAnyAuthority(
+            T(pl.co.common.security.RoleName).ROLE_MEMBER.name(),
+            T(pl.co.common.security.RoleName).ROLE_ADMIN.name(),
+            T(pl.co.common.security.RoleName).ROLE_MANAGER.name()
+        )
+        """)
     public ApiResponse<ProfileResponse> updateMe(Authentication authentication,
                                                  @Valid @RequestBody UpdateProfileRequest request) {
         String userId = AuthUtils.resolveUserId(authentication);

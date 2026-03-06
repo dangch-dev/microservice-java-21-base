@@ -6,6 +6,7 @@ import pl.co.auth.dto.TokenResponse;
 import pl.co.auth.dto.LoginRequest;
 import pl.co.auth.dto.RefreshTokenRequest;
 import pl.co.auth.dto.SignupRequest;
+import pl.co.auth.dto.GuestSignupRequest;
 import pl.co.auth.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,14 @@ public class AuthController {
     public ApiResponse<Void> signup(@Valid @RequestBody SignupRequest request,
                                     HttpServletResponse response) {
         TokenResponse tokens = authService.signup(request);
+        authCookieService.setTokens(response, tokens);
+        return ApiResponse.ok(null);
+    }
+
+    @PostMapping("/guest")
+    public ApiResponse<Void> guest(@Valid @RequestBody GuestSignupRequest request,
+                                   HttpServletResponse response) {
+        TokenResponse tokens = authService.issueGuestToken(request);
         authCookieService.setTokens(response, tokens);
         return ApiResponse.ok(null);
     }
@@ -65,4 +74,3 @@ public class AuthController {
         return ApiResponse.ok(null);
     }
 }
-

@@ -58,6 +58,10 @@
   "errorMessage": string | null,
   "data": {
     "ownerId": string,
+    "ownerFullName": string | null,
+    "ownerAvatarUrl": string | null,
+    "ownerEmail": string | null,
+    "ownerRoleName": string | null,
     "sessionId": string,
     "ttlSeconds": number
   }
@@ -79,7 +83,7 @@
   "success": false,
   "errorCode": string,
   "errorMessage": string,
-  "data": null | { "ownerId": string, "sessionId": string, "ttlSeconds": number }
+  "data": null | { "ownerId": string, "ownerFullName": string | null, "ownerAvatarUrl": string | null, "ownerEmail": string | null, "ownerRoleName": string | null, "sessionId": string, "ttlSeconds": number }
 }
 ```
 

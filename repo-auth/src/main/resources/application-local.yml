@@ -9,6 +9,11 @@ spring:
         registration:
           google:
             client-id:
+            client-secret:
+            scope: openid,profile,email
+          google-connect:
+            provider: google
+            client-id:
             client-secret: 
             scope: openid,profile,email
   sql:
@@ -16,7 +21,7 @@ spring:
       mode: always
       data-locations: classpath:init-data.sql
   datasource:
-    url: jdbc:mysql://localhost:3306/id_mysql_database?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    url: jdbc:mysql://localhost:3306/id_mysql_database?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: root
     password: mysql_root_password
   jpa:
@@ -66,8 +71,8 @@ logging:
 
 app:
   frontend:
-    reset-password-url: http://localhost:5173/reset-password
-    oauth-callback-url: http://localhost:5173
+    base-url: http://localhost:5173
+    reset-password-path: /reset-password
   security:
     cookies:
       access-token-name: access_token
@@ -78,11 +83,12 @@ app:
 
 # Required declarations (But it doesn't need to have value.)
 internal:
-  api:
-    auth-service: repo-auth
+  config:
     token-path: /oauth/token
     client-id:
     client-secret:
+  service:
+    auth-service: repo-auth
 
 kafka:
   topics:

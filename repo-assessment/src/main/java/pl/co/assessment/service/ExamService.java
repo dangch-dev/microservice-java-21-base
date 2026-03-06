@@ -4,6 +4,8 @@ import pl.co.assessment.dto.ExamCreateRequest;
 import pl.co.assessment.dto.ExamCreateResponse;
 import pl.co.assessment.dto.ExamDraftSaveRequest;
 import pl.co.assessment.dto.ExamEditorResponse;
+import pl.co.assessment.dto.ExamFormImportRequest;
+import pl.co.assessment.dto.ExamFormImportResponse;
 import pl.co.assessment.dto.ExamPageResponse;
 import pl.co.assessment.dto.ExamStatusUpdateRequest;
 
@@ -14,9 +16,11 @@ public interface ExamService {
 
     ExamPageResponse listPublic(String searchValue, Integer page, Integer size);
 
-    ExamEditorResponse requestEdit(String examId);
+    ExamEditorResponse requestEdit(String examId, Boolean forceNewDraft);
 
     void saveDraft(String examId, ExamDraftSaveRequest request);
+
+    ExamFormImportResponse importFromForm(ExamFormImportRequest request);
 
     void discardDraft(String examId);
 

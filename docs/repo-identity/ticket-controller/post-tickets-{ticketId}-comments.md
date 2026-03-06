@@ -10,7 +10,7 @@
 2. Save comment and publish file and notification events.
 
 ## Auth & Permissions
-- USER
+- MEMBER | ADMIN | MANAGER
 
 
 ## Request

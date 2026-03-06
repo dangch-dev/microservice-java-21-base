@@ -10,7 +10,7 @@
 2. Update profile fields and return updated profile.
 
 ## Auth & Permissions
-- USER
+- MEMBER | ADMIN | MANAGER
 
 
 ## Request

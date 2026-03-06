@@ -16,6 +16,7 @@ import pl.co.common.exception.ErrorCode;
 import pl.co.common.mail.MailMessage;
 import pl.co.common.event.EventPublisher;
 import pl.co.common.template.TemplateLoader;
+import pl.co.common.security.RoleName;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -33,8 +34,11 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     private final TemplateLoader templateLoader;
     private final EventPublisher eventPublisher;
 
-    @Value("${app.frontend.reset-password-url}")
-    private String resetPasswordUrl;
+    @Value("${app.frontend.base-url:}")
+    private String frontendBaseUrl;
+
+    @Value("${app.frontend.reset-password-path:}")
+    private String resetPasswordPath;
 
     @Value("${kafka.topics.mail}")
     private String mailTopic;
@@ -47,6 +51,11 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     public String requestReset(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ApiException(ErrorCode.E238, "Username does not exist."));
+        boolean isGuest = user.getRoles() != null && user.getRoles().stream()
+                .anyMatch(role -> role != null && RoleName.ROLE_GUEST.name().equals(role.getName()));
+        if (isGuest) {
+            throw new ApiException(ErrorCode.E238, "Username does not exist.");
+        }
         // invalidate previous tokens
         passwordResetTokenRepository.deleteByUserId(user.getId());
 
@@ -110,12 +119,45 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     }
 
     private String buildResetLink(String tokenValue) {
-        if (resetPasswordUrl == null || resetPasswordUrl.isBlank()) {
+        String baseOrigin = resolveBaseOrigin(frontendBaseUrl);
+        String path = normalizePath(resetPasswordPath);
+        if (baseOrigin == null || baseOrigin.isBlank() || path == null || path.isBlank()) {
             return "";
         }
+        String resetPasswordUrl = baseOrigin + path;
         String separator = resetPasswordUrl.contains("?") ? "&" : "?";
         String encoded = URLEncoder.encode(tokenValue, StandardCharsets.UTF_8);
         return resetPasswordUrl + separator + "token=" + encoded;
+    }
+
+    private String normalizePath(String path) {
+        if (path == null || path.isBlank()) {
+            return null;
+        }
+        if (path.startsWith("/")) {
+            return path;
+        }
+        return "/" + path;
+    }
+
+    private String resolveBaseOrigin(String baseUrl) {
+        if (baseUrl == null || baseUrl.isBlank()) {
+            return null;
+        }
+        try {
+            java.net.URI base = java.net.URI.create(baseUrl);
+            if (base.getScheme() == null || base.getHost() == null) {
+                return null;
+            }
+            StringBuilder sb = new StringBuilder();
+            sb.append(base.getScheme()).append("://").append(base.getHost());
+            if (base.getPort() != -1) {
+                sb.append(":").append(base.getPort());
+            }
+            return sb.toString();
+        } catch (Exception ex) {
+            return null;
+        }
     }
 
     private String renderResetPassword(String email, String resetLink, Duration ttl) {

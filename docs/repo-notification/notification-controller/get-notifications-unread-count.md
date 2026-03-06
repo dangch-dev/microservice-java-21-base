@@ -9,7 +9,7 @@
 1. Count unread notifications by userId.
 
 ## Auth & Permissions
-- USER
+- MEMBER | ADMIN | MANAGER
 
 
 ## Request

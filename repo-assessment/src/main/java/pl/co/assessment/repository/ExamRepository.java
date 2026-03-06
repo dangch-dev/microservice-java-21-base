@@ -49,6 +49,7 @@ public interface ExamRepository extends JpaRepository<Exam, String> {
             SELECT
                 e.id AS examId,
                 ev.id AS examVersionId,
+                e.draftExamVersionId AS draftExamVersionId,
                 c.name AS categoryName,
                 ev.name AS name,
                 ev.description AS description,
@@ -80,6 +81,7 @@ public interface ExamRepository extends JpaRepository<Exam, String> {
                 :enabled IS NULL
                 OR e.enabled = :enabled
               )
+            ORDER BY e.createdAt DESC
             """,
             countQuery = """
             SELECT COUNT(e)
@@ -113,6 +115,7 @@ public interface ExamRepository extends JpaRepository<Exam, String> {
             SELECT
                 e.id AS examId,
                 ev.id AS examVersionId,
+                e.draftExamVersionId AS draftExamVersionId,
                 c.name AS categoryName,
                 ev.name AS name,
                 ev.description AS description,

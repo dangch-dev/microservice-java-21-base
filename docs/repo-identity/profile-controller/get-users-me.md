@@ -10,7 +10,7 @@
 2. Load user and map to profile response.
 
 ## Auth & Permissions
-- USER
+- MEMBER | ADMIN | MANAGER
 
 
 ## Request

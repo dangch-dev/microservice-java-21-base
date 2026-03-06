@@ -10,7 +10,7 @@
 2. Publish attached files.
 
 ## Auth & Permissions
-- USER
+- MEMBER | ADMIN | MANAGER
 
 
 ## Request

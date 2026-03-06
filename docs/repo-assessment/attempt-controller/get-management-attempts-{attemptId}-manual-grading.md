@@ -57,6 +57,10 @@
     "percent": number | null,
     "lock": {
       "ownerId": string,
+      "ownerFullName": string | null,
+      "ownerAvatarUrl": string | null,
+      "ownerEmail": string | null,
+      "ownerRoleName": string | null,
       "sessionId": string,
       "ttlSeconds": number
     },

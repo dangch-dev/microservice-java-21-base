@@ -21,6 +21,11 @@ public class ManagementExamController {
         return ApiResponse.ok(examService.create(request));
     }
 
+    @PostMapping("/form/import")
+    public ApiResponse<ExamFormImportResponse> importForm(@RequestBody ExamFormImportRequest request) {
+        return ApiResponse.ok(examService.importFromForm(request));
+    }
+
     @GetMapping
     public ApiResponse<ExamPageResponse> list(@RequestParam(value = "searchValue", required = false) String searchValue,
                                               @RequestParam(value = "categoryId", required = false) String categoryId,
@@ -31,8 +36,10 @@ public class ManagementExamController {
     }
 
     @PutMapping("/{examId}/edit")
-    public ApiResponse<ExamEditorResponse> requestEdit(@PathVariable("examId") String examId) {
-        return ApiResponse.ok(examService.requestEdit(examId));
+    public ApiResponse<ExamEditorResponse> requestEdit(@PathVariable("examId") String examId,
+                                                       @RequestParam(value = "forceNewDraft", required = false)
+                                                       Boolean forceNewDraft) {
+        return ApiResponse.ok(examService.requestEdit(examId, forceNewDraft));
     }
 
     @PostMapping("/{examId}/draft/save")
