@@ -18,6 +18,9 @@
 ### Path Params
 - examId: string (required)
 
+### Query Params
+- forceNewDraft: boolean (optional, default false)
+
 ### Headers
 - Authorization: string (Bearer token)
 
@@ -220,6 +223,7 @@
 
 ## Notes
 - `questionContent` and `gradingRules` fields are populated by question type; unused fields can be null/omitted.
+- If `forceNewDraft=true`, the current draft (if any) is discarded and a new draft is created.
 
 
 

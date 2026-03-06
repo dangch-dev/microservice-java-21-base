@@ -43,6 +43,7 @@
       {
         "examId": string,
         "examVersionId": string,
+        "draftExamVersionId": string | null,
         "categoryName": string,
         "name": string,
         "description": string | null,
