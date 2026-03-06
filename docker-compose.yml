@@ -8,7 +8,7 @@ services:
       MYSQL_TCP_PORT: 3306
     command: ["--port=3306"]
     ports:
-      - "58003:3306"
+      - "58002:3306"
     volumes:
       - dangch-mysql_data:/var/lib/mysql
     networks:
