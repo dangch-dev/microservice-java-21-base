@@ -87,6 +87,21 @@ services:
       dockerfile: docker/minio.Dockerfile
     container_name: dangch-minio
     restart: unless-stopped
+    entrypoint:
+      - /bin/sh
+      - -c
+      - >
+        minio server /data --address :9000 --console-address :9001 &
+        MINIO_PID=$$!;
+        until mc alias set local "$${MINIO_HOST:-http://localhost:9000}" "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD" >/dev/null 2>&1; do
+          echo "Waiting for MinIO...";
+          sleep 2;
+        done;
+        if [ -n "$$MINIO_APP_USER" ] && [ -n "$$MINIO_APP_SECRET" ]; then
+          mc admin user add local "$$MINIO_APP_USER" "$$MINIO_APP_SECRET" >/dev/null 2>&1 || true;
+          mc admin policy attach local readwrite --user "$$MINIO_APP_USER" >/dev/null 2>&1 || true;
+        fi;
+        wait "$$MINIO_PID";
     environment:
       MINIO_ROOT_USER: minio_root
       MINIO_ROOT_PASSWORD: minio_root_password
