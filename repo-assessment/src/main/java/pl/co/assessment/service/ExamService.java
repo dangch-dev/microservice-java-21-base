@@ -16,7 +16,7 @@ public interface ExamService {
 
     ExamPageResponse listPublic(String searchValue, Integer page, Integer size);
 
-    ExamEditorResponse requestEdit(String examId);
+    ExamEditorResponse requestEdit(String examId, Boolean forceNewDraft);
 
     void saveDraft(String examId, ExamDraftSaveRequest request);
 

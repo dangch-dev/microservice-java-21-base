@@ -36,8 +36,10 @@ public class ManagementExamController {
     }
 
     @PutMapping("/{examId}/edit")
-    public ApiResponse<ExamEditorResponse> requestEdit(@PathVariable("examId") String examId) {
-        return ApiResponse.ok(examService.requestEdit(examId));
+    public ApiResponse<ExamEditorResponse> requestEdit(@PathVariable("examId") String examId,
+                                                       @RequestParam(value = "forceNewDraft", required = false)
+                                                       Boolean forceNewDraft) {
+        return ApiResponse.ok(examService.requestEdit(examId, forceNewDraft));
     }
 
     @PostMapping("/{examId}/draft/save")

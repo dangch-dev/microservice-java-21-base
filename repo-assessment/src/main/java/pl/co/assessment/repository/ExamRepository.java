@@ -49,6 +49,7 @@ public interface ExamRepository extends JpaRepository<Exam, String> {
             SELECT
                 e.id AS examId,
                 ev.id AS examVersionId,
+                e.draftExamVersionId AS draftExamVersionId,
                 c.name AS categoryName,
                 ev.name AS name,
                 ev.description AS description,
@@ -114,6 +115,7 @@ public interface ExamRepository extends JpaRepository<Exam, String> {
             SELECT
                 e.id AS examId,
                 ev.id AS examVersionId,
+                e.draftExamVersionId AS draftExamVersionId,
                 c.name AS categoryName,
                 ev.name AS name,
                 ev.description AS description,

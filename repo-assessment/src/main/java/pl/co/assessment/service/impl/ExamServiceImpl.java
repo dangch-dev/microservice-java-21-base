@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.StringUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import pl.co.assessment.dto.ExamCreateRequest;
@@ -147,6 +148,7 @@ public class ExamServiceImpl implements ExamService {
                 .map(row -> new ExamListItemResponse(
                         row.getExamId(),
                         row.getExamVersionId(),
+                        row.getDraftExamVersionId(),
                         row.getCategoryName(),
                         row.getName(),
                         row.getDescription(),
@@ -177,6 +179,7 @@ public class ExamServiceImpl implements ExamService {
                 .map(row -> new ExamListItemResponse(
                         row.getExamId(),
                         row.getExamVersionId(),
+                        row.getDraftExamVersionId(),
                         row.getCategoryName(),
                         row.getName(),
                         row.getDescription(),
@@ -197,77 +200,42 @@ public class ExamServiceImpl implements ExamService {
 
     @Override
     @Transactional
-    public ExamEditorResponse requestEdit(String examId) {
-        // Load exam (active only)
-        Exam exam = examRepository.findByIdAndDeletedFalse(examId)
+    public ExamEditorResponse requestEdit(String examId, Boolean forceNewDraft) {
+        Exam exam = examRepository.findByIdAndDeletedFalseForUpdate(examId)
                 .orElseThrow(() -> new ApiException(ErrorCode.E227, "Exam not found"));
 
-        // Resolve editorVersion: prefer draft if it is valid for this exam
+        boolean forceNew = Boolean.TRUE.equals(forceNewDraft);
         ExamVersion editorVersion = null;
         String draftId = exam.getDraftExamVersionId();
-        if (draftId != null && !draftId.isBlank()) {
+
+        if (!forceNew && StringUtils.hasText(draftId)) {
             editorVersion = examVersionRepository.findByIdAndExamIdAndDeletedFalse(draftId, exam.getId())
                     .orElse(null);
         }
-        // Clear stale draft pointer
-        if (editorVersion == null && draftId != null && !draftId.isBlank()) {
+
+        if (forceNew && StringUtils.hasText(draftId)) {
+            ExamVersion existingDraft = examVersionRepository.findByIdAndExamIdAndDeletedFalse(draftId, exam.getId())
+                    .orElse(null);
+            if (existingDraft != null && ExamVersionStatus.DRAFT.name().equalsIgnoreCase(existingDraft.getStatus())) {
+                if (examVersionRepository.existsByExamIdAndVersionAndDeletedTrue(exam.getId(), existingDraft.getVersion())) {
+                    int nextVersion = examVersionRepository.findMaxVersionByExamId(exam.getId()) + 1;
+                    existingDraft.setVersion(nextVersion);
+                }
+                existingDraft.setDeleted(true);
+                examVersionRepository.save(existingDraft);
+            }
+            exam.setDraftExamVersionId(null);
+            examRepository.save(exam);
+            editorVersion = null;
+        }
+
+        if (editorVersion == null && StringUtils.hasText(draftId)) {
             exam.setDraftExamVersionId(null);
             examRepository.save(exam);
         }
 
-        // If no draft, create a new draft (empty or cloned from published)
         if (editorVersion == null) {
-            String publishedId = exam.getPublishedExamVersionId();
-            int nextVersion = examVersionRepository.findMaxVersionByExamIdAndDeletedFalse(exam.getId()) + 1;
-            // If it doesn't have publishedId   => Create empty draft
-            // Else                             => Create draft clone from publishedId version
-            if (publishedId == null || publishedId.isBlank()) {
-                ExamVersion draft = ExamVersion.builder()
-                        .examId(exam.getId())
-                        .version(nextVersion)
-                        .name("Untitled Exam")
-                        .description(null)
-                        .status(ExamVersionStatus.DRAFT.name())
-                        .durationMinutes(null)
-                        .shuffleQuestions(false)
-                        .shuffleOptions(false)
-                        .build();
-                editorVersion = examVersionRepository.save(draft);
-            } else {
-                ExamVersion published = examVersionRepository.findByIdAndExamIdAndDeletedFalse(publishedId, exam.getId())
-                        .orElseThrow(() -> new ApiException(ErrorCode.E227, "Exam version not found"));
-
-                ExamVersion draft = ExamVersion.builder()
-                        .examId(exam.getId())
-                        .version(nextVersion)
-                        .name(published.getName())
-                        .description(published.getDescription())
-                        .status(ExamVersionStatus.DRAFT.name())
-                        .durationMinutes(published.getDurationMinutes())
-                        .shuffleQuestions(published.isShuffleQuestions())
-                        .shuffleOptions(published.isShuffleOptions())
-                        .build();
-                editorVersion = examVersionRepository.save(draft);
-
-                // Clone question order from published to draft
-                List<ExamVersionQuestion> publishedQuestions = examVersionQuestionRepository.findByExamVersionIdAndDeletedFalseOrderByQuestionOrderAsc(published.getId());
-                if (!publishedQuestions.isEmpty()) {
-                    String editorVersionId = editorVersion.getId();
-                    List<ExamVersionQuestion> draftQuestions = publishedQuestions.stream()
-                            .map(item -> ExamVersionQuestion.builder()
-                                    .examVersionId(editorVersionId)
-                                    .questionId(item.getQuestionId())
-                                    .questionVersionId(item.getQuestionVersionId())
-                                    .questionOrder(item.getQuestionOrder())
-                                    .groupVersionId(item.getGroupVersionId())
-                                    .build())
-                            .toList();
-                    examVersionQuestionRepository.saveAll(draftQuestions);
-                }
-            }
-            // Persist draft pointer on exam
-            exam.setDraftExamVersionId(editorVersion.getId());
-            examRepository.save(exam);
+            editorVersion = createDraftVersion(exam);
         }
 
         // Build response
@@ -307,6 +275,60 @@ public class ExamServiceImpl implements ExamService {
                 questions,
                 groups
         );
+    }
+
+    private ExamVersion createDraftVersion(Exam exam) {
+        String publishedId = exam.getPublishedExamVersionId();
+        ExamVersion published = null;
+        if (StringUtils.hasText(publishedId)) {
+            published = examVersionRepository.findByIdAndExamIdAndDeletedFalse(publishedId, exam.getId())
+                    .orElseThrow(() -> new ApiException(ErrorCode.E227, "Exam version not found"));
+        }
+
+        for (int attempt = 0; attempt < 3; attempt++) {
+            int nextVersion = examVersionRepository.findMaxVersionByExamId(exam.getId()) + 1;
+            try {
+                ExamVersion draft = ExamVersion.builder()
+                        .examId(exam.getId())
+                        .version(nextVersion)
+                        .name(published == null ? "Untitled Exam" : published.getName())
+                        .description(published == null ? null : published.getDescription())
+                        .status(ExamVersionStatus.DRAFT.name())
+                        .durationMinutes(published == null ? null : published.getDurationMinutes())
+                        .shuffleQuestions(published != null && published.isShuffleQuestions())
+                        .shuffleOptions(published != null && published.isShuffleOptions())
+                        .build();
+                ExamVersion editorVersion = examVersionRepository.saveAndFlush(draft);
+
+                if (published != null) {
+                    List<ExamVersionQuestion> publishedQuestions =
+                            examVersionQuestionRepository.findByExamVersionIdAndDeletedFalseOrderByQuestionOrderAsc(published.getId());
+                    if (!publishedQuestions.isEmpty()) {
+                        String editorVersionId = editorVersion.getId();
+                        List<ExamVersionQuestion> draftQuestions = publishedQuestions.stream()
+                                .map(item -> ExamVersionQuestion.builder()
+                                        .examVersionId(editorVersionId)
+                                        .questionId(item.getQuestionId())
+                                        .questionVersionId(item.getQuestionVersionId())
+                                        .questionOrder(item.getQuestionOrder())
+                                        .groupVersionId(item.getGroupVersionId())
+                                        .build())
+                                .toList();
+                        examVersionQuestionRepository.saveAll(draftQuestions);
+                    }
+                }
+
+                exam.setDraftExamVersionId(editorVersion.getId());
+                examRepository.save(exam);
+                return editorVersion;
+            } catch (org.springframework.dao.DataIntegrityViolationException ex) {
+                if (attempt == 2) {
+                    throw ex;
+                }
+            }
+        }
+
+        throw new IllegalStateException("Failed to create draft version after retries");
     }
 
     @Override
@@ -1430,6 +1452,10 @@ public class ExamServiceImpl implements ExamService {
                     ErrorCode.E420.message("Draft exam version does not exist"));
         }
 
+        if (examVersionRepository.existsByExamIdAndVersionAndDeletedTrue(exam.getId(), draft.getVersion())) {
+            int nextVersion = examVersionRepository.findMaxVersionByExamId(exam.getId()) + 1;
+            draft.setVersion(nextVersion);
+        }
         draft.setDeleted(true);
         examVersionRepository.save(draft);
 
