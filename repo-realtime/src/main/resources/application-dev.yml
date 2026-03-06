@@ -14,13 +14,13 @@ spring:
       - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
       - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
   kafka:
-    bootstrap-servers: dangch-kafka:59092
+    bootstrap-servers: dangch-kafka:9092
     consumer:
       group-id: realtime-service
       auto-offset-reset: latest
 
 server:
-  port: 58084
+  port: 8084
   forward-headers-strategy: framework
 
 security:
@@ -32,7 +32,7 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: http://dangch-eureka:58761/eureka
+      defaultZone: http://dangch-eureka:8761/eureka
   instance:
     prefer-ip-address: true
     hostname: dangch-realtime

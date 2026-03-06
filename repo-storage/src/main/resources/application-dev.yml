@@ -8,7 +8,7 @@ spring:
       max-file-size: 25MB
       max-request-size: 25MB
   datasource:
-    url: jdbc:mysql://dangch-mysql:53306/storage_mysql_database?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    url: jdbc:mysql://dangch-mysql:3306/storage_mysql_database?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: root
     password: mysql_root_password
     hikari:
@@ -26,12 +26,12 @@ spring:
   cache:
     type: simple
   kafka:
-    bootstrap-servers: dangch-kafka:59092
+    bootstrap-servers: dangch-kafka:9092
     consumer:
       group-id: storage-file
 
 server:
-  port: 58086
+  port: 8086
   forward-headers-strategy: framework
 
 security:
@@ -43,7 +43,7 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: http://dangch-eureka:58761/eureka
+      defaultZone: http://dangch-eureka:8761/eureka
   instance:
     prefer-ip-address: true
     hostname: dangch-storage
@@ -55,8 +55,8 @@ storage:
   cleanup-cron: "0 0 * * * *"
   delete-object-on-soft-delete: false
   minio:
-    endpoint: http://dangch-minio:59000
-    console-endpoint: http://dangch-minio:59001
+    endpoint: http://dangch-minio:9000
+    console-endpoint: http://dangch-minio:9001
     access-key: app-user
     secret-key: app-user-secret
     bucket: repo-storage

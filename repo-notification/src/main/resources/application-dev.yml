@@ -4,7 +4,7 @@ spring:
     serialization:
       write-dates-as-timestamps: false
   datasource:
-    url: jdbc:mysql://dangch-mysql:53306/notification_mysql_database?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    url: jdbc:mysql://dangch-mysql:3306/notification_mysql_database?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: root
     password: mysql_root_password
   jpa:
@@ -17,13 +17,13 @@ spring:
         dialect: org.hibernate.dialect.MySQL8Dialect
     open-in-view: false
   kafka:
-    bootstrap-servers: dangch-kafka:59092
+    bootstrap-servers: dangch-kafka:9092
     consumer:
       group-id: notification-service
       auto-offset-reset: latest
 
 server:
-  port: 58083
+  port: 8083
   forward-headers-strategy: framework
 
 security:
@@ -39,7 +39,7 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: http://dangch-eureka:58761/eureka
+      defaultZone: http://dangch-eureka:8761/eureka
   instance:
     prefer-ip-address: true
     hostname: dangch-notification
