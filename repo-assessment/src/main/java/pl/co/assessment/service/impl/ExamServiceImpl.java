@@ -1338,9 +1338,11 @@ public class ExamServiceImpl implements ExamService {
                 throw new ApiException(ErrorCode.E220,
                         ErrorCode.E220.message("Duplicate groupId, groupId: " + groupId));
             }
+
+            List<String> questionIds = group.getQuestionIds() == null ? List.of() : group.getQuestionIds();
             Integer previousOrder = null;
             List<String> desiredQuestionVersionIds = new ArrayList<>();
-            for (String questionId : group.getQuestionIds()) {
+            for (String questionId : questionIds) {
                 if (!usedQuestionIds.add(questionId)) {
                     throw new ApiException(ErrorCode.E220,
                             ErrorCode.E220.message("Question already grouped, questionId: " + questionId));
@@ -1401,7 +1403,7 @@ public class ExamServiceImpl implements ExamService {
                 }
             }
 
-            for (String questionId : group.getQuestionIds()) {
+            for (String questionId : questionIds) {
                 desiredGroupVersionByQuestionId.put(questionId, targetGroupVersionId);
             }
         }
