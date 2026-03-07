@@ -11,7 +11,7 @@
 3. Otherwise create a new attempt and persist question/option order if shuffle enabled.
 
 ## Auth & Permissions
-- USER, ADMIN
+- MEMBER, GUEST, ADMIN
 
 
 ## Request
@@ -53,9 +53,12 @@
 
 ### Errors
 - (404 Not Found) - errorCode: 227 when exam not found.
-- (422 Unprocessable Entity) - errorCode: 420 when exam is disabled.
-- (422 Unprocessable Entity) - errorCode: 420 when published version missing or not PUBLISHED.
-- (401 Unauthorized) - errorCode: 241 when access token is missing/invalid.
+- (422 Unprocessable Entity) - errorCode: 427 when exam is disabled.
+- (422 Unprocessable Entity) - errorCode: 428 when published version does not exist.
+- (422 Unprocessable Entity) - errorCode: 431 when published version status is not PUBLISHED.
+- (422 Unprocessable Entity) - errorCode: 426 when guest attempt limit exceeded.
+- (401 Unauthorized) - errorCode: UNAUTHORIZED when access token is missing.
+- (401 Unauthorized) - errorCode: 241 when access token is invalid.
 - (401 Unauthorized) - errorCode: 234 when access token is expired.
 - (403 Forbidden) - errorCode: 230 when user has no authority.
 ```

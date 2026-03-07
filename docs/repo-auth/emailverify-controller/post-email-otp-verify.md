@@ -53,7 +53,8 @@
 ### Errors
 - (400 Bad Request) - errorCode: 243 when otp is missing.
 - (400 Bad Request) - errorCode: 202 when request body has invalid data type or JSON.
-- (401 Unauthorized) - errorCode: UNAUTHORIZED when access token is missing or invalid.
+- (401 Unauthorized) - errorCode: UNAUTHORIZED when access token is missing.
+- (401 Unauthorized) - errorCode: 241 when access token is invalid.
 - (401 Unauthorized) - errorCode: 234 when access token is expired.
 - (401 Unauthorized) - errorCode: 238 when user not found.
 - (401 Unauthorized) - errorCode: 602 when OTP is invalid or attempts exceeded.

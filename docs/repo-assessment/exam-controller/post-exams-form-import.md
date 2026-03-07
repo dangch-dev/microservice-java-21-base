@@ -13,6 +13,9 @@
 - ADMIN
 
 ## Request
+### Headers
+- Authorization: string (Bearer token)
+
 ### Body (example)
 ```
 {
@@ -30,6 +33,13 @@
 }
 ```
 
+## Required
+| field | location | required |
+| --- | --- | --- |
+| Authorization | header | x |
+| form | body | x |
+| form.info.title | body | x |
+
 ## Response
 ### Success
 ```
@@ -44,6 +54,22 @@
     "skippedCount": 0,
     "warnings": []
   }
+}
+```
+
+### Errors
+- (400 Bad Request) - errorCode: 221 when `form` is missing or `form.info.title` is blank.
+- (400 Bad Request) - errorCode: 202 when request body has invalid data type/JSON.
+- (401 Unauthorized) - errorCode: UNAUTHORIZED when access token is missing.
+- (401 Unauthorized) - errorCode: 241 when access token is invalid.
+- (401 Unauthorized) - errorCode: 234 when access token is expired.
+- (403 Forbidden) - errorCode: FORBIDDEN when user is not ADMIN.
+```
+{
+  "success": false,
+  "errorCode": string,
+  "errorMessage": string,
+  "data": null
 }
 ```
 

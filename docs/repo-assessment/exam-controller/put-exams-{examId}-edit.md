@@ -18,6 +18,9 @@
 ### Path Params
 - examId: string (required)
 
+### Query Params
+- forceNewDraft: boolean (optional, default false)
+
 ### Headers
 - Authorization: string (Bearer token)
 
@@ -205,7 +208,8 @@
 
 ### Errors
 - (404 Not Found) - errorCode: 227 when exam not found or published version not found.
-- (401 Unauthorized) - errorCode: UNAUTHORIZED when access token is missing/invalid.
+- (401 Unauthorized) - errorCode: UNAUTHORIZED when access token is missing.
+- (401 Unauthorized) - errorCode: 241 when access token is invalid.
 - (401 Unauthorized) - errorCode: 234 when access token is expired.
 - (403 Forbidden) - errorCode: FORBIDDEN when user is not ADMIN.
 ```
@@ -220,6 +224,7 @@
 
 ## Notes
 - `questionContent` and `gradingRules` fields are populated by question type; unused fields can be null/omitted.
+- If `forceNewDraft=true`, the current draft (if any) is discarded and a new draft is created.
 
 
 

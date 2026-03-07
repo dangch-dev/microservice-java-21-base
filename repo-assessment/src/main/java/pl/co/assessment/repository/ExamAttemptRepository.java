@@ -21,6 +21,15 @@ public interface ExamAttemptRepository extends JpaRepository<ExamAttempt, String
     @Query("""
             SELECT ea
             FROM ExamAttempt ea
+            WHERE ea.createdBy = :userId
+              AND ea.deleted = false
+            """)
+    List<ExamAttempt> findByUserIdAndDeletedFalseForUpdate(@Param("userId") String userId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT ea
+            FROM ExamAttempt ea
             WHERE ea.examId = :examId
               AND ea.createdBy = :userId
               AND ea.status IN :statuses

@@ -38,7 +38,8 @@
 ```
 
 ### Errors
-- (401 Unauthorized) - errorCode: UNAUTHORIZED when access token is missing or invalid.
+- (401 Unauthorized) - errorCode: UNAUTHORIZED when access token is missing.
+- (401 Unauthorized) - errorCode: 241 when access token is invalid.
 - (401 Unauthorized) - errorCode: 234 when access token is expired.
 - (401 Unauthorized) - errorCode: 238 when user not found.
 - (409 Conflict) - errorCode: 220 when email is already verified.

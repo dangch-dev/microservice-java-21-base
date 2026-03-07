@@ -187,7 +187,7 @@
           ]
         }
       },
-      "questionIds": [string]
+      "questionIds": [string] | [] | null
     }
   ]
 }
@@ -220,7 +220,8 @@
 - (409 Conflict) - errorCode: 220 when duplicate `questionId` or duplicate `questionOrder` or duplicate `groupId`.
 - (400 Bad Request) - errorCode: 221 when request data is invalid (missing `metadata`/`questionChanges`/`groups`, invalid `questionOrder`, non-continuous order, invalid `questionId`, missing `type/questionContent/gradingRules`, group questions not consecutive, or a question appears in multiple groups).
 - (400 Bad Request) - errorCode: 204 when `questionContent`/`gradingRules` validation fails.
-- (401 Unauthorized) - errorCode: UNAUTHORIZED when access token is missing/invalid.
+- (401 Unauthorized) - errorCode: UNAUTHORIZED when access token is missing.
+- (401 Unauthorized) - errorCode: 241 when access token is invalid.
 - (401 Unauthorized) - errorCode: 234 when access token is expired.
 - (403 Forbidden) - errorCode: FORBIDDEN when user is not ADMIN.
 ```
@@ -243,7 +244,9 @@
 - `groups` is optional. If omitted, existing groups are unchanged.
 - If `groups` is provided (including empty list), it replaces all current group assignments in the draft.
 - A question can belong to at most one group.
-- `questionIds` must follow the same order as `questionOrder` and be consecutive.
+- `questionIds` can be `null` or `[]` (empty group is allowed).
+- If `questionIds` is provided and not empty, it must follow the same order as `questionOrder` and be consecutive.
+- Each item in `questionIds` must be a non-blank string (not `""` or whitespace).
 
 ### Type requirements
 | type | questionContent required | gradingRules required |

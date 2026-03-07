@@ -17,6 +17,7 @@ import pl.co.assessment.service.AttemptStartService;
 import pl.co.assessment.service.AttemptSubmissionService;
 import pl.co.common.dto.ApiResponse;
 import pl.co.common.security.AuthUtils;
+import pl.co.common.security.RoleName;
 import java.time.Instant;
 
 @RestController
@@ -33,7 +34,11 @@ public class AttemptController {
     public ApiResponse<AttemptStartResponse> start(@PathVariable("examId") @NotBlank String examId,
                                                    Authentication authentication) {
         String userId = AuthUtils.resolveUserId(authentication);
-        return ApiResponse.ok(attemptStartService.startAttempt(examId, userId));
+        boolean isGuest = authentication != null
+                && authentication.getAuthorities() != null
+                && authentication.getAuthorities().stream()
+                .anyMatch(a -> RoleName.ROLE_GUEST.name().equals(a.getAuthority()));
+        return ApiResponse.ok(attemptStartService.startAttempt(examId, userId, isGuest));
     }
 
     @GetMapping("/{attemptId}")

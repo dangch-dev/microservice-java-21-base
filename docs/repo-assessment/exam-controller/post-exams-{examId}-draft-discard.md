@@ -44,7 +44,8 @@
 ### Errors
 - (404 Not Found) - errorCode: 227 when exam not found.
 - (422 Unprocessable Entity) - errorCode: 420 when draft exam version does not exist or status is not DRAFT.
-- (401 Unauthorized) - errorCode: UNAUTHORIZED when access token is missing/invalid.
+- (401 Unauthorized) - errorCode: UNAUTHORIZED when access token is missing.
+- (401 Unauthorized) - errorCode: 241 when access token is invalid.
 - (401 Unauthorized) - errorCode: 234 when access token is expired.
 - (403 Forbidden) - errorCode: FORBIDDEN when user is not ADMIN.
 ```

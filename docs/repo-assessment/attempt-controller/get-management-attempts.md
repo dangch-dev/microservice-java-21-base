@@ -74,7 +74,8 @@
 ```
 
 ### Errors
-- (401 Unauthorized) - errorCode: 241 when access token is missing/invalid.
+- (401 Unauthorized) - errorCode: UNAUTHORIZED when access token is missing.
+- (401 Unauthorized) - errorCode: 241 when access token is invalid.
 - (401 Unauthorized) - errorCode: 234 when access token is expired.
 - (403 Forbidden) - errorCode: 230 when user is not ADMIN.
 - (400 Bad Request) - errorCode: 221 when `from/to` is invalid ISO-8601.

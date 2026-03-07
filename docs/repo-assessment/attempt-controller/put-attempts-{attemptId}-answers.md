@@ -12,7 +12,7 @@
 4. Upsert answers; answerJson = null clears the answer.
 
 ## Auth & Permissions
-- USER
+- MEMBER, GUEST, ADMIN (owner only)
 
 
 ## Request

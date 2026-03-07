@@ -44,11 +44,21 @@ public enum ErrorCode {
     E423("423", HttpStatus.CONFLICT,"Attempt is locked (%s)"), // Manual grading lock conflict
     E424("424", HttpStatus.CONFLICT,"Session conflict (%s)"), // Manual grading session conflict
     E425("425", HttpStatus.CONFLICT,"Lock lost (%s)"), // Manual grading lock lost
+    E426("426", HttpStatus.UNPROCESSABLE_ENTITY,"Guest attempt limit exceeded"), // Guest attempt limit exceeded
     E420("420", HttpStatus.UNPROCESSABLE_ENTITY,"Business rule violation (%s)"), // Business rule violation
 
     // Not found / Data integrity
     E223("223", HttpStatus.NOT_FOUND,"No master data"), // No master data
     E227("227", HttpStatus.NOT_FOUND,"No data found (%s)"), // No data found
+
+    // Exam / Draft specific (avoid overloading E420)
+    E427("427", HttpStatus.UNPROCESSABLE_ENTITY,"Exam is disabled"), // Exam is disabled
+    E428("428", HttpStatus.UNPROCESSABLE_ENTITY,"Published exam version does not exist"), // Published exam version missing
+    E431("431", HttpStatus.UNPROCESSABLE_ENTITY,"Exam version is not published"), // Published pointer is not PUBLISHED
+    E432("432", HttpStatus.BAD_REQUEST,"No draft to publish"), // No draft pointer
+    E433("433", HttpStatus.BAD_REQUEST,"Draft exam version does not exist"), // Draft missing
+    E434("434", HttpStatus.BAD_REQUEST,"Draft exam version is not DRAFT"), // Draft status invalid
+    E435("435", HttpStatus.BAD_REQUEST,"Draft must have at least 1 question"), // Draft empty
 
     // System / External
     E235("235", HttpStatus.SERVICE_UNAVAILABLE,"Service not available"), // Service not available

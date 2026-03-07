@@ -23,3 +23,6 @@ docker compose up -d assessment
 
 docker compose build storage
 docker compose up -d storage
+
+docker compose build minio
+docker compose up -d minio
