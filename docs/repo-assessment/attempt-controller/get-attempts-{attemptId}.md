@@ -13,7 +13,7 @@
 5. Load saved answers for resume.
 
 ## Auth & Permissions
-- USER, ADMIN (owner only)
+- MEMBER, GUEST, ADMIN (owner only)
 
 
 ## Request

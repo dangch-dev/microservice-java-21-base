@@ -13,7 +13,7 @@
 5. Return attempt totals and per-question result payload.
 
 ## Auth & Permissions
-- USER, ADMIN (owner only)
+- MEMBER, GUEST, ADMIN (owner only)
 
 
 ## Request

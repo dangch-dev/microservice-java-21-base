@@ -13,7 +13,7 @@
 5. TODO: enqueue attemptId for grading.
 
 ## Auth & Permissions
-- USER
+- MEMBER, GUEST, ADMIN (owner only)
 
 
 ## Request

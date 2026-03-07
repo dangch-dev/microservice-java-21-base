@@ -66,7 +66,7 @@ public class AttemptStartServiceImpl implements AttemptStartService {
             // Each attempt counts as one "trial". Only enforce when about to create a new attempt.
             int used = examAttemptRepository.findByUserIdAndDeletedFalseForUpdate(userId).size();
             if (used >= 2) {
-                throw new ApiException(ErrorCode.E420, ErrorCode.E420.message("Guest attempt limit exceeded"));
+                throw new ApiException(ErrorCode.E426);
             }
         }
         return createOrResumeOnConflict(exam, published, examId, userId);
@@ -77,7 +77,7 @@ public class AttemptStartServiceImpl implements AttemptStartService {
         Exam exam = examRepository.findByIdAndDeletedFalse(examId)
                 .orElseThrow(() -> new ApiException(ErrorCode.E227, ErrorCode.E227.message("Exam not found")));
         if (!exam.isEnabled()) {
-            throw new ApiException(ErrorCode.E420, ErrorCode.E420.message("Exam is disabled"));
+            throw new ApiException(ErrorCode.E427);
         }
         return exam;
     }
@@ -86,12 +86,12 @@ public class AttemptStartServiceImpl implements AttemptStartService {
         // Validate published pointer + published status
         String publishedId = exam.getPublishedExamVersionId();
         if (publishedId == null || publishedId.isBlank()) {
-            throw new ApiException(ErrorCode.E420, ErrorCode.E420.message("Published exam version does not exist"));
+            throw new ApiException(ErrorCode.E428);
         }
         ExamVersion published = examVersionRepository.findByIdAndExamIdAndDeletedFalse(publishedId, exam.getId())
-                .orElseThrow(() -> new ApiException(ErrorCode.E420, ErrorCode.E420.message("Published exam version does not exist")));
+                .orElseThrow(() -> new ApiException(ErrorCode.E428));
         if (!ExamVersionStatus.PUBLISHED.name().equalsIgnoreCase(published.getStatus())) {
-            throw new ApiException(ErrorCode.E420, ErrorCode.E420.message("Exam version is not published"));
+            throw new ApiException(ErrorCode.E431);
         }
         return published;
     }

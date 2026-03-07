@@ -11,7 +11,7 @@
 3. Return list with exam version metadata and attempt scores.
 
 ## Auth & Permissions
-- USER, ADMIN (owner only)
+- MEMBER, GUEST, ADMIN (owner only)
 
 
 ## Request

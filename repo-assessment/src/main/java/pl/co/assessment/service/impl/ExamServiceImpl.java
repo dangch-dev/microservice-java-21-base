@@ -1471,18 +1471,16 @@ public class ExamServiceImpl implements ExamService {
 
         String draftId = exam.getDraftExamVersionId();
         if (draftId == null || draftId.isBlank()) {
-            throw new ApiException(ErrorCode.E221, ErrorCode.E221.message("No draft to publish"));
+            throw new ApiException(ErrorCode.E432);
         }
 
         ExamVersion draft = examVersionRepository.findByIdAndExamIdAndDeletedFalse(draftId, exam.getId())
-                .orElseThrow(() -> new ApiException(ErrorCode.E221,
-                        ErrorCode.E221.message("Draft exam version does not exist")));
+                .orElseThrow(() -> new ApiException(ErrorCode.E433));
         if (!ExamVersionStatus.DRAFT.name().equalsIgnoreCase(draft.getStatus())) {
-            throw new ApiException(ErrorCode.E221,
-                    ErrorCode.E221.message("Draft exam version does not exist"));
+            throw new ApiException(ErrorCode.E434);
         }
         if (!examVersionQuestionRepository.existsByExamVersionIdAndDeletedFalse(draftId)) {
-            throw new ApiException(ErrorCode.E221, ErrorCode.E221.message("Draft must have at least 1 question"));
+            throw new ApiException(ErrorCode.E435);
         }
 
         String oldPublishedId = exam.getPublishedExamVersionId();
@@ -1521,16 +1519,13 @@ public class ExamServiceImpl implements ExamService {
         if (enabled) {
             String publishedId = exam.getPublishedExamVersionId();
             if (publishedId == null || publishedId.isBlank()) {
-                throw new ApiException(ErrorCode.E420,
-                        ErrorCode.E420.message("Published exam version does not exist"));
+                throw new ApiException(ErrorCode.E428);
             }
             ExamVersion published = examVersionRepository
                     .findByIdAndExamIdAndDeletedFalse(publishedId, exam.getId())
-                    .orElseThrow(() -> new ApiException(ErrorCode.E420,
-                            ErrorCode.E420.message("Published exam version does not exist")));
+                    .orElseThrow(() -> new ApiException(ErrorCode.E428));
             if (!ExamVersionStatus.PUBLISHED.name().equalsIgnoreCase(published.getStatus())) {
-                throw new ApiException(ErrorCode.E420,
-                        ErrorCode.E420.message("Exam version is not published"));
+                throw new ApiException(ErrorCode.E431);
             }
         }
 

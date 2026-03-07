@@ -43,8 +43,10 @@
 ```
 
 ### Errors
-- (400 Bad Request) - errorCode: 221 when draft does not exist or status is not DRAFT.
-- (400 Bad Request) - errorCode: 221 when draft has no active questions.
+- (400 Bad Request) - errorCode: 432 when no draft to publish.
+- (400 Bad Request) - errorCode: 433 when draft does not exist.
+- (400 Bad Request) - errorCode: 434 when draft status is not DRAFT.
+- (400 Bad Request) - errorCode: 435 when draft has no active questions.
 - (404 Not Found) - errorCode: 227 when exam not found.
 - (401 Unauthorized) - errorCode: UNAUTHORIZED when access token is missing.
 - (401 Unauthorized) - errorCode: 241 when access token is invalid.
