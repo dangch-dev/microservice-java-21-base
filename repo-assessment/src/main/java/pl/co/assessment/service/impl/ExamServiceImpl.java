@@ -1339,7 +1339,7 @@ public class ExamServiceImpl implements ExamService {
                         ErrorCode.E220.message("Duplicate groupId, groupId: " + groupId));
             }
 
-            List<String> questionIds = group.getQuestionIds() == null ? List.of() : group.getQuestionIds();
+            List<String> questionIds = group.getQuestionIds();
             Integer previousOrder = null;
             List<String> desiredQuestionVersionIds = new ArrayList<>();
             for (String questionId : questionIds) {
