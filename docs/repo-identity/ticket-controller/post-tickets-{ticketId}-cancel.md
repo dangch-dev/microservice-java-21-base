@@ -63,7 +63,8 @@
 - (404 Not Found) - errorCode: 227 when ticket not found.
 - (403 Forbidden) - errorCode: 230 when user is not the creator.
 - (400 Bad Request) - errorCode: 221 when ticket cannot be cancelled.
-- (401 Unauthorized) - errorCode: UNAUTHORIZED when access token is missing or invalid.
+- (401 Unauthorized) - errorCode: UNAUTHORIZED when access token is missing.
+- (401 Unauthorized) - errorCode: 241 when access token is invalid.
 - (401 Unauthorized) - errorCode: 234 when access token is expired.
 - (403 Forbidden) - errorCode: 233 when email is not verified.
 ```

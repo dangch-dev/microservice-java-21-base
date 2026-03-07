@@ -81,7 +81,8 @@
 ### Errors
 - (404 Not Found) - errorCode: 227 when attempt not found.
 - (422 Unprocessable Entity) - errorCode: 420 when attempt is still IN_PROGRESS.
-- (401 Unauthorized) - errorCode: 241 when access token is missing/invalid.
+- (401 Unauthorized) - errorCode: UNAUTHORIZED when access token is missing.
+- (401 Unauthorized) - errorCode: 241 when access token is invalid.
 - (401 Unauthorized) - errorCode: 234 when access token is expired.
 - (403 Forbidden) - errorCode: 230 when user is not ADMIN.
 ```
