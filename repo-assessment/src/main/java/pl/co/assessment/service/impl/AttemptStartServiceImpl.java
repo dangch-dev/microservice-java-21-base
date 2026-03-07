@@ -54,13 +54,20 @@ public class AttemptStartServiceImpl implements AttemptStartService {
 
     @Override
     @Transactional
-    public AttemptStartResponse startAttempt(String examId, String userId) {
+    public AttemptStartResponse startAttempt(String examId, String userId, boolean isGuest) {
         Exam exam = loadExamOrThrow(examId);
         ExamVersion published = loadPublishedVersionOrThrow(exam);
 
         ExamAttempt activeAttempt = findActiveAttemptForUpdate(examId, userId);
         if (activeAttempt != null) {
             return buildResumeResponse(exam, activeAttempt);
+        }
+        if (isGuest) {
+            // Each attempt counts as one "trial". Only enforce when about to create a new attempt.
+            int used = examAttemptRepository.findByUserIdAndDeletedFalseForUpdate(userId).size();
+            if (used >= 2) {
+                throw new ApiException(ErrorCode.E420, ErrorCode.E420.message("Guest attempt limit exceeded"));
+            }
         }
         return createOrResumeOnConflict(exam, published, examId, userId);
     }
