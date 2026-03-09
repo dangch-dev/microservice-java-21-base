@@ -46,7 +46,7 @@ eureka:
 
 sendgrid:
   api-key:
-  from: no-reply@simes.io.vn
+  from: no-reply@dangch.tech
 
 logging:
   level:

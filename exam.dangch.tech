@@ -1,15 +1,15 @@
 server {
     listen 80;
-    server_name simes.io.vn www.simes.io.vn;
+    server_name exam.dangch.tech;
     return 301 https://$host$request_uri;
 }
 
 server {
     listen 443 ssl http2;
-    server_name simes.io.vn www.simes.io.vn;
+    server_name exam.dangch.tech;
 
-    ssl_certificate     /etc/letsencrypt/live/simes.io.vn/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/simes.io.vn/privkey.pem;
+    ssl_certificate     /etc/letsencrypt/live/exam.dangch.tech/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/exam.dangch.tech/privkey.pem;
 
     # ===== Upload limit =====
     client_max_body_size 25M;
@@ -17,7 +17,7 @@ server {
     # ---------- API (HTTP) ----------
     location = /api { return 301 /api/; }
     location /api/ {
-        proxy_pass http://127.0.0.1:58080/api/;
+        proxy_pass http://14.232.211.255:58001/api/;
         proxy_http_version 1.1;
 
         proxy_set_header Host $host;
@@ -34,7 +34,7 @@ server {
     # ---------- OAuth2 ----------
     location = /oauth2 { return 301 /oauth2/; }
     location /oauth2/ {
-        proxy_pass http://127.0.0.1:58080/oauth2/;
+        proxy_pass http://14.232.211.255:58001/oauth2/;
         proxy_http_version 1.1;
 
         proxy_set_header Host $host;
@@ -50,7 +50,7 @@ server {
 
     # ---------- Login Callback ----------
     location /login/oauth2/code/ {
-        proxy_pass http://127.0.0.1:58080/login/oauth2/code/;
+        proxy_pass http://14.232.211.255:58001/login/oauth2/code/;
         proxy_http_version 1.1;
 
         proxy_set_header Host $host;
@@ -67,7 +67,7 @@ server {
     # ---------- WebSocket ----------
     location = /ws { return 301 /ws/; }
     location /ws/ {
-        proxy_pass http://127.0.0.1:58080/ws/;
+        proxy_pass http://14.232.211.255:58001/ws/;
         proxy_http_version 1.1;
 
         proxy_set_header Upgrade $http_upgrade;
@@ -86,7 +86,7 @@ server {
 
     # ---------- Frontend / ----------
     location / {
-        proxy_pass http://127.0.0.1:55173;
+        proxy_pass http://14.232.211.255:58000;
         proxy_http_version 1.1;
 
         proxy_set_header Upgrade $http_upgrade;
