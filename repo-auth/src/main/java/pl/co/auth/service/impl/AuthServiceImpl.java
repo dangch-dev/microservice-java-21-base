@@ -114,7 +114,7 @@ public class AuthServiceImpl implements AuthService {
             boolean isGuest = existing.getRoles() != null && existing.getRoles().stream()
                     .anyMatch(role -> role != null && RoleName.ROLE_GUEST.name().equals(role.getName()));
             if (!isGuest) {
-                throw new ApiException(ErrorCode.E255, "Email already in use",new InternalGuestResponse(existing.getId()));
+                throw new ApiException(ErrorCode.E255, "Email already in use");
             }
 
             // Update guest info
