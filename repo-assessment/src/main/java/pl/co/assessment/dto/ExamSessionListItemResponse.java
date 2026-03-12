@@ -19,4 +19,7 @@ public class ExamSessionListItemResponse {
     private final ExamSessionTargetType targetType;
     private final String code;
     private final String accessCode;
+    private final String creatorFullName;
+    private final String creatorEmail;
+    private final String creatorAvatarUrl;
 }

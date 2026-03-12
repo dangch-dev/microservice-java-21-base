@@ -162,11 +162,13 @@ public class ExamSessionServiceImpl implements ExamSessionService {
         List<ExamSession> sessions = sessionsPage.getContent();
         List<ExamSessionListItemResponse> responses = new ArrayList<>();
         Map<String, ExamVersion> examVersionMap = resolveExamVersions(sessions);
+        Map<String, UserLookupResponse> creatorMap = resolveCreators(sessions);
         for (ExamSession session : sessions) {
             ExamVersion version = examVersionMap.get(session.getExamId());
             String examName = version == null ? null : version.getName();
             String examDescription = version == null ? null : version.getDescription();
-            responses.add(toListItemResponse(session, examName, examDescription));
+            UserLookupResponse creator = creatorMap.get(session.getCreatedBy());
+            responses.add(toListItemResponse(session, examName, examDescription, creator));
         }
         return responses;
     }
@@ -369,7 +371,8 @@ public class ExamSessionServiceImpl implements ExamSessionService {
 
     private ExamSessionListItemResponse toListItemResponse(ExamSession session,
                                                            String examName,
-                                                           String examDescription) {
+                                                           String examDescription,
+                                                           UserLookupResponse creator) {
         return new ExamSessionListItemResponse(
                 session.getId(),
                 session.getExamId(),
@@ -380,7 +383,10 @@ public class ExamSessionServiceImpl implements ExamSessionService {
                 session.getEndAt(),
                 session.getTargetType(),
                 session.getCode(),
-                session.getAccessCode()
+                session.getAccessCode(),
+                creator == null ? null : creator.getFullName(),
+                creator == null ? null : creator.getEmail(),
+                creator == null ? null : creator.getAvatarUrl()
         );
     }
 
@@ -509,6 +515,21 @@ public class ExamSessionServiceImpl implements ExamSessionService {
             map.put(attempt.getId(), attempt);
         }
         return map;
+    }
+
+    private Map<String, UserLookupResponse> resolveCreators(List<ExamSession> sessions) {
+        if (sessions == null || sessions.isEmpty()) {
+            return Map.of();
+        }
+        List<String> userIds = sessions.stream()
+                .map(ExamSession::getCreatedBy)
+                .filter(StringUtils::hasText)
+                .distinct()
+                .toList();
+        if (userIds.isEmpty()) {
+            return Map.of();
+        }
+        return identityLookupService.lookupByIds(userIds);
     }
 
 

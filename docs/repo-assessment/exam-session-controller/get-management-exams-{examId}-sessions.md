@@ -43,7 +43,10 @@ size: number (optional, default: 20)
       "endAt": "2026-03-12T23:59:59Z",
       "targetType": "USER|CLASS|GUEST",
       "code": "string | null",
-      "accessCode": "string | null"
+      "accessCode": "string | null",
+      "creatorFullName": "string | null",
+      "creatorEmail": "string | null",
+      "creatorAvatarUrl": "string | null"
     }
   ]
 }
