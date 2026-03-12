@@ -6,6 +6,8 @@ import pl.co.auth.dto.TokenResponse;
 import pl.co.auth.dto.LoginRequest;
 import pl.co.auth.dto.SignupRequest;
 import pl.co.auth.dto.GuestSignupRequest;
+import pl.co.auth.dto.InternalGuestRequest;
+import pl.co.auth.dto.InternalGuestResponse;
 import pl.co.auth.entity.Role;
 import pl.co.auth.entity.User;
 import pl.co.auth.repository.RoleRepository;
@@ -19,6 +21,7 @@ import pl.co.common.security.RoleName;
 import pl.co.common.security.UserStatus;
 
 import java.util.UUID;
+import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -101,6 +104,42 @@ public class AuthServiceImpl implements AuthService {
         User saved = userRepository.save(user);
 
         return jwtTokenService.issueExternalTokens(saved);
+    }
+
+    @Transactional
+    @Override
+    public InternalGuestResponse upsertGuest(InternalGuestRequest request) {
+        User existing = userRepository.findByEmail(request.getEmail()).orElse(null);
+        if (existing != null) {
+            boolean isGuest = existing.getRoles() != null && existing.getRoles().stream()
+                    .anyMatch(role -> role != null && RoleName.ROLE_GUEST.name().equals(role.getName()));
+            if (!isGuest) {
+                throw new ApiException(ErrorCode.E255, "Email already in use",new InternalGuestResponse(existing.getId()));
+            }
+
+            // Update guest info
+            if (StringUtils.hasText(request.getFullName())) {
+                existing.setFullName(request.getFullName().trim());
+            }
+            if (StringUtils.hasText(request.getPhoneNumber())) {
+                existing.setPhoneNumber(request.getPhoneNumber().trim());
+            }
+            User updated = userRepository.save(existing);
+            return new InternalGuestResponse(updated.getId());
+        }
+        Role guestRole = roleRepository.findByName(RoleName.ROLE_GUEST.name())
+                .orElseThrow(() -> new ApiException(ErrorCode.E221, "Role not found data: ROLE_GUEST"));
+        User user = User.builder()
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(UUID.randomUUID().toString()))
+                .fullName(StringUtils.hasText(request.getFullName()) ? request.getFullName().trim() : null)
+                .phoneNumber(StringUtils.hasText(request.getPhoneNumber()) ? request.getPhoneNumber().trim() : null)
+                .status(UserStatus.ACTIVE.name())
+                .emailVerified(true)
+                .build();
+        user.getRoles().add(guestRole);
+        User saved = userRepository.save(user);
+        return new InternalGuestResponse(saved.getId());
     }
 
     @Override
