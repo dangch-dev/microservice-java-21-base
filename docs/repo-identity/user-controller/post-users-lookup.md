@@ -46,7 +46,8 @@
       "fullName": string,
       "avatarUrl": string | null,
       "email": string,
-      "roleName": string | null
+      "phoneNumber": string | null,
+      "roleNames": ["ROLE_MEMBER", "ROLE_ADMIN"]
     }
   ]
 }

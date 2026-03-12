@@ -18,6 +18,8 @@ public interface ExamRepository extends JpaRepository<Exam, String> {
 
     Optional<Exam> findByIdAndDeletedFalse(String id);
 
+    List<Exam> findByIdInAndDeletedFalse(List<String> ids);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
             SELECT e

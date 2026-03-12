@@ -3,15 +3,10 @@ package pl.co.assessment.dto;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.List;
-
 @Getter
 @Setter
-public class UserLookupResponse {
-    private String userId;
+public class InternalGuestRequest {
     private String fullName;
-    private String avatarUrl;
     private String email;
     private String phoneNumber;
-    private List<String> roleNames;
 }

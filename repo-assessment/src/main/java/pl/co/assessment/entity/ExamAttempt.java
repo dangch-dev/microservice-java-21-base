@@ -25,6 +25,8 @@ import java.time.Instant;
                 columnList = "created_by, exam_version_id, status, deleted"),
         @Index(name = "idx_exam_attempts_exam_creator_status_deleted",
                 columnList = "exam_id, created_by, status, deleted"),
+        @Index(name = "idx_exam_attempts_session_creator_status_deleted",
+                columnList = "exam_session_id, created_by, status, deleted"),
         @Index(name = "idx_exam_attempts_exam_version_created_at",
                 columnList = "exam_version_id, created_at"),
         @Index(name = "idx_exam_attempts_creator_created_at",
@@ -40,6 +42,9 @@ public class ExamAttempt extends BaseEntity {
 
     @Column(name = "exam_version_id", nullable = false, length = 26)
     private String examVersionId;
+
+    @Column(name = "exam_session_id", length = 26)
+    private String examSessionId;
 
     @Column(name = "start_time", nullable = false)
     private Instant startTime;

@@ -51,6 +51,12 @@ public interface ExamAttemptRepository extends JpaRepository<ExamAttempt, String
 
     Optional<ExamAttempt> findByIdAndDeletedFalse(String id);
 
+    List<ExamAttempt> findByIdInAndDeletedFalse(List<String> ids);
+
+    long countByExamSessionIdAndCreatedByAndDeletedFalseAndStatusIn(String examSessionId,
+                                                                    String createdBy,
+                                                                    List<String> statuses);
+
     @Query("""
             SELECT ea
             FROM ExamAttempt ea

@@ -82,7 +82,10 @@ public class AttemptServiceImpl implements AttemptService {
     @Transactional
     public AttemptDetailResponse getAttempt(String attemptId, String userId) {
         ExamAttempt attempt = loadAttemptOrThrow(attemptId);
-        assertOwner(attempt, userId);
+        // assert owner;
+        if (!userId.equals(attempt.getCreatedBy())) {
+            throw new ApiException(ErrorCode.E230, ErrorCode.E230.message("No authority"));
+        }
 
         ExamVersion version = loadVersionOrThrow(attempt);
         List<ExamVersionQuestion> mappings = resolveQuestionOrder(attempt, version);
@@ -171,7 +174,10 @@ public class AttemptServiceImpl implements AttemptService {
     @Transactional
     public AttemptResultResponse getAttemptResult(String attemptId, String userId) {
         ExamAttempt attempt = loadAttemptOrThrow(attemptId);
-        assertOwner(attempt, userId);
+        // assert owner;
+        if (!userId.equals(attempt.getCreatedBy())) {
+            throw new ApiException(ErrorCode.E230, ErrorCode.E230.message("No authority"));
+        }
 
         if (ExamAttemptStatus.IN_PROGRESS.name().equalsIgnoreCase(attempt.getStatus())) {
             throw new ApiException(ErrorCode.E420, ErrorCode.E420.message("Attempt is in progress"));
@@ -236,7 +242,7 @@ public class AttemptServiceImpl implements AttemptService {
                             .creatorFullName(user == null ? null : user.getFullName())
                             .creatorAvatarUrl(user == null ? null : user.getAvatarUrl())
                             .creatorEmail(user == null ? null : user.getEmail())
-                            .creatorRoleName(user == null ? null : user.getRoleName())
+                            .creatorRoleName(resolvePrimaryRole(user))
                             .name(item.getName())
                             .description(item.getDescription())
                             .durationMinutes(item.getDurationMinutes())
@@ -440,7 +446,7 @@ public class AttemptServiceImpl implements AttemptService {
                 .ownerFullName(user.getFullName())
                 .ownerAvatarUrl(user.getAvatarUrl())
                 .ownerEmail(user.getEmail())
-                .ownerRoleName(user.getRoleName())
+                .ownerRoleName(resolvePrimaryRole(user))
                 .sessionId(lock.getSessionId())
                 .ttlSeconds(lock.getTtlSeconds())
                 .build();
@@ -451,10 +457,11 @@ public class AttemptServiceImpl implements AttemptService {
                 .orElseThrow(() -> new ApiException(ErrorCode.E227, ErrorCode.E227.message("Attempt not found")));
     }
 
-    private void assertOwner(ExamAttempt attempt, String userId) {
-        if (!userId.equals(attempt.getCreatedBy())) {
-            throw new ApiException(ErrorCode.E230, ErrorCode.E230.message("No authority"));
+    private String resolvePrimaryRole(UserLookupResponse user) {
+        if (user == null || user.getRoleNames() == null || user.getRoleNames().isEmpty()) {
+            return null;
         }
+        return user.getRoleNames().get(0);
     }
 
     private ExamVersion loadVersionOrThrow(ExamAttempt attempt) {
