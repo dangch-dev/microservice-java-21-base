@@ -69,6 +69,7 @@
 - (400 Bad Request) - errorCode: 221 when `title` or required fields are missing/invalid.
 - (400 Bad Request) - errorCode: 221 when exam has no published version.
 - (400 Bad Request) - errorCode: 221 when guestInfo has duplicate email.
+- (409 Conflict) - errorCode: 255 when guest email already exists for non-guest user.
 - (400 Bad Request) - errorCode: 202 when request body has invalid data type/JSON.
 - (401 Unauthorized) - errorCode: UNAUTHORIZED when access token is missing.
 - (401 Unauthorized) - errorCode: 241 when access token is invalid.

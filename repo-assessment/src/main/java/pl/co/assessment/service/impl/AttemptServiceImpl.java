@@ -47,6 +47,8 @@ import pl.co.assessment.projection.AttemptListRow;
 import pl.co.assessment.projection.AttemptManagementListRow;
 import pl.co.common.exception.ApiException;
 import pl.co.common.exception.ErrorCode;
+import pl.co.common.security.RoleName;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -174,8 +176,12 @@ public class AttemptServiceImpl implements AttemptService {
     @Transactional
     public AttemptResultResponse getAttemptResult(String attemptId, String userId) {
         ExamAttempt attempt = loadAttemptOrThrow(attemptId);
-        // assert owner;
-        if (!userId.equals(attempt.getCreatedBy())) {
+        // Access: owner always allowed. If no auth, only guest attempt is allowed.
+        if (StringUtils.hasText(userId)) {
+            if (!userId.equals(attempt.getCreatedBy()) && !isGuestUser(attempt.getCreatedBy())) {
+                throw new ApiException(ErrorCode.E230, ErrorCode.E230.message("No authority"));
+            }
+        } else if (!isGuestUser(attempt.getCreatedBy())) {
             throw new ApiException(ErrorCode.E230, ErrorCode.E230.message("No authority"));
         }
 
@@ -462,6 +468,18 @@ public class AttemptServiceImpl implements AttemptService {
             return null;
         }
         return user.getRoleNames().get(0);
+    }
+
+    private boolean isGuestUser(String userId) {
+        if (!StringUtils.hasText(userId)) {
+            return false;
+        }
+        Map<String, UserLookupResponse> users = identityLookupService.lookupByIds(Set.of(userId));
+        UserLookupResponse user = users.get(userId);
+        return user != null
+                && user.getRoleNames() != null
+                && user.getRoleNames().stream()
+                .anyMatch(role -> RoleName.ROLE_GUEST.name().equals(role));
     }
 
     private ExamVersion loadVersionOrThrow(ExamAttempt attempt) {

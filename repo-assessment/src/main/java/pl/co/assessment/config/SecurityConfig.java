@@ -41,7 +41,7 @@ public class SecurityConfig {
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/exams").permitAll()
+                        .requestMatchers("/exams", "/attempts/*/result").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(commonRequestContextFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(internalJwtFilter, UsernamePasswordAuthenticationFilter.class)
@@ -54,14 +54,16 @@ public class SecurityConfig {
     @Bean
     public BearerTokenAuthenticationFilter bearerTokenAuthenticationFilter(RSAPublicKey jwtPublicKey) {
         return new BearerTokenAuthenticationFilter(jwtPublicKey, List.of(
-                "/exams"
+                "/exams",
+                "/attempts/*/result"
         ));
     }
 
     @Bean
     public EmailVerifiedFilter emailVerifiedFilter() {
         return new EmailVerifiedFilter(List.of(
-                "/exams"
+                "/exams",
+                "/attempts/*/result"
         ));
     }
 

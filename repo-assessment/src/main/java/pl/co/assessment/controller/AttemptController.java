@@ -51,7 +51,7 @@ public class AttemptController {
     @GetMapping("/{attemptId}/result")
     public ApiResponse<AttemptResultResponse> getAttemptResult(@PathVariable("attemptId") String attemptId,
                                                                Authentication authentication) {
-        String userId = AuthUtils.resolveUserId(authentication);
+        String userId = authentication == null ? null : AuthUtils.resolveUserId(authentication);
         return ApiResponse.ok(attemptService.getAttemptResult(attemptId, userId));
     }
 

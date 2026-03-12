@@ -617,7 +617,7 @@ public class ExamSessionServiceImpl implements ExamSessionService {
             }
             if (!body.isSuccess()) {
                 if (ErrorCode.E255.code().equalsIgnoreCase(body.getErrorCode())) {
-                    return null;
+                    throw new ApiException(ErrorCode.E255, "Email already exists for non-guest user");
                 }
                 throw new ApiException(ErrorCode.E305, "Guest creation failed");
             }
@@ -628,7 +628,7 @@ public class ExamSessionServiceImpl implements ExamSessionService {
             return data.getUserId();
         } catch (RestClientResponseException ex) {
             if (isEmailAlreadyInUse(ex.getResponseBodyAsString())) {
-                return null;
+                throw new ApiException(ErrorCode.E255, "Email already exists for non-guest user");
             }
             throw ex;
         }
