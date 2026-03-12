@@ -82,21 +82,27 @@ public class UserLookupServiceImpl implements UserLookupService {
                     .fullName(user.getFullName())
                     .avatarUrl(user.getAvatarUrl())
                     .email(user.getEmail())
-                    .roleName(resolveRoleName(roleNames))
+                    .phoneNumber(user.getPhoneNumber())
+                    .roleNames(resolveRoleNames(roleNames))
                     .build());
         }
         return result;
     }
 
-    private String resolveRoleName(Set<String> roleNames) {
+    private List<String> resolveRoleNames(Set<String> roleNames) {
         if (roleNames == null || roleNames.isEmpty()) {
-            return null;
+            return List.of();
         }
+        Set<String> remaining = new HashSet<>(roleNames);
+        List<String> ordered = new ArrayList<>();
         for (String candidate : ROLE_PRIORITY) {
-            if (roleNames.contains(candidate)) {
-                return candidate;
+            if (remaining.remove(candidate)) {
+                ordered.add(candidate);
             }
         }
-        return roleNames.stream().sorted().findFirst().orElse(null);
+        if (!remaining.isEmpty()) {
+            ordered.addAll(remaining.stream().sorted().toList());
+        }
+        return ordered;
     }
 }
