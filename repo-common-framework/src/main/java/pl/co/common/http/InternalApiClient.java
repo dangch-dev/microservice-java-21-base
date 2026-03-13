@@ -23,7 +23,7 @@ import pl.co.common.dto.ApiResponse;
 import pl.co.common.exception.ApiException;
 import pl.co.common.exception.ErrorCode;
 import pl.co.common.security.SecurityConstants;
-import org.springframework.util.StringUtils;
+import pl.co.common.util.StringUtils;
 
 import java.time.Duration;
 import java.time.Instant;

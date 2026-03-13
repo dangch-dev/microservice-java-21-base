@@ -3,7 +3,7 @@ package pl.co.auth.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
+import pl.co.common.util.StringUtils;
 import pl.co.auth.dto.TokenResponse;
 import pl.co.auth.entity.RefreshToken;
 import pl.co.auth.entity.Role;

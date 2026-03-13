@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import pl.co.assessment.dto.VerifyGuestCodeRequest;
 import pl.co.assessment.dto.VerifyGuestCodeResponse;
-import pl.co.assessment.service.ExamSessionService;
+import pl.co.assessment.service.ManagementExamSessionService;
 import pl.co.common.dto.ApiResponse;
 
 @RestController
@@ -18,10 +18,10 @@ import pl.co.common.dto.ApiResponse;
 @PreAuthorize("hasAnyAuthority(T(pl.co.common.security.RoleName).ROLE_INTERNAL.name())")
 public class InternalExamSessionController {
 
-    private final ExamSessionService examSessionService;
+    private final ManagementExamSessionService managementExamSessionService;
 
     @PostMapping("/verify-guest-code")
     public ApiResponse<VerifyGuestCodeResponse> verifyGuestCode(@Valid @RequestBody VerifyGuestCodeRequest request) {
-        return ApiResponse.ok(examSessionService.verifyGuestCode(request.getCode()));
+        return ApiResponse.ok(managementExamSessionService.verifyGuestCode(request.getCode()));
     }
 }

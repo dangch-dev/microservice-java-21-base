@@ -48,7 +48,7 @@ import pl.co.assessment.projection.AttemptManagementListRow;
 import pl.co.common.exception.ApiException;
 import pl.co.common.exception.ErrorCode;
 import pl.co.common.security.RoleName;
-import org.springframework.util.StringUtils;
+import pl.co.common.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;

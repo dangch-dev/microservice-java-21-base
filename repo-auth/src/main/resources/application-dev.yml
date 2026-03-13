@@ -86,10 +86,11 @@ app:
 internal:
   config:
     token-path: /oauth/token
-    client-id:
-    client-secret:
+    client-id: IYW2skVZTV45fPoWKXTnwfwNv08R2zAl
+    client-secret: Q09T4ua4j1PzEz8M3c6CDYQlh9bAhFHB
   service:
     auth-service: repo-auth
+    assessment-service: repo-assessment
 
 kafka:
   topics:

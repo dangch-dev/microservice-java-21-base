@@ -22,6 +22,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.web.client.HttpClientErrorException;
 import pl.co.auth.service.*;
 import pl.co.common.security.RoleName;
 import pl.co.common.security.UserStatus;
@@ -29,7 +30,7 @@ import pl.co.common.http.InternalApiClient;
 import pl.co.common.dto.ApiResponse;
 
 import java.util.UUID;
-import org.springframework.util.StringUtils;
+import pl.co.common.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -122,18 +123,29 @@ public class AuthServiceImpl implements AuthService {
         if (request == null || !StringUtils.hasText(request.getCode())) {
             throw new ApiException(ErrorCode.E221, "code is required");
         }
-        ApiResponse<VerifyGuestCodeResponse> body = internalApiClient.send(
-                assessmentServiceId,
-                VERIFY_GUEST_CODE_PATH,
-                HttpMethod.POST,
-                MediaType.APPLICATION_JSON,
-                null,
-                null,
-                request,
-                new ParameterizedTypeReference<ApiResponse<VerifyGuestCodeResponse>>() {
-                },
-                false
-        ).getBody();
+        ApiResponse<VerifyGuestCodeResponse> body;
+        try {
+            body = internalApiClient.send(
+                    assessmentServiceId,
+                    VERIFY_GUEST_CODE_PATH,
+                    HttpMethod.POST,
+                    MediaType.APPLICATION_JSON,
+                    null,
+                    null,
+                    request,
+                    new ParameterizedTypeReference<ApiResponse<VerifyGuestCodeResponse>>() {
+                    },
+                    false
+            ).getBody();
+        } catch (HttpClientErrorException ex) {
+            if (ex.getStatusCode().value() == 404) {
+                throw new ApiException(ErrorCode.E227, "Code not found");
+            }
+            if (ex.getStatusCode().value() == 400) {
+                throw new ApiException(ErrorCode.E221, "Invalid data");
+            }
+            throw ex;
+        }
         if (body == null) {
             throw new ApiException(ErrorCode.E227, "Code not found");
         }
@@ -162,11 +174,13 @@ public class AuthServiceImpl implements AuthService {
             }
 
             // Update guest info
-            if (StringUtils.hasText(request.getFullName())) {
-                existing.setFullName(request.getFullName().trim());
+            String normalizedFullName = StringUtils.normalize(request.getFullName());
+            if (normalizedFullName != null) {
+                existing.setFullName(normalizedFullName);
             }
-            if (StringUtils.hasText(request.getPhoneNumber())) {
-                existing.setPhoneNumber(request.getPhoneNumber().trim());
+            String normalizedPhone = StringUtils.normalize(request.getPhoneNumber());
+            if (normalizedPhone != null) {
+                existing.setPhoneNumber(normalizedPhone);
             }
             User updated = userRepository.save(existing);
             return new InternalGuestResponse(updated.getId());
@@ -176,8 +190,8 @@ public class AuthServiceImpl implements AuthService {
         User user = User.builder()
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(UUID.randomUUID().toString()))
-                .fullName(StringUtils.hasText(request.getFullName()) ? request.getFullName().trim() : null)
-                .phoneNumber(StringUtils.hasText(request.getPhoneNumber()) ? request.getPhoneNumber().trim() : null)
+                .fullName(StringUtils.normalize(request.getFullName()))
+                .phoneNumber(StringUtils.normalize(request.getPhoneNumber()))
                 .status(UserStatus.ACTIVE.name())
                 .emailVerified(true)
                 .build();

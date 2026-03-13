@@ -69,7 +69,9 @@ public class SecurityConfig {
 
     @Bean
     public InternalJwtFilter internalJwtFilter(RSAPublicKey jwtPublicKey) {
-        return new InternalJwtFilter(jwtPublicKey, List.of());
+        return new InternalJwtFilter(jwtPublicKey, List.of(
+                "/internal/**"
+        ));
     }
 
     @Bean

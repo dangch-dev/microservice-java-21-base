@@ -5,7 +5,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
+import pl.co.common.util.StringUtils;
 import pl.co.auth.dto.TokenResponse;
 import pl.co.auth.entity.Role;
 import pl.co.auth.entity.User;

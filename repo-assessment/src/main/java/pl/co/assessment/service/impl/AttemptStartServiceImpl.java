@@ -6,25 +6,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.co.assessment.dto.AttemptStartMode;
 import pl.co.assessment.dto.AttemptStartResponse;
-import pl.co.assessment.entity.AttemptOptionOrder;
-import pl.co.assessment.entity.AttemptQuestionOrder;
-import pl.co.assessment.entity.Exam;
-import pl.co.assessment.entity.ExamAttempt;
-import pl.co.assessment.entity.ExamAttemptGradingStatus;
-import pl.co.assessment.entity.ExamAttemptStatus;
-import pl.co.assessment.entity.ExamVersion;
-import pl.co.assessment.entity.ExamVersionQuestion;
-import pl.co.assessment.entity.ExamVersionStatus;
-import pl.co.assessment.entity.QuestionType;
-import pl.co.assessment.entity.QuestionVersion;
+import pl.co.assessment.entity.*;
 import pl.co.assessment.entity.json.QuestionContent;
-import pl.co.assessment.repository.AttemptOptionOrderRepository;
-import pl.co.assessment.repository.AttemptQuestionOrderRepository;
-import pl.co.assessment.repository.ExamAttemptRepository;
-import pl.co.assessment.repository.ExamRepository;
-import pl.co.assessment.repository.ExamVersionQuestionRepository;
-import pl.co.assessment.repository.ExamVersionRepository;
-import pl.co.assessment.repository.QuestionVersionRepository;
+import pl.co.assessment.repository.*;
 import pl.co.assessment.service.AttemptStartService;
 import pl.co.assessment.service.AttemptSubmissionService;
 import pl.co.common.exception.ApiException;
@@ -32,11 +16,7 @@ import pl.co.common.exception.ErrorCode;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Service
@@ -56,12 +36,12 @@ public class AttemptStartServiceImpl implements AttemptStartService {
     @Transactional
     public AttemptStartResponse startAttempt(String examId, String userId, boolean isGuest) {
         Exam exam = loadExamOrThrow(examId);
-        ExamVersion published = loadPublishedVersionOrThrow(exam);
-
         ExamAttempt activeAttempt = findActiveAttemptForUpdate(examId, userId);
+        // Case RESUME
         if (activeAttempt != null) {
             return buildResumeResponse(exam, activeAttempt);
         }
+        // Case NEW
         if (isGuest) {
             // Each attempt counts as one "trial". Only enforce when about to create a new attempt.
             int used = examAttemptRepository.findByUserIdAndDeletedFalseForUpdate(userId).size();
@@ -69,7 +49,8 @@ public class AttemptStartServiceImpl implements AttemptStartService {
                 throw new ApiException(ErrorCode.E426);
             }
         }
-        return createOrResumeOnConflict(exam, published, examId, userId);
+        ExamVersion published = loadPublishedVersionOrThrow(exam);
+        return createOrResumeOnConflict(exam, published, userId);
     }
 
     private Exam loadExamOrThrow(String examId) {
@@ -275,14 +256,13 @@ public class AttemptStartServiceImpl implements AttemptStartService {
 
     private AttemptStartResponse createOrResumeOnConflict(Exam exam,
                                                           ExamVersion published,
-                                                          String examId,
                                                           String userId) {
         try {
             ExamAttempt created = createAttempt(exam, published);
             persistAttemptOrdersIfNeeded(created.getId(), published);
             return buildNewResponse(exam, published, created);
         } catch (DataIntegrityViolationException ex) {
-            ExamAttempt resumed = findActiveAttemptForUpdate(examId, userId);
+            ExamAttempt resumed = findActiveAttemptForUpdate(exam.getId(), userId);
             if (resumed != null) {
                 return buildResumeResponse(exam, resumed);
             }

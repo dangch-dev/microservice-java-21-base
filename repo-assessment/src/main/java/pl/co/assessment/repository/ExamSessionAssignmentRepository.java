@@ -14,6 +14,8 @@ public interface ExamSessionAssignmentRepository extends JpaRepository<ExamSessi
 
     Optional<ExamSessionAssignment> findByCodeAndDeletedFalse(String code);
 
+    Optional<ExamSessionAssignment> findByCodeAndUserIdAndDeletedFalse(String code, String userId);
+
     boolean existsByCodeAndDeletedFalse(String code);
 
     long countBySessionIdAndDeletedFalse(String sessionId);

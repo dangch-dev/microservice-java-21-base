@@ -12,7 +12,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.util.AntPathMatcher;
-import org.springframework.util.StringUtils;
+import pl.co.common.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 import pl.co.common.dto.ApiResponse;
 import pl.co.common.jwt.record.JwtPayload;
