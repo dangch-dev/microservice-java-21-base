@@ -59,7 +59,7 @@ public class SecurityConfig {
                         .accessDeniedHandler(restAccessDeniedHandler))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/email/**").authenticated()
-                        .requestMatchers("/signup", "/guest", "/signin", "/refresh", "/signout").permitAll()
+                        .requestMatchers("/signup", "/guest", "/guest/login-by-code", "/signin", "/refresh", "/signout").permitAll()
                         .requestMatchers("/password/**", "/oauth/**", "/oauth2/**", "/login/oauth2/**").permitAll()
                         .anyRequest().permitAll())
                 .addFilterBefore(commonRequestContextFilter(), UsernamePasswordAuthenticationFilter.class)
@@ -83,6 +83,7 @@ public class SecurityConfig {
         return new BearerTokenAuthenticationFilter(jwtPublicKey, List.of(
                 "/signup",
                 "/guest",
+                "/guest/login-by-code",
                 "/signin",
                 "/refresh",
                 "/signout",
@@ -98,6 +99,7 @@ public class SecurityConfig {
         return new EmailVerifiedFilter(List.of(
                 "/signup",
                 "/guest",
+                "/guest/login-by-code",
                 "/signin",
                 "/refresh",
                 "/signout",

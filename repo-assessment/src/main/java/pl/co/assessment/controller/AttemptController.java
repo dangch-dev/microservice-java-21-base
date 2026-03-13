@@ -19,6 +19,9 @@ import pl.co.common.dto.ApiResponse;
 import pl.co.common.security.AuthUtils;
 import pl.co.common.security.RoleName;
 import java.time.Instant;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/attempts")
@@ -34,10 +37,14 @@ public class AttemptController {
     public ApiResponse<AttemptStartResponse> start(@PathVariable("examId") @NotBlank String examId,
                                                    Authentication authentication) {
         String userId = AuthUtils.resolveUserId(authentication);
-        boolean isGuest = authentication != null
-                && authentication.getAuthorities() != null
-                && authentication.getAuthorities().stream()
-                .anyMatch(a -> RoleName.ROLE_GUEST.name().equals(a.getAuthority()));
+        boolean isGuest = false;
+        if (authentication != null && authentication.getAuthorities() != null) {
+            Set<String> roles = authentication.getAuthorities().stream()
+                    .map(a -> a == null ? null : a.getAuthority())
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+            isGuest = roles.size() == 1 && roles.contains(RoleName.ROLE_GUEST.name());
+        }
         return ApiResponse.ok(attemptStartService.startAttempt(examId, userId, isGuest));
     }
 

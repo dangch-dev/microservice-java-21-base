@@ -8,7 +8,7 @@
 ## Description
 1. Validate request payload.
 2. If email already exists:
-   - When existing user is ROLE_GUEST, issue tokens.
+   - When existing user is guest-only (ROLE_GUEST only), issue tokens.
    - Otherwise return conflict error.
 3. Create user with ROLE_GUEST and issue tokens (cookies).
 

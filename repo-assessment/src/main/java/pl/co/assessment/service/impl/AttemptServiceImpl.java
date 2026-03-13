@@ -478,8 +478,8 @@ public class AttemptServiceImpl implements AttemptService {
         UserLookupResponse user = users.get(userId);
         return user != null
                 && user.getRoleNames() != null
-                && user.getRoleNames().stream()
-                .anyMatch(role -> RoleName.ROLE_GUEST.name().equals(role));
+                && user.getRoleNames().size() == 1
+                && RoleName.ROLE_GUEST.name().equals(user.getRoleNames().get(0));
     }
 
     private ExamVersion loadVersionOrThrow(ExamAttempt attempt) {

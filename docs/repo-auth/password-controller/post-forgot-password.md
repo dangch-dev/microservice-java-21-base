@@ -43,7 +43,7 @@
 - (400 Bad Request) - errorCode: 243 when email is missing.
 - (400 Bad Request) - errorCode: BAD_REQUEST when email format is invalid.
 - (400 Bad Request) - errorCode: 202 when request body has invalid data type or JSON.
-- (401 Unauthorized) - errorCode: 238 when user does not exist (or is a guest account).
+- (401 Unauthorized) - errorCode: 238 when user does not exist (or is guest-only).
 ```
 {
   "success": false,
