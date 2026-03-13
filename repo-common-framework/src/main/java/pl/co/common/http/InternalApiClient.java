@@ -75,7 +75,7 @@ public class InternalApiClient {
                                       Map<String, String> headers,
                                       Map<String, ?> queryParams,
                                       Object body,
-                                      Class<T> responseType,
+                                      ParameterizedTypeReference<T> responseType,
                                       boolean forwardUserAuth) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(buildBaseUrl(serviceName))
                 .path(normalizePath(path));
@@ -93,7 +93,11 @@ public class InternalApiClient {
         applyRequestContextHeaders(httpHeaders);
         httpHeaders.set(SecurityConstants.HEADER_INTERNAL_TOKEN, SecurityConstants.HEADER_BEARER_PREFIX + getAccessToken());
         HttpEntity<?> entity = body == null ? new HttpEntity<>(httpHeaders) : new HttpEntity<>(body, httpHeaders);
-        return executeWithRetry(() -> restTemplate.exchange(builder.toUriString(), method, entity, responseType));
+        ParameterizedTypeReference<T> resolvedType = responseType == null
+                ? new ParameterizedTypeReference<>() {
+                }
+                : responseType;
+        return executeWithRetry(() -> restTemplate.exchange(builder.toUriString(), method, entity, resolvedType));
     }
 
 

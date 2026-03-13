@@ -4,12 +4,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
@@ -1138,7 +1136,7 @@ public class ExamServiceImpl implements ExamService {
         MultiValueMap<String, Object> form = new LinkedMultiValueMap<>();
         form.add("file", filePart);
 
-        ApiResponse<?> body = internalApiClient.send(
+        ApiResponse<FileMeta> body = internalApiClient.send(
                 storageServiceId,
                 STORAGE_UPLOAD_PATH,
                 HttpMethod.POST,
@@ -1146,7 +1144,8 @@ public class ExamServiceImpl implements ExamService {
                 null,
                 null,
                 form,
-                ApiResponse.class,
+                new ParameterizedTypeReference<ApiResponse<FileMeta>>() {
+                },
                 true).getBody();
         if (body == null || !body.success() || body.data() == null) {
             return null;

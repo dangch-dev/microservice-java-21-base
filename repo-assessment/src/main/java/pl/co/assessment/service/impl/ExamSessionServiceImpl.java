@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpMethod;
@@ -30,6 +31,7 @@ import pl.co.assessment.service.ExamSessionService;
 import pl.co.common.exception.ApiException;
 import pl.co.common.exception.ErrorCode;
 import pl.co.common.http.InternalApiClient;
+import pl.co.common.dto.ApiResponse;
 
 import java.security.SecureRandom;
 import java.time.Instant;
@@ -629,7 +631,7 @@ public class ExamSessionServiceImpl implements ExamSessionService {
         request.setPhoneNumber(guest.getPhoneNumber());
 
         try {
-            ResponseEntity<InternalGuestApiResponse> response = internalApiClient.send(
+            ApiResponse<InternalGuestResponse> body = internalApiClient.send(
                     authServiceId,
                     INTERNAL_GUEST_PATH,
                     HttpMethod.POST,
@@ -637,20 +639,20 @@ public class ExamSessionServiceImpl implements ExamSessionService {
                     null,
                     null,
                     request,
-                    InternalGuestApiResponse.class,
+                    new ParameterizedTypeReference<ApiResponse<InternalGuestResponse>>() {
+                    },
                     true
-            );
-            InternalGuestApiResponse body = response.getBody();
+            ).getBody();
             if (body == null) {
                 throw new ApiException(ErrorCode.E305, "Guest creation failed");
             }
-            if (!body.isSuccess()) {
-                if (ErrorCode.E255.code().equalsIgnoreCase(body.getErrorCode())) {
+            if (!body.success()) {
+                if (ErrorCode.E255.code().equalsIgnoreCase(body.errorCode())) {
                     throw new ApiException(ErrorCode.E255, "Email already exists for non-guest user");
                 }
                 throw new ApiException(ErrorCode.E305, "Guest creation failed");
             }
-            InternalGuestResponse data = body.getData();
+            InternalGuestResponse data = body.data();
             if (data == null || !StringUtils.hasText(data.getUserId())) {
                 throw new ApiException(ErrorCode.E305, "Guest creation failed");
             }

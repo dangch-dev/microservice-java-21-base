@@ -2,17 +2,18 @@ package pl.co.assessment.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import pl.co.assessment.dto.UserLookupApiResponse;
 import pl.co.assessment.dto.UserLookupRequest;
 import pl.co.assessment.dto.UserLookupResponse;
 import pl.co.assessment.service.IdentityLookupService;
 import pl.co.common.exception.ApiException;
 import pl.co.common.exception.ErrorCode;
 import pl.co.common.http.InternalApiClient;
+import pl.co.common.dto.ApiResponse;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -47,7 +48,7 @@ public class IdentityLookupServiceImpl implements IdentityLookupService {
             return Collections.emptyMap();
         }
         UserLookupRequest request = new UserLookupRequest(ids);
-        ResponseEntity<UserLookupApiResponse> response = internalApiClient.send(
+        ApiResponse<List<UserLookupResponse>> body = internalApiClient.send(
                 identityService,
                 lookupPath,
                 HttpMethod.POST,
@@ -55,15 +56,15 @@ public class IdentityLookupServiceImpl implements IdentityLookupService {
                 null,
                 null,
                 request,
-                UserLookupApiResponse.class,
+                new ParameterizedTypeReference<ApiResponse<List<UserLookupResponse>>>() {
+                },
                 false
-        );
-        UserLookupApiResponse body = response.getBody();
-        if (body == null || !body.isSuccess() || body.getData() == null) {
+        ).getBody();
+        if (body == null || !body.success() || body.data() == null) {
             throw new ApiException(ErrorCode.E305, "Identity lookup failed");
         }
         Map<String, UserLookupResponse> map = new LinkedHashMap<>();
-        for (UserLookupResponse item : body.getData()) {
+        for (UserLookupResponse item : body.data()) {
             if (item == null || item.getUserId() == null || item.getUserId().isBlank()) {
                 continue;
             }
