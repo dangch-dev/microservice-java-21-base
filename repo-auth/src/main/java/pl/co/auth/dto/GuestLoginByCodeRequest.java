@@ -9,6 +9,4 @@ import lombok.Setter;
 public class GuestLoginByCodeRequest {
     @NotBlank
     private String code;
-
-    private String scope;
 }

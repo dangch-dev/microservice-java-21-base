@@ -15,8 +15,7 @@
 ### Body
 ```
 {
-  "code": "XXXX-YYYY",
-  "scope": "exam"
+  "code": "XXXX-YYYY"
 }
 ```
 
@@ -24,7 +23,6 @@
 | field | location | required |
 | --- | --- | --- |
 | code | body | x |
-| scope | body |  |
 
 ## Response
 ### Success
@@ -57,4 +55,3 @@
 
 ## Notes
 - This endpoint is intended for guest-only exam sessions.
-- `scope` is optional and reserved for future use.
