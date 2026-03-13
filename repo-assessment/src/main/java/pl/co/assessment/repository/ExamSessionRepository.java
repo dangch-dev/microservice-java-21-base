@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import pl.co.assessment.entity.ExamSession;
+import pl.co.assessment.entity.ExamSessionTargetType;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -13,6 +14,8 @@ import java.util.Optional;
 public interface ExamSessionRepository extends JpaRepository<ExamSession, String> {
 
     Optional<ExamSession> findByIdAndDeletedFalse(String id);
+
+    Optional<ExamSession> findByIdAndTargetTypeAndDeletedFalse(String id, ExamSessionTargetType targetType);
 
     @Query(value = """
             SELECT s

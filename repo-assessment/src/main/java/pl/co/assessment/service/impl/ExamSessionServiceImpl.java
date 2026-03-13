@@ -355,6 +355,35 @@ public class ExamSessionServiceImpl implements ExamSessionService {
         examSessionAssignmentRepository.save(assignment);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public VerifyGuestCodeResponse verifyGuestCode(String code) {
+        if (!StringUtils.hasText(code)) {
+            throw new ApiException(ErrorCode.E243);
+        }
+        ExamSessionAssignment assignment = examSessionAssignmentRepository.findByCodeAndDeletedFalse(code.trim())
+                .orElseThrow( () -> new ApiException(ErrorCode.E227));
+        ExamSession session = examSessionRepository.findByIdAndTargetTypeAndDeletedFalse(assignment.getSessionId(),ExamSessionTargetType.GUEST)
+                .orElseThrow(() -> new ApiException(ErrorCode.E227));
+
+        Instant now = Instant.now();
+        if (session.getStartAt() != null && now.isBefore(session.getStartAt())) {
+            throw new ApiException(ErrorCode.E221, "Session has not started");
+        }
+        if (session.getEndAt() != null && now.isAfter(session.getEndAt())) {
+            throw new ApiException(ErrorCode.E221, "Session has ended");
+        }
+        return new VerifyGuestCodeResponse(
+                true,
+                session.getId(),
+                assignment.getId(),
+                session.getExamId(),
+                session.getStartAt(),
+                session.getEndAt(),
+                assignment.getUserId()
+        );
+    }
+
     private ExamSessionResponse toResponse(ExamSession session, int assignmentCount) {
         return new ExamSessionResponse(
                 session.getId(),

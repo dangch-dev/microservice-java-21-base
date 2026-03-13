@@ -7,6 +7,7 @@ import pl.co.assessment.dto.ExamSessionDetailResponse;
 import pl.co.assessment.dto.ExamSessionListItemResponse;
 import pl.co.assessment.dto.ExamSessionResponse;
 import pl.co.assessment.dto.ExamSessionUpdateRequest;
+import pl.co.assessment.dto.VerifyGuestCodeResponse;
 
 import java.time.Instant;
 import java.util.List;
@@ -33,4 +34,6 @@ public interface ExamSessionService {
     List<ExamSessionAssignmentResponse> addAssignments(String sessionId, ExamSessionAssignmentRequest request);
 
     void deleteAssignment(String sessionId, String assignmentId);
+
+    VerifyGuestCodeResponse verifyGuestCode(String code);
 }
