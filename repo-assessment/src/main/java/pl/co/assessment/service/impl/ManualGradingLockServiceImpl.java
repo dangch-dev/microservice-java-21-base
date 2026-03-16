@@ -21,7 +21,7 @@ import java.util.Objects;
 public class ManualGradingLockServiceImpl implements ManualGradingLockService {
 
     private static final String LOCK_KEY_PREFIX = "mg:attempt:";
-    private static final Duration LOCK_TTL = Duration.ofSeconds(180);
+    private static final Duration LOCK_TTL = Duration.ofSeconds(60);
     private static final long DEFAULT_TTL_MS = LOCK_TTL.toMillis();
 
     private static final DefaultRedisScript<List> ACQUIRE_SCRIPT = new DefaultRedisScript<>();
