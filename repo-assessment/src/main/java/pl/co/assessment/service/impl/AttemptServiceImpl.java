@@ -293,8 +293,13 @@ public class AttemptServiceImpl implements AttemptService {
             throw new ApiException(ErrorCode.E420, ErrorCode.E420.message("Attempt is auto grading"));
         }
         // Acquire or renew the manual grading lock.
-        AttemptLockResponse lock = manualGradingLockService.acquire(attemptId, adminId, sessionId);
-        AttemptLockResponse enrichedLock = enrichLock(lock);
+        AttemptLockResponse enrichedLock;
+        try {
+            AttemptLockResponse lock = manualGradingLockService.acquire(attemptId, adminId, sessionId);
+            enrichedLock = enrichLock(lock);
+        } catch (ApiException ex) {
+            throw enrichLockException(ex);
+        }
         // Return grading payload with lock info (answered items only).
         AttemptResultResponse response = buildAttemptResult(attempt, enrichedLock);
         List<AttemptResultItemResponse> items = response.getItems() == null
@@ -310,8 +315,12 @@ public class AttemptServiceImpl implements AttemptService {
     @Transactional(readOnly = true)
     public AttemptLockResponse heartbeatManualGrading(String attemptId, String adminId, String sessionId) {
         // Renew lock or raise E425 if lost.
-        AttemptLockResponse lock = manualGradingLockService.renew(attemptId, adminId, sessionId);
-        return enrichLock(lock);
+        try {
+            AttemptLockResponse lock = manualGradingLockService.renew(attemptId, adminId, sessionId);
+            return enrichLock(lock);
+        } catch (ApiException ex) {
+            throw enrichLockException(ex);
+        }
     }
 
     @Override
@@ -324,7 +333,12 @@ public class AttemptServiceImpl implements AttemptService {
         if (ExamAttemptStatus.IN_PROGRESS.name().equalsIgnoreCase(attempt.getStatus())) {
             throw new ApiException(ErrorCode.E420, ErrorCode.E420.message("Attempt is not gradable"));
         }
-        AttemptLockResponse lock = manualGradingLockService.validate(attemptId, adminId, sessionId);
+        AttemptLockResponse lock;
+        try {
+            lock = manualGradingLockService.validate(attemptId, adminId, sessionId);
+        } catch (ApiException ex) {
+            throw enrichLockException(ex);
+        }
 
         List<AttemptManualGradingSaveItem> items = request == null ? null : request.getItems();
         if (items == null || items.isEmpty()) {
@@ -456,6 +470,18 @@ public class AttemptServiceImpl implements AttemptService {
                 .sessionId(lock.getSessionId())
                 .ttlSeconds(lock.getTtlSeconds())
                 .build();
+    }
+
+    private ApiException enrichLockException(ApiException ex) {
+        if (ex == null) {
+            return null;
+        }
+        Object data = ex.getData();
+        if (data instanceof AttemptLockResponse lock) {
+            AttemptLockResponse enriched = enrichLock(lock);
+            return new ApiException(ex.getErrorCode(), ex.getMessage(), ex.getHttpStatus(), enriched, ex);
+        }
+        return ex;
     }
 
     private ExamAttempt loadAttemptOrThrow(String attemptId) {
