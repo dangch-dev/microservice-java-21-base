@@ -16,6 +16,12 @@ public class AttemptResultResponse {
     private final String attemptId;
     private final String examId;
     private final String examVersionId;
+    private String createdBy;
+    private String creatorFullName;
+    private String creatorAvatarUrl;
+    private String creatorEmail;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String creatorRoleName;
     private final String status;
     private final String gradingStatus;
     private final String name;

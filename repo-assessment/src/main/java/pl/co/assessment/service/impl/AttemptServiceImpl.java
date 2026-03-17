@@ -188,7 +188,9 @@ public class AttemptServiceImpl implements AttemptService {
         if (ExamAttemptStatus.IN_PROGRESS.name().equalsIgnoreCase(attempt.getStatus())) {
             throw new ApiException(ErrorCode.E420, ErrorCode.E420.message("Attempt is in progress"));
         }
-        return buildAttemptResult(attempt, null);
+        AttemptResultResponse response = buildAttemptResult(attempt, null);
+        enrichAttemptCreator(response, attempt.getCreatedBy(), false);
+        return response;
     }
 
     @Override
@@ -278,7 +280,9 @@ public class AttemptServiceImpl implements AttemptService {
         if (ExamAttemptStatus.IN_PROGRESS.name().equalsIgnoreCase(attempt.getStatus())) {
             throw new ApiException(ErrorCode.E420, ErrorCode.E420.message("Attempt is in progress"));
         }
-        return buildAttemptResult(attempt, null);
+        AttemptResultResponse response = buildAttemptResult(attempt, null);
+        enrichAttemptCreator(response, attempt.getCreatedBy(), true);
+        return response;
     }
 
     @Override
@@ -302,6 +306,7 @@ public class AttemptServiceImpl implements AttemptService {
         }
         // Return grading payload with lock info (answered items only).
         AttemptResultResponse response = buildAttemptResult(attempt, enrichedLock);
+        enrichAttemptCreator(response, attempt.getCreatedBy(), true);
         List<AttemptResultItemResponse> items = response.getItems() == null
                 ? List.of()
                 : response.getItems().stream()
@@ -470,6 +475,21 @@ public class AttemptServiceImpl implements AttemptService {
                 .sessionId(lock.getSessionId())
                 .ttlSeconds(lock.getTtlSeconds())
                 .build();
+    }
+
+    private void enrichAttemptCreator(AttemptResultResponse response, String userId, boolean includeRoleName) {
+        if (response == null || !StringUtils.hasText(userId)) {
+            return;
+        }
+        Map<String, UserLookupResponse> users = identityLookupService.lookupByIds(Set.of(userId));
+        UserLookupResponse user = users.get(userId);
+        response.setCreatedBy(userId);
+        response.setCreatorFullName(user == null ? null : user.getFullName());
+        response.setCreatorAvatarUrl(user == null ? null : user.getAvatarUrl());
+        response.setCreatorEmail(user == null ? null : user.getEmail());
+        if (includeRoleName) {
+            response.setCreatorRoleName(resolvePrimaryRole(user));
+        }
     }
 
     private ApiException enrichLockException(ApiException ex) {
