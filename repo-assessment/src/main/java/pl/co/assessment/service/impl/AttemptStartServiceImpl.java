@@ -34,8 +34,8 @@ public class AttemptStartServiceImpl implements AttemptStartService {
 
     @Override
     @Transactional
-    public AttemptStartResponse startAttempt(String examId, String userId, boolean isGuest) {
-        Exam exam = loadExamOrThrow(examId);
+    public AttemptStartResponse startAttempt(String examId, String userId, boolean isGuest, boolean requireEnabled) {
+        Exam exam = loadExamOrThrow(examId, requireEnabled);
         ExamAttempt activeAttempt = findActiveAttemptForUpdate(examId, userId);
         // Case RESUME
         if (activeAttempt != null) {
@@ -53,11 +53,11 @@ public class AttemptStartServiceImpl implements AttemptStartService {
         return createOrResumeOnConflict(exam, published, userId);
     }
 
-    private Exam loadExamOrThrow(String examId) {
+    private Exam loadExamOrThrow(String examId, boolean requireEnabled) {
         // Validate exam existence + enabled flag
         Exam exam = examRepository.findByIdAndDeletedFalse(examId)
                 .orElseThrow(() -> new ApiException(ErrorCode.E227, ErrorCode.E227.message("Exam not found")));
-        if (!exam.isEnabled()) {
+        if (requireEnabled && !exam.isEnabled()) {
             throw new ApiException(ErrorCode.E427);
         }
         return exam;

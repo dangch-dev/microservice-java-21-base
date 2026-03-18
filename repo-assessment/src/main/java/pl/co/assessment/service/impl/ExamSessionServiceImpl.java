@@ -50,7 +50,8 @@ public class ExamSessionServiceImpl implements ExamSessionService {
         }
 
         // Load exam
-        Exam exam = loadExamOrThrow(session.getExamId());
+        Exam exam = examRepository.findByIdAndDeletedFalse(session.getExamId())
+                .orElseThrow(() -> new ApiException(ErrorCode.E227, ErrorCode.E227.message("Exam not found")));
         ExamVersion published = loadPublishedVersionOrThrow(exam);
 
         // If has active attempt
@@ -122,11 +123,11 @@ public class ExamSessionServiceImpl implements ExamSessionService {
             if (ExamAttemptStatus.SUBMITTED.name().equalsIgnoreCase(sessionAttempt.getStatus())) {
                 throw new ApiException(ErrorCode.E420, "This session code has already been used");
             }
-            return attemptStartService.startAttempt(session.getExamId(), userId, false);
+            return attemptStartService.startAttempt(session.getExamId(), userId, false, true);
         }
 
         // Create Attempt
-        AttemptStartResponse attemptStart = attemptStartService.startAttempt(session.getExamId(),userId,false);
+        AttemptStartResponse attemptStart = attemptStartService.startAttempt(session.getExamId(), userId, false, false);
 
         // Save attempt to session
         assignment.setAttemptId(attemptStart.getAttemptId());
@@ -159,16 +160,6 @@ public class ExamSessionServiceImpl implements ExamSessionService {
         if (!assignment.getAccessCode().equals(normalized)) {
             throw new ApiException(ErrorCode.E221, "accessCode is invalid");
         }
-    }
-
-    private Exam loadExamOrThrow(String examId) {
-        // Validate exam existence + enabled flag
-        Exam exam = examRepository.findByIdAndDeletedFalse(examId)
-                .orElseThrow(() -> new ApiException(ErrorCode.E227, ErrorCode.E227.message("Exam not found")));
-        if (!exam.isEnabled()) {
-            throw new ApiException(ErrorCode.E427);
-        }
-        return exam;
     }
 
     private ExamVersion loadPublishedVersionOrThrow(Exam exam) {

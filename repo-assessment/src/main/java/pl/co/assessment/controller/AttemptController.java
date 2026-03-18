@@ -41,7 +41,7 @@ public class AttemptController {
                     .collect(Collectors.toSet());
             isGuest = roles.size() == 1 && roles.contains(RoleName.ROLE_GUEST.name());
         }
-        return ApiResponse.ok(attemptStartService.startAttempt(examId, userId, isGuest));
+        return ApiResponse.ok(attemptStartService.startAttempt(examId, userId, isGuest, true));
     }
 
     @GetMapping("/{attemptId}")
