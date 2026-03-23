@@ -20,6 +20,9 @@
 ### Query Params
 - disposition: string (optional, inline|attachment, default inline)
 
+### Headers
+- Range: string (optional, bytes range for partial content)
+
 
 ## Required
 | field | location | required |
@@ -32,6 +35,12 @@
 - Content-Type: file mime type
 - Content-Disposition: inline or attachment with filename
 - Body: binary stream
+
+### Partial Content (Range)
+- Status: 206 Partial Content
+- Accept-Ranges: bytes
+- Content-Range: bytes start-end/total
+- Content-Length: range length
 
 ### Errors
 - (404 Not Found) - errorCode: NOT_FOUND when file metadata not found.

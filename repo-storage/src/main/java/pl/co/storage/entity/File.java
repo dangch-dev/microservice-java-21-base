@@ -33,6 +33,12 @@ public class File extends BaseEntity {
     @Column(name = "size_bytes")
     private Long sizeBytes;
 
+    @Column(name = "hls_playlist_key", length = 512)
+    private String hlsPlaylistKey;
+
+    @Column(name = "hls_status", length = 32)
+    private String hlsStatus;
+
     @Column(name = "status", length = 32, nullable = false)
     private String status;
 }

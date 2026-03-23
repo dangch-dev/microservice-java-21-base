@@ -11,6 +11,9 @@ RUN mvn -f repo-storage/pom.xml -DskipTests package org.springframework.boot:spr
 FROM eclipse-temurin:21-jre
 
 WORKDIR /workspace
+RUN apt-get update \
+    && apt-get install -y ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
 COPY --from=build /workspace/app.jar /workspace/app.jar
 
 EXPOSE 8086
