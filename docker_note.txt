@@ -4,6 +4,10 @@ docker build -f docker/framework.Dockerfile -t dangch-framework .
 docker compose build
 docker compose up -d
 
+docker compose down --rmi local
+docker compose build
+docker compose up -d
+
 docker ps | grep -i dangch
 
 docker compose down --rmi all -v // container - images - volume
@@ -51,3 +55,6 @@ docker build -f docker/parent.Dockerfile -t cms-parent .
 docker build -f docker/framework.Dockerfile -t cms-framework .
 docker compose build
 docker compose up -d
+
+docker compose down repo-erp-backend
+docker compose up -d repo-erp-backend

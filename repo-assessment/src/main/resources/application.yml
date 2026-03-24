@@ -1,5 +1,0 @@
-spring:
-  profiles:
-    active: ${PROFILES_ACTIVE:local}
-  application:
-    name: repo-assessment
