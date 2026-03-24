@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
+import pl.co.common.util.StringUtils;
 import pl.co.auth.dto.RefreshTokenRequest;
 import pl.co.auth.dto.TokenResponse;
 import pl.co.common.exception.ApiException;

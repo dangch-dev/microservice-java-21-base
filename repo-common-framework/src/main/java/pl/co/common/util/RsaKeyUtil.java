@@ -2,7 +2,7 @@ package pl.co.common.util;
 
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
-import org.springframework.util.StringUtils;
+import pl.co.common.util.StringUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;

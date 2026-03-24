@@ -7,6 +7,7 @@ import pl.co.auth.dto.LoginRequest;
 import pl.co.auth.dto.RefreshTokenRequest;
 import pl.co.auth.dto.SignupRequest;
 import pl.co.auth.dto.GuestSignupRequest;
+import pl.co.auth.dto.GuestLoginByCodeRequest;
 import pl.co.auth.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +38,14 @@ public class AuthController {
     public ApiResponse<Void> guest(@Valid @RequestBody GuestSignupRequest request,
                                    HttpServletResponse response) {
         TokenResponse tokens = authService.issueGuestToken(request);
+        authCookieService.setTokens(response, tokens);
+        return ApiResponse.ok(null);
+    }
+
+    @PostMapping("/guest/login-by-code")
+    public ApiResponse<Void> loginByExamCode(@Valid @RequestBody GuestLoginByCodeRequest request,
+                                             HttpServletResponse response) {
+        TokenResponse tokens = authService.loginByExamCode(request);
         authCookieService.setTokens(response, tokens);
         return ApiResponse.ok(null);
     }

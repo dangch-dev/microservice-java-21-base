@@ -187,7 +187,7 @@
           ]
         }
       },
-      "questionIds": [string] | [] | null
+      "questionIds": [string]
     }
   ]
 }
@@ -244,9 +244,10 @@
 - `groups` is optional. If omitted, existing groups are unchanged.
 - If `groups` is provided (including empty list), it replaces all current group assignments in the draft.
 - A question can belong to at most one group.
-- `questionIds` can be `null` or `[]` (empty group is allowed).
-- If `questionIds` is provided and not empty, it must follow the same order as `questionOrder` and be consecutive.
+- `questionIds` is required and must not be empty.
+- `questionIds` must follow the same order as `questionOrder` and be consecutive.
 - Each item in `questionIds` must be a non-blank string (not `""` or whitespace).
+- `groups[].promptContent.prompt.content` can be empty (no validation on blank content).
 
 ### Type requirements
 | type | questionContent required | gradingRules required |

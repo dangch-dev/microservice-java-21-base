@@ -13,22 +13,19 @@
 5. Return attempt totals and per-question result payload.
 
 ## Auth & Permissions
-- MEMBER, GUEST, ADMIN (owner only)
+- Public for guest attempts.
+- For non-guest attempts: only owner can view.
+- If authenticated, you can view your own attempts and any guest attempts.
 
 
 ## Request
 ### Path Params
 - attemptId: string (required)
 
-### Headers
-- Authorization: string (Bearer token)
-
-
 ## Required
 | field | location | required |
 | --- | --- | --- |
 | attemptId | path | x |
-| Authorization | header | x |
 
 
 ## Response
@@ -42,6 +39,10 @@
     "attemptId": string,
     "examId": string,
     "examVersionId": string,
+    "createdBy": string,
+    "creatorFullName": string | null,
+    "creatorAvatarUrl": string | null,
+    "creatorEmail": string | null,
     "status": string,
     "gradingStatus": string | null,
     "name": string,
@@ -218,9 +219,6 @@
 - (404 Not Found) - errorCode: 227 when attempt not found.
 - (403 Forbidden) - errorCode: 230 when attempt does not belong to current user.
 - (422 Unprocessable Entity) - errorCode: 420 when attempt is still IN_PROGRESS.
-- (401 Unauthorized) - errorCode: UNAUTHORIZED when access token is missing.
-- (401 Unauthorized) - errorCode: 241 when access token is invalid.
-- (401 Unauthorized) - errorCode: 234 when access token is expired.
 ```
 {
   "success": false,
@@ -233,3 +231,4 @@
 
 ## Notes
 - This endpoint always returns `questionContent`, `gradingRules`, and `answerJson`.
+- If no auth is provided, only attempts owned by GUEST users can be accessed.

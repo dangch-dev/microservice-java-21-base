@@ -5,7 +5,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
-import org.springframework.util.StringUtils;
+import pl.co.common.util.StringUtils;
 import pl.co.auth.entity.OAuthCallbackState;
 import pl.co.auth.repository.OAuthCallbackStateRepository;
 import pl.co.common.security.AuthUtils;

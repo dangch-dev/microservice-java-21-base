@@ -35,6 +35,20 @@ WHERE u.email = 'admin@local'
   AND NOT EXISTS (SELECT 1 FROM user_role ur WHERE ur.user_id = u.id AND ur.role_id = r.id);
 
 INSERT INTO service_account(id, service_name, client_id, client_secret_hash, enabled, created_at, updated_at, deleted)
+VALUES ('2LHLOESF2AWJ7Q22K3K7LNVVEE',
+        'repo-auth',
+        'IYW2skVZTV45fPoWKXTnwfwNv08R2zAl',
+        '$2a$10$vU2W5i/pEFug5iwLnx92cOp8/dUaGkxNI1A2mvOhTL3B5rEiRUtU2', -- secret: Q09T4ua4j1PzEz8M3c6CDYQlh9bAhFHB
+        true,
+        NOW(),
+        NOW(),
+        false)
+ON DUPLICATE KEY UPDATE
+    service_name = VALUES(service_name),
+    client_secret_hash = VALUES(client_secret_hash),
+    enabled = VALUES(enabled);
+
+INSERT INTO service_account(id, service_name, client_id, client_secret_hash, enabled, created_at, updated_at, deleted)
 VALUES ('0CT5DEYM7NSEFJ23XM6TRA14R2',
         'repo-assessment',
         'oRd1gWcf7Sx1z0NHHA1zwSPa',

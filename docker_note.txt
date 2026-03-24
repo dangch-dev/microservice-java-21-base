@@ -1,9 +1,19 @@
+docker compose down --rmi local
 docker build -f docker/parent.Dockerfile -t dangch-parent .
 docker build -f docker/framework.Dockerfile -t dangch-framework .
 docker compose build
 docker compose up -d
 
+docker compose down --rmi local
+docker compose build
+docker compose up -d
+
 docker ps | grep -i dangch
+
+docker compose down --rmi all -v // container - images - volume
+docker compose down --rmi all // container - images
+docker compose down --rmi local // container - local images
+docker compose down // container
 
 docker rm -f $(docker ps -aq --filter "name=dangch-")
 
@@ -26,3 +36,25 @@ docker compose up -d storage
 
 docker compose build minio
 docker compose up -d minio
+
+==========================================
+docker compose down --rmi local
+docker build -f docker/parent.Dockerfile -t lms-parent .
+docker build -f docker/framework.Dockerfile -t lms-framework .
+docker compose build
+docker compose up -d
+
+docker rm -f $(docker ps -aq --filter "name=lms-")
+
+docker rmi $(docker images --filter=reference='lms-*' -q)
+
+
+===========================================
+docker compose down --rmi local
+docker build -f docker/parent.Dockerfile -t cms-parent .
+docker build -f docker/framework.Dockerfile -t cms-framework .
+docker compose build
+docker compose up -d
+
+docker compose down repo-erp-backend
+docker compose up -d repo-erp-backend

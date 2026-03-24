@@ -51,9 +51,11 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     public String requestReset(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ApiException(ErrorCode.E238, "Username does not exist."));
-        boolean isGuest = user.getRoles() != null && user.getRoles().stream()
+        boolean isGuestOnly = user.getRoles() != null
+                && user.getRoles().size() == 1
+                && user.getRoles().stream()
                 .anyMatch(role -> role != null && RoleName.ROLE_GUEST.name().equals(role.getName()));
-        if (isGuest) {
+        if (isGuestOnly) {
             throw new ApiException(ErrorCode.E238, "Username does not exist.");
         }
         // invalidate previous tokens

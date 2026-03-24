@@ -72,13 +72,13 @@ logging:
 
 app:
   frontend:
-    base-url: https://simes.io.vn
+    base-url: https://exam.dangch.tech
     reset-password-path: /reset-password
   security:
     cookies:
       access-token-name: access_token
       refresh-token-name: refresh_token
-      domain: simes.io.vn
+      domain: exam.dangch.tech
       same-site: None
       secure: true
 
@@ -86,10 +86,11 @@ app:
 internal:
   config:
     token-path: /oauth/token
-    client-id:
-    client-secret:
+    client-id: IYW2skVZTV45fPoWKXTnwfwNv08R2zAl
+    client-secret: Q09T4ua4j1PzEz8M3c6CDYQlh9bAhFHB
   service:
     auth-service: repo-auth
+    assessment-service: repo-assessment
 
 kafka:
   topics:

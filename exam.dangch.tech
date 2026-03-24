@@ -1,0 +1,68 @@
+server {
+
+    listen 58010;
+    server_name exam.dangch.tech;
+
+    client_max_body_size 25M;
+
+    real_ip_header CF-Connecting-IP;
+
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+    gzip_min_length 1000;
+
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $http_cf_connecting_ip;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto https;
+    proxy_set_header X-Forwarded-Host $host;
+    proxy_set_header X-Forwarded-Port $server_port;
+
+    proxy_request_buffering off;
+    proxy_connect_timeout 60s;
+
+    location = /api {
+        return 301 /api/;
+    }
+
+    location /api/ {
+        proxy_pass http://127.0.0.1:58001/api/;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+    }
+
+    location = /oauth2 {
+        return 301 /oauth2/;
+    }
+
+    location /oauth2/ {
+        proxy_pass http://127.0.0.1:58001/oauth2/;
+
+        proxy_buffer_size 16k;
+        proxy_buffers 8 16k;
+        proxy_busy_buffers_size 32k;
+    }
+
+    location /login/oauth2/code/ {
+        proxy_pass http://127.0.0.1:58001/login/oauth2/code/;
+    }
+
+    location /ws/ {
+        proxy_pass http://127.0.0.1:58001/ws/;
+
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        proxy_read_timeout 1h;
+        proxy_send_timeout 1h;
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:58000/;
+
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+}

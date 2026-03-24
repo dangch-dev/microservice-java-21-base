@@ -10,7 +10,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
+import pl.co.common.util.StringUtils;
 import pl.co.common.dto.ApiResponse;
 import pl.co.common.exception.ErrorCode;
 import pl.co.auth.entity.OAuthCallbackState;

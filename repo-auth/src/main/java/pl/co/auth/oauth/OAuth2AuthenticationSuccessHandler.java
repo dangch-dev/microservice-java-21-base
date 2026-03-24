@@ -16,7 +16,7 @@ import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
+import pl.co.common.util.StringUtils;
 import pl.co.auth.dto.TokenResponse;
 import pl.co.auth.entity.OAuthCallbackState;
 import pl.co.auth.service.GoogleOAuthTokenService;

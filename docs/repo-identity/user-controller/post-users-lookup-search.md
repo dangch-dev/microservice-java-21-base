@@ -45,14 +45,15 @@
   "errorMessage": string | null,
   "data": {
     "items": [
-      {
-        "userId": string,
-        "fullName": string,
-        "avatarUrl": string | null,
-        "email": string,
-        "roleName": string | null
-      }
-    ],
+    {
+      "userId": string,
+      "fullName": string,
+      "avatarUrl": string | null,
+      "email": string,
+      "phoneNumber": string | null,
+      "roleNames": ["ROLE_MEMBER", "ROLE_ADMIN"]
+    }
+  ],
     "totalElements": integer,
     "totalPages": integer,
     "page": integer,

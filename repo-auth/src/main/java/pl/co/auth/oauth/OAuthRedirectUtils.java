@@ -1,6 +1,6 @@
 package pl.co.auth.oauth;
 
-import org.springframework.util.StringUtils;
+import pl.co.common.util.StringUtils;
 
 final class OAuthRedirectUtils {
 

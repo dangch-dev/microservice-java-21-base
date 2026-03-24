@@ -80,4 +80,5 @@ kafka:
   topics:
     notification: notification.in-app
     file: storage.file
+    file-hls: storage.file-hls
     mail: notification.mail
