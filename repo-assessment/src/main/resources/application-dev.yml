@@ -1,0 +1,76 @@
+spring:
+  jackson:
+    time-zone: UTC
+    serialization:
+      write-dates-as-timestamps: false
+  sql:
+    init:
+      mode: always
+      data-locations: classpath:init-data.sql
+  datasource:
+    url: jdbc:mysql://dangch-mysql:3306/assessment_mysql_database?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: root
+    password: mysql_root_password
+    hikari:
+      maximum-pool-size: 10
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+        dialect: org.hibernate.dialect.MySQL8Dialect
+    open-in-view: false
+    defer-datasource-initialization: true
+  cache:
+    type: simple
+  kafka:
+    bootstrap-servers: dangch-kafka:9092
+    consumer:
+      group-id: assessment-event
+  data:
+    redis:
+      host: dangch-redis
+      port: 6379
+      password: redis_password
+
+server:
+  port: 8087
+  forward-headers-strategy: framework
+
+security:
+  external-jwt:
+    public-key-path: file:../secrets/jwt-public.pem
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://dangch-eureka:8761/eureka
+  instance:
+    prefer-ip-address: true
+    hostname: dangch-assessment
+    instance-id: ${spring.application.name}:${server.port}
+
+# Required declarations (But it doesn't need to have value.)
+internal:
+  config:
+    token-path: /oauth/token
+    client-id: oRd1gWcf7Sx1z0NHHA1zwSPa
+    client-secret: 4PHWqCA2CtcSjEf6pUpP7D9hVuvCOdRL
+  service:
+    auth-service: repo-auth
+    identity-service: repo-identity
+    storage-service: repo-storage
+
+kafka:
+  topics:
+    notification: notification.in-app
+    file: storage.file
+    mail: notification.mail
+    assessment-grading: assessment.grading
+
+assessment:
+  attempt-timeout-cron: "0 */1 * * * *"

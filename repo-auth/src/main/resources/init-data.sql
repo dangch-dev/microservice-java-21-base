@@ -2,8 +2,14 @@ INSERT INTO role(id, name, created_at, updated_at, deleted) VALUES
     ('01JFZC5Y3K1M7X9C6T2B4N8PQ', 'ROLE_ADMIN', NOW(), NOW(), false)
     ON DUPLICATE KEY UPDATE name = VALUES(name);
 
+UPDATE role SET name = 'ROLE_MEMBER' WHERE name = 'ROLE_USER';
+
 INSERT INTO role(id, name, created_at, updated_at, deleted) VALUES
-    ('01JFZC5Y3K1M7X9C6T2B4N8PR', 'ROLE_USER', NOW(), NOW(), false)
+    ('01JFZC5Y3K1M7X9C6T2B4N8PR', 'ROLE_MEMBER', NOW(), NOW(), false)
+    ON DUPLICATE KEY UPDATE name = VALUES(name);
+
+INSERT INTO role(id, name, created_at, updated_at, deleted) VALUES
+    ('01JFZC5Y3K1M7X9C6T2B4N8PT', 'ROLE_GUEST', NOW(), NOW(), false)
     ON DUPLICATE KEY UPDATE name = VALUES(name);
 
 INSERT INTO user(id, email, password, full_name, phone_number, avatar_url, address, status, email_verified, created_at, updated_at, deleted)
@@ -30,7 +36,7 @@ WHERE u.email = 'admin@local'
 
 INSERT INTO service_account(id, service_name, client_id, client_secret_hash, enabled, created_at, updated_at, deleted)
 VALUES ('0CT5DEYM7NSEFJ23XM6TRA14R2',
-        'repo-auth',
+        'repo-assessment',
         'oRd1gWcf7Sx1z0NHHA1zwSPa',
         '$2a$10$aqPx.umyCq1GYfKGhnQ.JOxNn3Ecg0il7c4rFvh73emiplO5loKTe', -- secret: 4PHWqCA2CtcSjEf6pUpP7D9hVuvCOdRL
         true,

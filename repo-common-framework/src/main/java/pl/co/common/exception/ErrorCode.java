@@ -8,7 +8,7 @@ public enum ErrorCode {
     E201("201", HttpStatus.BAD_REQUEST,"Invalid data length"), // Invalid data length
     E202("202", HttpStatus.BAD_REQUEST,"Invalid data type"), // Invalid data type
     E203("203", HttpStatus.BAD_REQUEST,"Invalid data format"), // Invalid data format
-    E204("204", HttpStatus.BAD_REQUEST,"Invalid data value"), // Invalid data value
+    E204("204", HttpStatus.BAD_REQUEST,"Invalid data value (%s)"), // Invalid data value
     E243("243", HttpStatus.BAD_REQUEST,"Required parameter missing"), // Required parameter missing
     E215("215", HttpStatus.BAD_REQUEST,"Invalid file size"), // Invalid file size
     E216("216", HttpStatus.BAD_REQUEST,"Invalid image/file type"), // Invalid image/file type
@@ -19,7 +19,7 @@ public enum ErrorCode {
     E245("245", HttpStatus.BAD_REQUEST,"Invalid email address"), // Invalid email address
     E252("252", HttpStatus.BAD_REQUEST,"Invalid password complexity"), // Invalid password complexity
     E247("247", HttpStatus.BAD_REQUEST,"Invalid date of birth / age"), // Invalid date of birth / age
-    E221("221", HttpStatus.BAD_REQUEST,"Requested data invalid"), // Requested data invalid
+    E221("221", HttpStatus.BAD_REQUEST,"Requested data invalid (%s)"), // Requested data invalid
     E228("228", HttpStatus.BAD_REQUEST,"Registration count exceeded"), // Registration count exceeded
     E225("225", HttpStatus.BAD_REQUEST,"Data more than expected"), // Data more than expected
 
@@ -37,14 +37,28 @@ public enum ErrorCode {
     E249("249", HttpStatus.FORBIDDEN,"User is blocked"),   // User is blocked
 
     // Conflict / Duplicate / State
-    E220("220", HttpStatus.CONFLICT,"Already registered / duplicate"), // Already registered / duplicate
+    E220("220", HttpStatus.CONFLICT,"Already registered / duplicate (%s)"), // Already registered / duplicate
     E255("255", HttpStatus.CONFLICT,"User exists (email)"), // User exists (email)
     E256("256", HttpStatus.CONFLICT,"User exists (phone)"), // User exists (phone)
     E250("250", HttpStatus.CONFLICT,"Another request in progress"), // Another request in progress
+    E423("423", HttpStatus.CONFLICT,"Attempt is locked (%s)"), // Manual grading lock conflict
+    E424("424", HttpStatus.CONFLICT,"Session conflict (%s)"), // Manual grading session conflict
+    E425("425", HttpStatus.CONFLICT,"Lock lost (%s)"), // Manual grading lock lost
+    E426("426", HttpStatus.UNPROCESSABLE_ENTITY,"Guest attempt limit exceeded"), // Guest attempt limit exceeded
+    E420("420", HttpStatus.UNPROCESSABLE_ENTITY,"Business rule violation (%s)"), // Business rule violation
 
     // Not found / Data integrity
     E223("223", HttpStatus.NOT_FOUND,"No master data"), // No master data
-    E227("227", HttpStatus.NOT_FOUND,"No data found"), // No data found
+    E227("227", HttpStatus.NOT_FOUND,"No data found (%s)"), // No data found
+
+    // Exam / Draft specific (avoid overloading E420)
+    E427("427", HttpStatus.UNPROCESSABLE_ENTITY,"Exam is disabled"), // Exam is disabled
+    E428("428", HttpStatus.UNPROCESSABLE_ENTITY,"Published exam version does not exist"), // Published exam version missing
+    E431("431", HttpStatus.UNPROCESSABLE_ENTITY,"Exam version is not published"), // Published pointer is not PUBLISHED
+    E432("432", HttpStatus.BAD_REQUEST,"No draft to publish"), // No draft pointer
+    E433("433", HttpStatus.BAD_REQUEST,"Draft exam version does not exist"), // Draft missing
+    E434("434", HttpStatus.BAD_REQUEST,"Draft exam version is not DRAFT"), // Draft status invalid
+    E435("435", HttpStatus.BAD_REQUEST,"Draft must have at least 1 question"), // Draft empty
 
     // System / External
     E235("235", HttpStatus.SERVICE_UNAVAILABLE,"Service not available"), // Service not available
@@ -86,5 +100,12 @@ public enum ErrorCode {
 
     public String message() {
         return message;
+    }
+
+    public String message(String... args) {
+        if (args == null || args.length == 0) {
+            return message;
+        }
+        return String.format(message, (Object[]) args);
     }
 }

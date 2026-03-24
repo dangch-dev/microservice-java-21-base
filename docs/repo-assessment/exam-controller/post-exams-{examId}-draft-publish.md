@@ -1,0 +1,68 @@
+# POST /api/assessment/management/exams/{examId}/draft/publish
+
+
+## Summary
+- Publish the current draft version and archive the previous published version.
+
+
+## Description
+1. Lock and load exam row.
+2. Validate draft pointer and draft status.
+3. Ensure draft has at least 1 active question.
+4. Archive old published version (if exists).
+5. Promote draft to PUBLISHED and update exam pointers.
+
+## Auth & Permissions
+- ADMIN
+
+
+## Request
+### Path Params
+- examId: string (required)
+
+### Headers
+- Authorization: string (Bearer token)
+
+
+## Required
+| field | location | required |
+| --- | --- | --- |
+| examId | path | x |
+| Authorization | header | x |
+
+
+## Response
+### Success
+```
+{
+  "success": boolean,
+  "errorCode": string | null,
+  "errorMessage": string | null,
+  "data": null
+}
+```
+
+### Errors
+- (400 Bad Request) - errorCode: 432 when no draft to publish.
+- (400 Bad Request) - errorCode: 433 when draft does not exist.
+- (400 Bad Request) - errorCode: 434 when draft status is not DRAFT.
+- (400 Bad Request) - errorCode: 435 when draft has no active questions.
+- (404 Not Found) - errorCode: 227 when exam not found.
+- (401 Unauthorized) - errorCode: UNAUTHORIZED when access token is missing.
+- (401 Unauthorized) - errorCode: 241 when access token is invalid.
+- (401 Unauthorized) - errorCode: 234 when access token is expired.
+- (403 Forbidden) - errorCode: FORBIDDEN when user is not ADMIN.
+```
+{
+  "success": false,
+  "errorCode": string,
+  "errorMessage": string,
+  "data": null
+}
+```
+
+
+## Notes
+- Draft version becomes the published version; no new exam version is created.
+- Questions and question versions are not modified.
+

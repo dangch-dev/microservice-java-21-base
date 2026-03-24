@@ -48,7 +48,8 @@ public class JwtTokenServiceImpl implements JwtTokenService {
         return TokenResponse.builder()
                 .accessToken(access)
                 .refreshToken(refresh)
-                .expiresInSeconds(externalTokenIssuer.accessTtlSeconds())
+                .acssessExpireIn(externalTokenIssuer.accessTtlSeconds())
+                .refreshExpireIn(externalTokenIssuer.refreshTtl().toSeconds())
                 .build();
     }
 
@@ -79,7 +80,8 @@ public class JwtTokenServiceImpl implements JwtTokenService {
         return TokenResponse.builder()
                 .accessToken(access)
                 .refreshToken(rotated)
-                .expiresInSeconds(externalTokenIssuer.accessTtlSeconds())
+                .acssessExpireIn(externalTokenIssuer.accessTtlSeconds())
+                .refreshExpireIn(externalTokenIssuer.refreshTtl().toSeconds())
                 .build();
     }
 

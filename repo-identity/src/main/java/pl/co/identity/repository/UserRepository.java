@@ -1,12 +1,20 @@
 package pl.co.identity.repository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import pl.co.identity.entity.User;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, String>, JpaSpecificationExecutor<User> {
-    Optional<User> findByEmail(String email);
     boolean existsByEmail(String email);
+    List<User> findByIdIn(List<String> ids);
+    Page<User>  findByFullNameContainingIgnoreCaseOrEmailContainingIgnoreCase(
+            String fullName,
+            String email,
+            Pageable pageable
+    );
 }

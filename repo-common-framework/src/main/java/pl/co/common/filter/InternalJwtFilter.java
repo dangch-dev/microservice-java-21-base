@@ -34,14 +34,14 @@ public class InternalJwtFilter extends OncePerRequestFilter {
     private static final List<String> AUDIENCE = List.of(SecurityConstants.AUD_INTERNAL);
 
     private final RSAPublicKey publicKey;
-    private final List<String> protectedPatterns;
+    private final List<String> internalPatterns;
     private final JwtVerificationOptions verificationOptions;
     private final AntPathMatcher matcher = new AntPathMatcher();
 
     public InternalJwtFilter(RSAPublicKey publicKey,
-                             List<String> protectedPatterns) {
+                             List<String> internalPatterns) {
         this.publicKey = publicKey;
-        this.protectedPatterns = protectedPatterns == null ? Collections.emptyList() : protectedPatterns;
+        this.internalPatterns = internalPatterns == null ? Collections.emptyList() : internalPatterns;
         this.verificationOptions = new JwtVerificationOptions(
                 AUDIENCE,
                 null);
@@ -50,7 +50,7 @@ public class InternalJwtFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
-        return protectedPatterns.stream().noneMatch(p -> matcher.match(p, path) || path.startsWith(p));
+        return internalPatterns.stream().noneMatch(p -> matcher.match(p, path));
     }
 
     @Override

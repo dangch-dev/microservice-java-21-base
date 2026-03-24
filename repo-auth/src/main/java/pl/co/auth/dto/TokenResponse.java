@@ -10,6 +10,7 @@ import lombok.Getter;
 public class TokenResponse {
     private final String accessToken;
     private final String refreshToken;
-    private final long expiresInSeconds;
+    private final long acssessExpireIn;
+    private final long refreshExpireIn;
 }
 

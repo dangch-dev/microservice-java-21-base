@@ -6,7 +6,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import pl.co.common.dto.ApiResponse;
-import pl.co.common.filter.principal.AuthPrincipal;
+import pl.co.common.security.AuthUtils;
 import pl.co.identity.dto.TicketCommentRequest;
 import pl.co.identity.dto.TicketCommentResponse;
 import pl.co.identity.dto.TicketFilterRequest;
@@ -29,37 +29,37 @@ public class TicketManagementController {
     @GetMapping
     public ApiResponse<TicketPageResponse> list(Authentication authentication,
                                                 @Valid TicketFilterRequest filter) {
-        AuthPrincipal principal = (AuthPrincipal) authentication.getPrincipal();
-        return ApiResponse.ok(ticketManagementService.list(principal, filter));
+        String userId = AuthUtils.resolveUserId(authentication);
+        return ApiResponse.ok(ticketManagementService.list(userId, filter));
     }
 
     @GetMapping("/{ticketId}")
     public ApiResponse<TicketResponse> get(Authentication authentication,
                                            @PathVariable String ticketId) {
-        AuthPrincipal principal = (AuthPrincipal) authentication.getPrincipal();
-        return ApiResponse.ok(ticketManagementService.get(principal, ticketId));
+        String userId = AuthUtils.resolveUserId(authentication);
+        return ApiResponse.ok(ticketManagementService.get(userId, ticketId));
     }
 
     @PatchMapping("/{ticketId}/status")
     public ApiResponse<TicketResponse> updateStatus(Authentication authentication,
                                                     @PathVariable String ticketId,
                                                     @Valid @RequestBody TicketStatusUpdateRequest request) {
-        AuthPrincipal principal = (AuthPrincipal) authentication.getPrincipal();
-        return ApiResponse.ok(ticketManagementService.updateStatus(principal, ticketId, request));
+        String userId = AuthUtils.resolveUserId(authentication);
+        return ApiResponse.ok(ticketManagementService.updateStatus(userId, ticketId, request));
     }
 
     @PostMapping("/{ticketId}/comments")
     public ApiResponse<TicketCommentResponse> addComment(Authentication authentication,
                                                          @PathVariable String ticketId,
                                                          @Valid @RequestBody TicketCommentRequest request) {
-        AuthPrincipal principal = (AuthPrincipal) authentication.getPrincipal();
-        return ApiResponse.ok(ticketManagementService.addComment(principal, ticketId, request));
+        String userId = AuthUtils.resolveUserId(authentication);
+        return ApiResponse.ok(ticketManagementService.addComment(userId, ticketId, request));
     }
 
     @GetMapping("/{ticketId}/comments")
     public ApiResponse<java.util.List<TicketCommentResponse>> listComments(Authentication authentication,
                                                                            @PathVariable String ticketId) {
-        AuthPrincipal principal = (AuthPrincipal) authentication.getPrincipal();
-        return ApiResponse.ok(ticketManagementService.listComments(principal, ticketId));
+        String userId = AuthUtils.resolveUserId(authentication);
+        return ApiResponse.ok(ticketManagementService.listComments(userId, ticketId));
     }
 }

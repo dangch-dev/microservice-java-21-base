@@ -18,4 +18,8 @@ public record ApiResponse<T>(@JsonProperty("success") boolean success, @JsonProp
     public static <T> ApiResponse<T> error(String errorCode, String errorMessage) {
         return new ApiResponse<>(false, errorCode, errorMessage, null);
     }
+
+    public static <T> ApiResponse<T> error(String errorCode, String errorMessage, T data) {
+        return new ApiResponse<>(false, errorCode, errorMessage, data);
+    }
 }

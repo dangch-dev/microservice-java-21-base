@@ -2,13 +2,14 @@ package pl.co.identity.controller;
 
 import org.springframework.web.bind.annotation.*;
 import pl.co.common.dto.ApiResponse;
-import pl.co.common.filter.principal.AuthPrincipal;
+import pl.co.common.security.AuthUtils;
 import pl.co.identity.dto.ProfileResponse;
 import pl.co.identity.dto.UpdateProfileRequest;
 import pl.co.identity.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/users")
@@ -18,15 +19,30 @@ public class ProfileController {
     private final UserService userService;
 
     @GetMapping("/me")
+    @PreAuthorize("""
+        hasAnyAuthority(
+            T(pl.co.common.security.RoleName).ROLE_GUEST.name(),
+            T(pl.co.common.security.RoleName).ROLE_MEMBER.name(),
+            T(pl.co.common.security.RoleName).ROLE_ADMIN.name(),
+            T(pl.co.common.security.RoleName).ROLE_MANAGER.name()
+        )
+        """)
     public ApiResponse<ProfileResponse> me(Authentication authentication) {
-        AuthPrincipal principal = (AuthPrincipal) authentication.getPrincipal();
-        return ApiResponse.ok(userService.getProfile(principal.userId()));
+        String userId = AuthUtils.resolveUserId(authentication);
+        return ApiResponse.ok(userService.getProfile(userId));
     }
 
     @PutMapping("/me")
+    @PreAuthorize("""
+        hasAnyAuthority(
+            T(pl.co.common.security.RoleName).ROLE_MEMBER.name(),
+            T(pl.co.common.security.RoleName).ROLE_ADMIN.name(),
+            T(pl.co.common.security.RoleName).ROLE_MANAGER.name()
+        )
+        """)
     public ApiResponse<ProfileResponse> updateMe(Authentication authentication,
                                                  @Valid @RequestBody UpdateProfileRequest request) {
-        AuthPrincipal principal = (AuthPrincipal) authentication.getPrincipal();
-        return ApiResponse.ok(userService.updateProfile(principal.userId(), request));
+        String userId = AuthUtils.resolveUserId(authentication);
+        return ApiResponse.ok(userService.updateProfile(userId, request));
     }
 }

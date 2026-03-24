@@ -30,6 +30,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
+import jakarta.servlet.http.Cookie;
 
 /**
  * Generic internal API caller that uses discovery/load-balancer
@@ -56,10 +57,10 @@ public class InternalApiClient {
     private volatile CachedToken cachedToken;
 
     public InternalApiClient(RestTemplate restTemplate,
-                             @Value("${internal.api.auth-service}") String authServiceId,
-                             @Value("${internal.api.token-path}") String tokenPath,
-                             @Value("${internal.api.client-id}") String clientId,
-                             @Value("${internal.api.client-secret}") String clientSecret) {
+                             @Value("${internal.service.auth-service}") String authServiceId,
+                             @Value("${internal.config.token-path}") String tokenPath,
+                             @Value("${internal.config.client-id}") String clientId,
+                             @Value("${internal.config.client-secret}") String clientSecret) {
         this.restTemplate = restTemplate;
         this.authServiceId = authServiceId;
         this.tokenPath = tokenPath;
@@ -70,25 +71,31 @@ public class InternalApiClient {
     public <T> ResponseEntity<T> send(String serviceName,
                                       String path,
                                       HttpMethod method,
+                                      MediaType contentType,
                                       Map<String, String> headers,
                                       Map<String, ?> queryParams,
                                       Object body,
-                                      Class<T> responseType) {
+                                      Class<T> responseType,
+                                      boolean forwardUserAuth) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(buildBaseUrl(serviceName))
                 .path(normalizePath(path));
         if (!CollectionUtils.isEmpty(queryParams)) {
             queryParams.forEach(builder::queryParam);
         }
         HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+        httpHeaders.setContentType(contentType == null ? MediaType.APPLICATION_JSON : contentType);
         if (!CollectionUtils.isEmpty(headers)) {
             headers.forEach(httpHeaders::set);
         }
-        applyUserAuthorization(httpHeaders);
+        if (forwardUserAuth) {
+            applyUserAuthorization(httpHeaders);
+        }
+        applyRequestContextHeaders(httpHeaders);
         httpHeaders.set(SecurityConstants.HEADER_INTERNAL_TOKEN, SecurityConstants.HEADER_BEARER_PREFIX + getAccessToken());
         HttpEntity<?> entity = body == null ? new HttpEntity<>(httpHeaders) : new HttpEntity<>(body, httpHeaders);
         return executeWithRetry(() -> restTemplate.exchange(builder.toUriString(), method, entity, responseType));
     }
+
 
     private String getAccessToken() {
         CachedToken current = cachedToken;
@@ -128,7 +135,7 @@ public class InternalApiClient {
                 || body.data().accessToken().isBlank()) {
             throw new ApiException(ErrorCode.E305, "Unable to obtain internal token");
         }
-        long ttlSeconds = Math.max(body.data().expiresInSeconds(), 1L);
+        long ttlSeconds = Math.max(body.data().acssessExpireIn(), 1L);
         return new CachedToken(body.data().accessToken(), Instant.now().plusSeconds(ttlSeconds));
     }
 
@@ -190,7 +197,7 @@ public class InternalApiClient {
         }
     }
 
-    private record InternalTokenResponse(String accessToken, String refreshToken, long expiresInSeconds) {
+    private record InternalTokenResponse(String accessToken, long acssessExpireIn) {
     }
 
     private void applyUserAuthorization(HttpHeaders headers) {
@@ -204,6 +211,47 @@ public class InternalApiClient {
         String authorization = servletAttributes.getRequest().getHeader(SecurityConstants.HEADER_AUTHORIZATION);
         if (StringUtils.hasText(authorization)) {
             headers.set(SecurityConstants.HEADER_AUTHORIZATION, authorization);
+            return;
+        }
+        if (headers.containsKey(HttpHeaders.COOKIE)) {
+            return;
+        }
+        String accessToken = resolveAccessTokenCookie(servletAttributes.getRequest().getCookies());
+        if (StringUtils.hasText(accessToken)) {
+            headers.set(HttpHeaders.COOKIE, SecurityConstants.COOKIE_ACCESS_TOKEN + "=" + accessToken);
+        }
+    }
+
+    private String resolveAccessTokenCookie(Cookie[] cookies) {
+        if (cookies == null || cookies.length == 0) {
+            return null;
+        }
+        for (Cookie cookie : cookies) {
+            if (cookie != null
+                    && SecurityConstants.COOKIE_ACCESS_TOKEN.equals(cookie.getName())
+                    && StringUtils.hasText(cookie.getValue())) {
+                return cookie.getValue();
+            }
+        }
+        return null;
+    }
+
+    private void applyRequestContextHeaders(HttpHeaders headers) {
+        RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
+        if (!(attributes instanceof ServletRequestAttributes servletAttributes)) {
+            return;
+        }
+        if (!headers.containsKey(SecurityConstants.HEADER_REQUEST_ID)) {
+            String requestId = servletAttributes.getRequest().getHeader(SecurityConstants.HEADER_REQUEST_ID);
+            if (StringUtils.hasText(requestId)) {
+                headers.set(SecurityConstants.HEADER_REQUEST_ID, requestId);
+            }
+        }
+        if (!headers.containsKey(SecurityConstants.HEADER_SESSION_ID)) {
+            String sessionId = servletAttributes.getRequest().getHeader(SecurityConstants.HEADER_SESSION_ID);
+            if (StringUtils.hasText(sessionId)) {
+                headers.set(SecurityConstants.HEADER_SESSION_ID, sessionId);
+            }
         }
     }
 }

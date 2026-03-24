@@ -1,10 +1,27 @@
 spring:
+  jackson:
+    time-zone: UTC
+    serialization:
+      write-dates-as-timestamps: false
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id:
+            client-secret:
+            scope: openid,profile,email
+          google-connect:
+            provider: google
+            client-id:
+            client-secret:
+            scope: openid,profile,email
   sql:
     init:
       mode: always
       data-locations: classpath:init-data.sql
   datasource:
-    url: jdbc:mysql://localhost:3306/id_mysql_database?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    url: jdbc:mysql://dangch-mysql:3306/id_mysql_database?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: root
     password: mysql_root_password
   jpa:
@@ -12,19 +29,22 @@ spring:
       ddl-auto: update
     properties:
       hibernate:
+        jdbc:
+          time_zone: UTC
         dialect: org.hibernate.dialect.MySQL8Dialect
     open-in-view: false
     defer-datasource-initialization: true
   data:
     redis:
-      host: localhost
+      host: dangch-redis
       port: 6379
       password: redis_password
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: dangch-kafka:9092
 
 server:
   port: 8082
+  forward-headers-strategy: framework
 
 security:
   external-jwt:
@@ -40,24 +60,11 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: http://localhost:8761/eureka
+      defaultZone: http://dangch-eureka:8761/eureka
   instance:
     prefer-ip-address: true
-    hostname: localhost
+    hostname: dangch-auth
     instance-id: ${spring.application.name}:${server.port}
-
-internal:
-  api:
-    auth-service: repo-auth
-    token-path: /oauth/token
-    client-id: oRd1gWcf7Sx1z0NHHA1zwSPa
-    client-secret: 4PHWqCA2CtcSjEf6pUpP7D9hVuvCOdRL
-
-kafka:
-  topics:
-    notification: notification.in-app
-    file: storage.file
-    mail: notification.mail
 
 logging:
   level:
@@ -65,5 +72,27 @@ logging:
 
 app:
   frontend:
-    reset-password-url: http://localhost:5173/
+    base-url: https://simes.io.vn
+    reset-password-path: /reset-password
+  security:
+    cookies:
+      access-token-name: access_token
+      refresh-token-name: refresh_token
+      domain: simes.io.vn
+      same-site: None
+      secure: true
 
+# Required declarations (But it doesn't need to have value.)
+internal:
+  config:
+    token-path: /oauth/token
+    client-id:
+    client-secret:
+  service:
+    auth-service: repo-auth
+
+kafka:
+  topics:
+    notification: notification.in-app
+    file: storage.file
+    mail: notification.mail

@@ -8,10 +8,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import pl.co.common.exception.ApiException;
 import pl.co.common.exception.ErrorCode;
+import pl.co.common.file.FileMeta;
 import pl.co.common.util.UlidGenerator;
 import pl.co.storage.config.StorageProperties;
 import pl.co.storage.dto.FileDownload;
-import pl.co.storage.dto.FileResponse;
 import pl.co.storage.entity.File;
 import pl.co.storage.entity.FileStatus;
 import pl.co.storage.mapper.FileMapper;
@@ -38,7 +38,7 @@ public class FileServiceImpl implements FileService {
 
     @Override
     @Transactional
-    public FileResponse upload(MultipartFile file) {
+    public FileMeta upload(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new ApiException(ErrorCode.E243, "File is required");
         }
@@ -113,8 +113,7 @@ public class FileServiceImpl implements FileService {
             file.setSizeBytes(stat.size());
         }
         file.setStatus(FileStatus.READY.name());
-        File saved = fileRepository.save(file);
-        fileMapper.toResponse(saved);
+        fileRepository.save(file);
     }
 
     @Override

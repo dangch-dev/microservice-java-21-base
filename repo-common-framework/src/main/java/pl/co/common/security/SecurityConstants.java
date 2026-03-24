@@ -7,7 +7,10 @@ public final class SecurityConstants {
     public static final String HEADER_AUTHORIZATION = "Authorization";
     public static final String HEADER_BEARER_PREFIX = "Bearer ";
     public static final String HEADER_REQUEST_ID = "X-Request-Id";
+    public static final String HEADER_SESSION_ID = "X-Session-Id";
     public static final String HEADER_INTERNAL_TOKEN = "X-Internal-Token";
+
+    public static final String COOKIE_ACCESS_TOKEN = "access_token";
 
     public static final String CLAIM_USER_ID = "uid";
     public static final String CLAIM_ROLES = "roles";

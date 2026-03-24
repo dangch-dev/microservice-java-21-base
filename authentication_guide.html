@@ -19,12 +19,16 @@
   <div class="card">
     <h2>1) Keys / Secrets to configure</h2>
     <ul>
-      <li><b>JWT HS256 secret</b>: <code>security.external-jwt.secret</code> (same for gateway & identity).</li>
+      <li><b>JWT RSA keys</b>: <code>security.external-jwt.public-key-path</code> / <code>private-key-path</code>.</li>
       <li><b>Access TTL</b>: <code>security.external-jwt.access-ttl</code> (default 5m).</li>
       <li><b>Refresh TTL</b>: <code>security.external-jwt.refresh-ttl</code> (default 7d).</li>
       <li><b>Redis</b>: host/port/password for refresh tokens + email/password reset tokens.</li>
       <li><b>MySQL</b>: URL, username, password for user & role tables.</li>
       <li><b>Eureka</b>: <code>eureka.client.service-url.defaultZone</code> (gateway + identity register here).</li>
+      <li><b>Google OAuth2 client</b>: <code>spring.security.oauth2.client.registration.google.*</code></li>
+      <li><b>FE base URL</b>: <code>app.frontend.base-url</code> (origin only, used to build redirect targets).</li>
+      <li><b>Reset password path</b>: <code>app.frontend.reset-password-path</code> (e.g. <code>/reset-password</code>).</li>
+      <li><b>Auth cookies</b>: <code>app.security.cookies.*</code> (name, domain, same-site, secure).</li>
     </ul>
   </div>
 
@@ -32,10 +36,10 @@
     <h2>2) Main functions</h2>
     <ul>
       <li><b>Signup</b>: create account, email starts as unverified.</li>
-      <li><b>Login</b>: requires verified email; returns access + refresh tokens.</li>
-      <li><b>Refresh token</b>: rotate refresh, get new access.</li>
-      <li><b>Logout</b>: revoke refresh token.</li>
-      <li><b>Email verification</b>: request token via email, verify token to unlock login.</li>
+      <li><b>Signin</b>: requires verified email; sets HttpOnly access + refresh cookies.</li>
+      <li><b>Refresh token</b>: rotate refresh and set new cookies.</li>
+      <li><b>Signout</b>: revoke refresh token and clear cookies.</li>
+      <li><b>Email verification</b>: request token via email, verify OTP to unlock login and set cookies.</li>
       <li><b>Forgot / Reset password</b>: request reset token via email, reset without old password.</li>
       <li><b>Profile</b>: get/update current user.</li>
       <li><b>Admin user management</b>: list (filter/paginate), detail, create/update, activate/block.</li>
@@ -53,12 +57,12 @@
   <div class="card">
     <h2>4) Auth flow (happy path)</h2>
     <ol>
-      <li><b>Signup</b>: POST <code>/auth/signup</code> → returns tokens + emailVerified=false.</li>
-      <li><b>Request email OTP</b>: POST <code>/auth/email/otp/send</code> (requires auth, uses email from token).</li>
-      <li><b>Verify email OTP</b>: POST <code>/auth/email/otp/verify</code> with otp → emailVerified=true and returns access/refresh tokens.</li>
-      <li><b>Login</b>: POST <code>/auth/login</code> → access/refresh tokens (after email verification).</li>
-      <li><b>Refresh</b>: POST <code>/auth/refresh</code> with refresh token.</li>
-      <li><b>Logout</b>: POST <code>/auth/logout</code> with refresh token.</li>
+      <li><b>Signup</b>: POST <code>/auth/signup</code> → sets cookies + emailVerified=false.</li>
+      <li><b>Request email OTP</b>: POST <code>/auth/email/otp/send</code> (requires auth).</li>
+      <li><b>Verify email OTP</b>: POST <code>/auth/email/otp/verify</code> with otp → emailVerified=true and sets cookies.</li>
+      <li><b>Signin</b>: POST <code>/auth/signin</code> → sets cookies (after email verification).</li>
+      <li><b>Refresh</b>: POST <code>/auth/refresh</code> (uses refresh cookie; body optional for non-browser clients).</li>
+      <li><b>Signout</b>: POST <code>/auth/signout</code> (uses refresh cookie; body optional for non-browser clients).</li>
     </ol>
   </div>
 
@@ -75,7 +79,8 @@
   <div class="card">
     <h2>6) Required headers</h2>
     <ul>
-      <li><code>Authorization: Bearer &lt;access_token&gt;</code> (protected APIs).</li>
+      <li>Browser clients: HttpOnly cookies <code>access_token</code> and <code>refresh_token</code> (send with <code>withCredentials</code>).</li>
+      <li>Non-browser clients: <code>Authorization: Bearer &lt;access_token&gt;</code>.</li>
       <li>Gateway injects for downstream: <code>X-User-Id</code>, <code>X-Roles</code> from JWT.</li>
       <li>Request correlation: <code>X-Request-Id</code> (optional).</li>
     </ul>
@@ -100,20 +105,35 @@ POST http://localhost:8080/api/auth/email/otp/send
 POST http://localhost:8080/api/auth/email/otp/verify
 { "otp":"&lt;otp&gt;" }
 
-POST http://localhost:8080/api/id/auth/login
+POST http://localhost:8080/api/id/auth/signin
 { "email":"user@local", "password":"Admin@123" }
 
 POST http://localhost:8080/api/id/auth/refresh
-{ "refreshToken":"&lt;refresh&gt;" }
+(no body; uses refresh cookie)
 
-POST http://localhost:8080/api/id/auth/logout
-{ "refreshToken":"&lt;refresh&gt;" }
+POST http://localhost:8080/api/id/auth/signout
+(no body; uses refresh cookie)
 
 POST http://localhost:8080/api/id/auth/forgot-password
 { "email":"user@local" }
 
 POST http://localhost:8080/api/id/auth/reset-password
 { "token":"&lt;resetToken&gt;", "newPassword":"NewPass@123" }</pre>
+  </div>
+
+  <div class="card">
+    <h2>9) OAuth2 (Google) login</h2>
+    <ul>
+      <li>Start login: <code>GET /oauth2/authorization/google</code></li>
+      <li>Optional callback path: <code>GET /oauth2/authorization/google?callback=/home</code> (path only; BE prepends FE base URL)</li>
+      <li>Request extra scope: <code>GET /oauth2/authorization/google?scope=https://www.googleapis.com/auth/drive.file</code></li>
+      <li>Force consent when needed: add <code>&amp;force_consent=true</code></li>
+      <li>Callback: <code>GET /login/oauth2/code/google</code> (handled by auth-service)</li>
+      <li>On success: cookies are set and user is redirected to FE callback URL.</li>
+      <li>Connect Google (no app session change): <code>GET /oauth2/authorization/google-connect?callback=/path</code></li>
+      <li>Get Google access token: <code>GET /api/auth/google/connect/token</code> (auto refresh if expired; returns Google account info + token if connected)</li>
+      <li>Disconnect Google: <code>POST /api/auth/google/disconnect</code></li>
+    </ul>
   </div>
 </body>
 </html>

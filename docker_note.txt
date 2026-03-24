@@ -1,0 +1,28 @@
+docker build -f docker/parent.Dockerfile -t dangch-parent .
+docker build -f docker/framework.Dockerfile -t dangch-framework .
+docker compose build
+docker compose up -d
+
+docker ps | grep -i dangch
+
+docker rm -f $(docker ps -aq --filter "name=dangch-")
+
+docker rmi $(docker images --filter=reference='dangch-*' -q)
+
+docker compose build api-gateway
+docker compose up -d api-gateway
+
+docker compose build identity
+docker compose up -d identity
+
+docker compose build auth
+docker compose up -d auth
+
+docker compose build assessment
+docker compose up -d assessment
+
+docker compose build storage
+docker compose up -d storage
+
+docker compose build minio
+docker compose up -d minio
