@@ -56,7 +56,7 @@
 ```
 
 ### Errors
-- (400 Bad Request) - errorCode: 243 when ullName is missing.
+- (400 Bad Request) - errorCode: 243 when fullName is missing.
 - (400 Bad Request) - errorCode: BAD_REQUEST when field length is invalid.
 - (400 Bad Request) - errorCode: 202 when request body has invalid data type or JSON.
 - (404 Not Found) - errorCode: NOT_FOUND when user not found.

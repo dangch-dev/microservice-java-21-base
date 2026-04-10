@@ -4,6 +4,7 @@ import pl.co.common.exception.ApiException;
 import pl.co.common.exception.ErrorCode;
 import pl.co.identity.dto.ProfileResponse;
 import pl.co.identity.dto.UpdateProfileRequest;
+import pl.co.identity.dto.UpdateProfileResponse;
 import pl.co.identity.entity.User;
 import pl.co.identity.mapper.UserMapper;
 import pl.co.identity.repository.UserRepository;
@@ -29,7 +30,7 @@ public class UserServiceImpl implements UserService {
 
     @Transactional
     @Override
-    public ProfileResponse updateProfile(String userId, UpdateProfileRequest request) {
+    public UpdateProfileResponse updateProfile(String userId, UpdateProfileRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "User not found"));
         user.setFullName(request.getFullName());
@@ -37,6 +38,6 @@ public class UserServiceImpl implements UserService {
         user.setAvatarUrl(request.getAvatarUrl());
         user.setAddress(request.getAddress());
         User saved = userRepository.save(user);
-        return userMapper.toProfile(saved);
+        return userMapper.toUpdateProfile(saved);
     }
 }

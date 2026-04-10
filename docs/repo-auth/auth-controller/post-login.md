@@ -2,7 +2,7 @@
 
 
 ## Summary
-- Sign in with email and password and set HttpOnly access/refresh cookies.
+- Sign in with email and password, set HttpOnly access/refresh cookies, and return email verification status.
 
 
 ## Description
@@ -38,7 +38,9 @@
   "success": boolean,
   "errorCode": string | null,
   "errorMessage": string | null,
-  "data": null
+  "data": {
+    "emailVerified": boolean
+  }
 }
 ```
 
@@ -65,3 +67,4 @@
 
 ## Notes
 - Token expiry values are managed by cookie TTL.
+- `data.emailVerified` helps client decide whether to show verify-email flow after signin.

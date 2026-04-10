@@ -38,6 +38,7 @@
     "phoneNumber": string | null,
     "avatarUrl": string | null,
     "address": string | null,
+    "emailVerified": boolean,
     "roles": [string],
     "status": string (ACTIVE|BLOCKED)
   }

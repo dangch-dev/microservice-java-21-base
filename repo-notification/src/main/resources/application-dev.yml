@@ -21,6 +21,19 @@ spring:
     consumer:
       group-id: notification-service
       auto-offset-reset: latest
+  mail:
+    host: smtp-relay.brevo.com
+    port: 587
+    username: 
+    password: 
+    from: 
+    from-name: 
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 server:
   port: 8083
@@ -44,10 +57,6 @@ eureka:
     prefer-ip-address: true
     hostname: dangch-notification
     instance-id: ${spring.application.name}:${server.port}
-
-sendgrid:
-  api-key:
-  from: no-reply@dangch.tech
 
 logging:
   level:
