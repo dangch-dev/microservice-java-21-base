@@ -1,0 +1,91 @@
+﻿{
+  "schema_version": 1,
+  "prompt": {
+    "content": "<p>In the text below some words are missing.</p><p>In theory, noncompete clauses promote investment by assuring <span data-blank-id=\"blank_1\"></span>.</p>",
+    "files": [
+      {
+        "fileId": "file_prompt_001",
+        "filename": "question-image.png",
+        "mimeType": "image/png",
+        "sizeBytes": 204800
+      }
+    ]
+  },
+  "explanation": {
+    "content": "<p>The best fit is based on context.</p>",
+    "files": []
+  },
+  "options": [
+    {
+      "id": "A",
+      "content": "<p>Option A</p>",
+      "files": []
+    },
+    {
+      "id": "B",
+      "content": "<p>Option B</p>",
+      "files": []
+    },
+    {
+      "id": "C",
+      "content": "<p>Option C</p>",
+      "files": []
+    }
+  ],
+  "matching": {
+    "left_items": [
+      {
+        "id": "L1",
+        "content": "<p>Paris</p>",
+        "files": []
+      },
+      {
+        "id": "L2",
+        "content": "<p>Tokyo</p>",
+        "files": []
+      }
+    ],
+    "right_items": [
+      {
+        "id": "R1",
+        "content": "<p>France</p>",
+        "files": []
+      },
+      {
+        "id": "R2",
+        "content": "<p>Japan</p>",
+        "files": []
+      }
+    ]
+  },
+  "sort": {
+    "items": [
+      {
+        "id": "S1",
+        "content": "<p>Bước 1</p>",
+        "files": []
+      },
+      {
+        "id": "S2",
+        "content": "<p>Bước 2</p>",
+        "files": []
+      },
+      {
+        "id": "S3",
+        "content": "<p>Bước 3</p>",
+        "files": []
+      }
+    ]
+  },
+  "blanks": {
+    "input_kind": "text",
+    "word_bank": []
+  },
+  "file_upload": {
+    "allowed_mime_types": [
+      "application/pdf",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    ],
+    "max_files": 2
+  }
+}

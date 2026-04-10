@@ -144,7 +144,7 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: dev
     ports:
-      - "58001:8080"
+      - "58030:8080"
     volumes:
       - ./secrets:/secrets:ro
     networks:
@@ -252,6 +252,25 @@ services:
       app-network:
         aliases:
           - dangch-storage
+
+  assessment:
+    image: dangch-assessment
+    build:
+      context: .
+      dockerfile: repo-assessment/Dockerfile
+    container_name: dangch-assessment
+    restart: unless-stopped
+    depends_on:
+      - mysql
+      - eureka
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+    volumes:
+      - ./secrets:/secrets:ro
+    networks:
+      app-network:
+        aliases:
+          - dangch-assessment
 
 networks:
   app-network:

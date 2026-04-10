@@ -8,8 +8,9 @@
 ## Description
 1. Normalize searchValue (trim).
 2. If searchValue is present, query by fullName/email (contains, case-insensitive).
-3. If searchValue is null/blank, return all users with paging.
-4. Return paged list with the same columns as lookup.
+3. If `roleNames` is present, filter users that have at least one role in this list.
+4. If searchValue is null/blank, return all users with paging.
+5. Return paged list with the same columns as lookup.
 
 ## Auth & Permissions
 - AUTHENTICATED
@@ -23,6 +24,7 @@
 ```
 {
   "searchValue": string | null,
+  "roleNames": [string] | null,
   "page": integer | null (default 0),
   "size": integer | null (default 20)
 }
@@ -34,6 +36,7 @@
 | --- | --- | --- |
 | Authorization | header | x |
 | searchValue | body |  |
+| roleNames | body |  |
 
 
 ## Response
@@ -80,4 +83,5 @@
 
 ## Notes
 - When `searchValue` is null/blank, returns all users with paging.
+- `roleNames` is optional; when provided, users must match at least one role in the list.
 - Sorted by `createdAt` DESC (newest first).

@@ -1,0 +1,68 @@
+﻿{
+  "schema_version": 1,
+  "max_points": 10,
+  "choice": {
+    "correct_option_ids": [
+      "B"
+    ]
+  },
+  "short_text": {
+    "match_method": "exact",
+    "accepted": [
+      "Ha Noi",
+      "Hanoi"
+    ]
+  },
+  "matching": {
+    "pairs": [
+      {
+        "left_id": "L1",
+        "right_id": "R1"
+      },
+      {
+        "left_id": "L2",
+        "right_id": "R2"
+      }
+    ],
+    "scheme": "per_pair"
+  },
+  "sort": {
+    "correct_order_ids": [
+      "S1",
+      "S2",
+      "S3"
+    ],
+    "scheme": "per_position"
+  },
+  "fill_blanks": {
+    "input_kind": "text",
+    "blanks": [
+      {
+        "blank_id": "blank_1",
+        "accepted": [
+          "companies"
+        ],
+        "match_method": "contains",
+        "correct_option_ids": []
+      }
+    ],
+    "scheme": "per_pair"
+  },
+  "manual": {
+    "auto_mode": false,
+    "rubric": [
+      {
+        "id": "completeness",
+        "label": "Completeness",
+        "max_points": 4,
+        "description": "Submit all required files."
+      },
+      {
+        "id": "quality",
+        "label": "Quality",
+        "max_points": 6,
+        "description": "Content quality and clarity."
+      }
+    ]
+  }
+}

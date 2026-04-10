@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import pl.co.common.dto.ApiResponse;
 import pl.co.identity.dto.UserLookupPageResponse;
@@ -13,6 +12,7 @@ import pl.co.identity.dto.UserLookupRequest;
 import pl.co.identity.dto.UserLookupResponse;
 import pl.co.identity.dto.UserLookupSearchRequest;
 import pl.co.identity.service.UserLookupService;
+
 
 import java.util.List;
 
@@ -33,6 +33,7 @@ public class UserLookupController {
     public ApiResponse<UserLookupPageResponse> search(@Valid @RequestBody UserLookupSearchRequest request) {
         return ApiResponse.ok(userLookupService.search(
                 request.getSearchValue(),
+                request.getRoleNames(),
                 request.getPage(),
                 request.getSize()
         ));
