@@ -1,25 +1,26 @@
 package pl.co.notification.service.impl;
 
-import com.sendgrid.Method;
-import com.sendgrid.Request;
-import com.sendgrid.SendGrid;
-import com.sendgrid.helpers.mail.Mail;
-import com.sendgrid.helpers.mail.objects.Content;
-import com.sendgrid.helpers.mail.objects.Email;
-import com.sendgrid.helpers.mail.objects.Personalization;
+import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import pl.co.common.mail.MailMessage;
 import pl.co.notification.service.MailService;
+
+import java.nio.charset.StandardCharsets;
 
 @Service
 @RequiredArgsConstructor
 public class MailServiceImpl implements MailService {
 
-    private final SendGrid sendGrid;
+    private static final Logger log = LoggerFactory.getLogger(MailServiceImpl.class);
+    private final JavaMailSender mailSender;
 
-    @Value("${sendgrid.from}")
+    @Value("${spring.mail.from}")
     private String from;
 
     @Override
@@ -28,27 +29,28 @@ public class MailServiceImpl implements MailService {
             return;
         }
         try {
-            Email fromEmail = new Email(from);
-            Email toEmail = new Email(message.to());
             String subject = message.subject() == null ? "" : message.subject();
-            String mimeType = message.html() ? "text/html" : "text/plain";
-            Content content = new Content(mimeType, message.body() == null ? "" : message.body());
+            String body = message.body() == null ? "" : message.body();
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(
+                    mimeMessage,
+                    false,
+                    StandardCharsets.UTF_8.name()
+            );
 
-            Mail mail = new Mail();
-            mail.setFrom(fromEmail);
-            mail.setSubject(subject);
-            mail.addContent(content);
-            Personalization personalization = new Personalization();
-            personalization.addTo(toEmail);
-            mail.addPersonalization(personalization);
+            helper.setFrom(from);
+            helper.setTo(message.to());
+            helper.setSubject(subject);
+            helper.setText(body, message.html());
 
-            Request request = new Request();
-            request.setMethod(Method.POST);
-            request.setEndpoint("mail/send");
-            request.setBody(mail.build());
-            sendGrid.api(request);
-        } catch (Exception ignored) {
-            // Avoid breaking notification pipeline on mail failures.
+            log.info("Sending mail via Brevo SMTP. to={}, subject={}, from={}",
+                    message.to(), subject, from);
+            mailSender.send(mimeMessage);
+            log.info("Mail sent via Brevo SMTP. to={}, subject={}", message.to(), subject);
+        } catch (Exception ex) {
+            // Keep pipeline resilient but do log full send failure details for troubleshooting.
+            log.error("Failed to send mail via Brevo SMTP. to={}, subject={}, from={}",
+                    message.to(), message.subject(), from, ex);
         }
     }
 }

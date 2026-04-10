@@ -65,7 +65,7 @@ public class SecurityConfig {
 
     @Bean
     public EmailVerifiedFilter emailVerifiedFilter() {
-        return new EmailVerifiedFilter(List.of());
+        return new EmailVerifiedFilter(List.of("/users/me"));
     }
 
     @Bean

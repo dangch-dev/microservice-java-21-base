@@ -26,9 +26,11 @@ public class EventPublisher {
         }
         try {
             String message = payload == null ? null : objectMapper.writeValueAsString(payload);
+            log.info("Publishing event: topic={}, key={}, payloadType={}",
+                    topic, key, payload == null ? "null" : payload.getClass().getSimpleName());
             kafkaTemplate.send(topic, key, message);
         } catch (Exception ex) {
-            log.warn("Failed to publish common event: {}", ex.getMessage());
+            log.warn("Failed to publish event: {}", ex.getMessage());
         }
     }
 }

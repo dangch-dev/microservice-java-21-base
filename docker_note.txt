@@ -37,6 +37,10 @@ docker compose up -d storage
 docker compose build minio
 docker compose up -d minio
 
+docker compose build notification
+docker compose up -d notification
+
+
 ==========================================
 docker compose down --rmi local
 docker build -f docker/parent.Dockerfile -t lms-parent .
