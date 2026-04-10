@@ -12,10 +12,13 @@ import pl.co.identity.service.UserLookupService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import pl.co.common.util.StringUtils;
+import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 @Service
@@ -42,17 +45,35 @@ public class UserLookupServiceImpl implements UserLookupService {
 
     @Override
     @Transactional(readOnly = true)
-    public pl.co.identity.dto.UserLookupPageResponse search(String searchValue, Integer page, Integer size) {
+    public pl.co.identity.dto.UserLookupPageResponse search(String searchValue,
+                                                            List<String> roleNames,
+                                                            Integer page,
+                                                            Integer size) {
         String normalizedSearch = StringUtils.trimToEmpty(searchValue);
+        List<String> normalizedRoleNames = normalizeRoleNames(roleNames);
         int pageValue = Math.max(page == null ? 0 : page, 0);
         int sizeValue = Math.max(size == null ? 20 : size, 1);
         PageRequest pageRequest = PageRequest.of(pageValue, sizeValue, Sort.by("createdAt").descending());
-        Page<User> result;
-        result = userRepository.findByFullNameContainingIgnoreCaseOrEmailContainingIgnoreCase(
-                normalizedSearch,
-                normalizedSearch,
-                pageRequest
-        );
+        Specification<User> spec = (root, query, cb) -> {
+            if (query != null) {
+                query.distinct(true);
+            }
+            List<Predicate> predicates = new ArrayList<>();
+            if (StringUtils.hasText(normalizedSearch)) {
+                String likeValue = "%" + normalizedSearch.toLowerCase(Locale.ROOT) + "%";
+                Predicate byName = cb.like(cb.lower(root.get("fullName")), likeValue);
+                Predicate byEmail = cb.like(cb.lower(root.get("email")), likeValue);
+                predicates.add(cb.or(byName, byEmail));
+            }
+            if (!normalizedRoleNames.isEmpty()) {
+                predicates.add(root.join("roles").get("name").in(normalizedRoleNames));
+            }
+            if (predicates.isEmpty()) {
+                return cb.conjunction();
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+        Page<User> result = userRepository.findAll(spec, pageRequest);
         List<UserLookupResponse> items = toLookupResponses(result.getContent());
         return pl.co.identity.dto.UserLookupPageResponse.builder()
                 .items(items)
@@ -61,6 +82,24 @@ public class UserLookupServiceImpl implements UserLookupService {
                 .page(result.getNumber())
                 .size(result.getSize())
                 .build();
+    }
+
+    private List<String> normalizeRoleNames(List<String> roleNames) {
+        if (roleNames == null || roleNames.isEmpty()) {
+            return List.of();
+        }
+        Set<String> seen = new HashSet<>();
+        List<String> normalized = new ArrayList<>();
+        for (String roleName : roleNames) {
+            if (!StringUtils.hasText(roleName)) {
+                continue;
+            }
+            String candidate = roleName.trim().toUpperCase(Locale.ROOT);
+            if (seen.add(candidate)) {
+                normalized.add(candidate);
+            }
+        }
+        return normalized;
     }
 
     private List<UserLookupResponse> toLookupResponses(List<User> users) {

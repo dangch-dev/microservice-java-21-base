@@ -60,8 +60,11 @@ public class BearerTokenAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
+        String servletPath = request.getServletPath();
         String header = request.getHeader(SecurityConstants.HEADER_AUTHORIZATION);
-        boolean isOptional = matches(request.getRequestURI(), optionalPatterns);
+        boolean isOptional = matches(servletPath, optionalPatterns);
+
+        log.info("Bearer filter path debug: servletPath={}, optional={}", servletPath, isOptional);
 
         String token = null;
         if (header != null && header.startsWith(SecurityConstants.HEADER_BEARER_PREFIX)) {

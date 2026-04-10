@@ -60,7 +60,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/email/**").authenticated()
                         .requestMatchers("/signup", "/guest", "/guest/login-by-code", "/signin", "/refresh", "/signout").permitAll()
-                        .requestMatchers("/password/**", "/oauth/**", "/oauth2/**", "/login/oauth2/**").permitAll()
+                        .requestMatchers("/forgot-password/**", "/oauth/**", "/oauth2/**", "/login/oauth2/**").permitAll()
                         .anyRequest().permitAll())
                 .addFilterBefore(commonRequestContextFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(internalJwtFilter, UsernamePasswordAuthenticationFilter.class)
@@ -87,7 +87,7 @@ public class SecurityConfig {
                 "/signin",
                 "/refresh",
                 "/signout",
-                "/password/**",
+                "/forgot-password/**",
                 "/oauth/**", // internal login
                 "/oauth2/**", // login with google
                 "/login/oauth2/**" // google oauth2 callback
@@ -103,7 +103,7 @@ public class SecurityConfig {
                 "/signin",
                 "/refresh",
                 "/signout",
-                "/password/**",
+                "/forgot-password/**",
                 "/oauth/**",
                 "/oauth2/**",
                 "/login/oauth2/**",

@@ -144,7 +144,7 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: dev
     ports:
-      - "58001:8080"
+      - "58030:8080"
     volumes:
       - ./secrets:/secrets:ro
     networks:

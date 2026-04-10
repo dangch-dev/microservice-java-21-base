@@ -33,7 +33,7 @@ public class EmailVerifiedFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getRequestURI();
+        String path = request.getServletPath();
         return skipPatterns.stream().anyMatch(p -> matcher.match(p, path));
     }
 
