@@ -36,7 +36,7 @@
     <h2>2) Main functions</h2>
     <ul>
       <li><b>Signup</b>: create account, email starts as unverified.</li>
-      <li><b>Signin</b>: requires verified email; sets HttpOnly access + refresh cookies.</li>
+      <li><b>Signin</b>: sets HttpOnly access + refresh cookies and returns <code>emailVerified</code> status.</li>
       <li><b>Refresh token</b>: rotate refresh and set new cookies.</li>
       <li><b>Signout</b>: revoke refresh token and clear cookies.</li>
       <li><b>Email verification</b>: request token via email, verify OTP to unlock login and set cookies.</li>
@@ -60,7 +60,7 @@
       <li><b>Signup</b>: POST <code>/auth/signup</code> → sets cookies + emailVerified=false.</li>
       <li><b>Request email OTP</b>: POST <code>/auth/email/otp/send</code> (requires auth).</li>
       <li><b>Verify email OTP</b>: POST <code>/auth/email/otp/verify</code> with otp → emailVerified=true and sets cookies.</li>
-      <li><b>Signin</b>: POST <code>/auth/signin</code> → sets cookies (after email verification).</li>
+      <li><b>Signin</b>: POST <code>/auth/signin</code> -> sets cookies and returns <code>emailVerified</code> for client-side flow handling.</li>
       <li><b>Refresh</b>: POST <code>/auth/refresh</code> (uses refresh cookie; body optional for non-browser clients).</li>
       <li><b>Signout</b>: POST <code>/auth/signout</code> (uses refresh cookie; body optional for non-browser clients).</li>
     </ol>
@@ -137,3 +137,4 @@ POST http://localhost:8080/api/id/auth/reset-password
   </div>
 </body>
 </html>
+

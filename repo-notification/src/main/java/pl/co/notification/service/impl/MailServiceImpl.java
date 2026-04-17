@@ -1,5 +1,6 @@
 package pl.co.notification.service.impl;
 
+import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -23,6 +24,9 @@ public class MailServiceImpl implements MailService {
     @Value("${spring.mail.from}")
     private String from;
 
+    @Value("${spring.mail.from-name}")
+    private String fromName;
+
     @Override
     public void send(MailMessage message) {
         if (message == null || message.to() == null || message.to().isBlank()) {
@@ -38,19 +42,19 @@ public class MailServiceImpl implements MailService {
                     StandardCharsets.UTF_8.name()
             );
 
-            helper.setFrom(from);
+            helper.setFrom(new InternetAddress(from, fromName, StandardCharsets.UTF_8.name()));
             helper.setTo(message.to());
             helper.setSubject(subject);
             helper.setText(body, message.html());
 
-            log.info("Sending mail via Brevo SMTP. to={}, subject={}, from={}",
-                    message.to(), subject, from);
+            log.info("Sending mail via Brevo SMTP. to={}, subject={}, from={} <{}>",
+                    message.to(), subject, fromName, from);
             mailSender.send(mimeMessage);
             log.info("Mail sent via Brevo SMTP. to={}, subject={}", message.to(), subject);
         } catch (Exception ex) {
             // Keep pipeline resilient but do log full send failure details for troubleshooting.
-            log.error("Failed to send mail via Brevo SMTP. to={}, subject={}, from={}",
-                    message.to(), message.subject(), from, ex);
+            log.error("Failed to send mail via Brevo SMTP. to={}, subject={}, from={} <{}>",
+                    message.to(), message.subject(), fromName, from, ex);
         }
     }
 }

@@ -9,11 +9,13 @@ spring:
         add-to-simple-url-handler-mapping: true
         corsConfigurations:
           '[/**]':
-            allowedOrigins:
+            allowedOriginPatterns:
               - http://localhost:5173
               - http://127.0.0.1:5173
-              - https://exam.dangch.tech
-              - https://www.exam.dangch.tech
+              - http://localhost:3000
+              - http://127.0.0.1:3000
+              - https://dangch.tech
+              - https://*.dangch.tech
             allowedMethods:
               - GET
               - POST

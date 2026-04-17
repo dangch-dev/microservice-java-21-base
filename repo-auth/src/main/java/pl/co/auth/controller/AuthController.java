@@ -4,6 +4,8 @@ import pl.co.auth.service.RefreshTokenService;
 import pl.co.common.dto.ApiResponse;
 import pl.co.auth.dto.TokenResponse;
 import pl.co.auth.dto.LoginRequest;
+import pl.co.auth.dto.SigninResponse;
+import pl.co.auth.dto.SigninResult;
 import pl.co.auth.dto.RefreshTokenRequest;
 import pl.co.auth.dto.SignupRequest;
 import pl.co.auth.dto.GuestSignupRequest;
@@ -51,11 +53,13 @@ public class AuthController {
     }
 
     @PostMapping("/signin")
-    public ApiResponse<Void> signin(@Valid @RequestBody LoginRequest request,
-                                    HttpServletResponse response) {
-        TokenResponse tokens = authService.login(request);
-        authCookieService.setTokens(response, tokens);
-        return ApiResponse.ok(null);
+    public ApiResponse<SigninResponse> signin(@Valid @RequestBody LoginRequest request,
+                                              HttpServletResponse response) {
+        SigninResult result = authService.login(request);
+        authCookieService.setTokens(response, result.getTokens());
+        return ApiResponse.ok(SigninResponse.builder()
+                .emailVerified(result.isEmailVerified())
+                .build());
     }
 
     @PostMapping("/refresh")

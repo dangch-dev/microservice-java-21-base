@@ -1,27 +1,32 @@
-# POST /api/id/internal/users/lookup
+# POST /api/id/users/lookup
 
 
 ## Summary
-- Lookup basic user info by userIds.
+- Search users by fullName/email with pagination.
 
 
 ## Description
-1. Validate request and userIds list.
-2. Load users by ids.
-3. Return basic fields for each matched user.
+1. Normalize searchValue (trim).
+2. If searchValue is present, query by fullName/email (contains, case-insensitive).
+3. If `roleNames` is present, filter users that have at least one role in this list.
+4. If searchValue is null/blank, return all users with paging.
+5. Return paged list with the same columns as lookup.
 
 ## Auth & Permissions
-- INTERNAL (ROLE_INTERNAL)
+- AUTHENTICATED
 
 
 ## Request
 ### Headers
-- X-Internal-Token: string (Bearer token)
+- Authorization: string (Bearer token)
 
 ### Body
 ```
 {
-  "userIds": [string]
+  "searchValue": string | null,
+  "roleNames": [string] | null,
+  "page": integer | null (default 0),
+  "size": integer | null (default 20)
 }
 ```
 
@@ -29,8 +34,9 @@
 ## Required
 | field | location | required |
 | --- | --- | --- |
-| X-Internal-Token | header | x |
-| userIds | body | x |
+| Authorization | header | x |
+| searchValue | body |  |
+| roleNames | body |  |
 
 
 ## Response
@@ -40,7 +46,8 @@
   "success": boolean,
   "errorCode": string | null,
   "errorMessage": string | null,
-  "data": [
+  "data": {
+    "items": [
     {
       "userId": string,
       "fullName": string,
@@ -49,13 +56,21 @@
       "phoneNumber": string | null,
       "roleNames": ["ROLE_MEMBER", "ROLE_ADMIN"]
     }
-  ]
+  ],
+    "totalElements": integer,
+    "totalPages": integer,
+    "page": integer,
+    "size": integer
+  }
 }
 ```
 
 ### Errors
-- (400 Bad Request) - errorCode: 243 when `userIds` is missing/empty.
-- (401 Unauthorized) - errorCode: UNAUTHORIZED when internal token is missing/invalid.
+- (400 Bad Request) - errorCode: 243 when `page/size` is invalid.
+- (401 Unauthorized) - errorCode: UNAUTHORIZED when access token is missing.
+- (401 Unauthorized) - errorCode: 241 when access token is invalid.
+- (401 Unauthorized) - errorCode: 234 when access token is expired.
+- (403 Forbidden) - errorCode: 233 when email is not verified.
 ```
 {
   "success": false,
@@ -67,5 +82,6 @@
 
 
 ## Notes
-- Response only includes users found in the system.
-- Order of returned users is not guaranteed.
+- When `searchValue` is null/blank, returns all users with paging.
+- `roleNames` is optional; when provided, users must match at least one role in the list.
+- Sorted by `createdAt` DESC (newest first).

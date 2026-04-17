@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.*;
 import pl.co.common.dto.ApiResponse;
 import pl.co.common.security.AuthUtils;
 import pl.co.identity.dto.ProfileResponse;
+import pl.co.identity.dto.UpdateProfileResponse;
 import pl.co.identity.dto.UpdateProfileRequest;
 import pl.co.identity.service.UserService;
 import jakarta.validation.Valid;
@@ -40,8 +41,8 @@ public class ProfileController {
             T(pl.co.common.security.RoleName).ROLE_MANAGER.name()
         )
         """)
-    public ApiResponse<ProfileResponse> updateMe(Authentication authentication,
-                                                 @Valid @RequestBody UpdateProfileRequest request) {
+    public ApiResponse<UpdateProfileResponse> updateMe(Authentication authentication,
+                                                       @Valid @RequestBody UpdateProfileRequest request) {
         String userId = AuthUtils.resolveUserId(authentication);
         return ApiResponse.ok(userService.updateProfile(userId, request));
     }

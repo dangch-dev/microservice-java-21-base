@@ -2,6 +2,7 @@ package pl.co.identity.mapper;
 
 import pl.co.identity.dto.AdminUserResponse;
 import pl.co.identity.dto.ProfileResponse;
+import pl.co.identity.dto.UpdateProfileResponse;
 import pl.co.identity.entity.Role;
 import pl.co.common.security.UserStatus;
 import pl.co.identity.entity.User;
@@ -16,6 +17,9 @@ public interface UserMapper {
 
     @Mapping(target = "roles", expression = "java(toRoleNames(user.getRoles()))")
     ProfileResponse toProfile(User user);
+
+    @Mapping(target = "roles", expression = "java(toRoleNames(user.getRoles()))")
+    UpdateProfileResponse toUpdateProfile(User user);
 
     @Mapping(target = "roles", expression = "java(toRoleNames(user.getRoles()))")
     @Mapping(target = "createdAt", source = "createdAt")

@@ -10,6 +10,7 @@ import pl.co.auth.dto.GuestSignupRequest;
 import pl.co.auth.dto.InternalGuestRequest;
 import pl.co.auth.dto.InternalGuestResponse;
 import pl.co.auth.dto.VerifyGuestCodeResponse;
+import pl.co.auth.dto.SigninResult;
 import pl.co.auth.entity.Role;
 import pl.co.auth.entity.User;
 import pl.co.auth.repository.RoleRepository;
@@ -211,7 +212,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public TokenResponse login(LoginRequest request) {
+    public SigninResult login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new ApiException(ErrorCode.E238));
         if (UserStatus.BLOCKED.name().equals(user.getStatus())) {
@@ -220,7 +221,10 @@ public class AuthServiceImpl implements AuthService {
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new ApiException(ErrorCode.E239);
         }
-        return jwtTokenService.issueExternalTokens(user);
+        return SigninResult.builder()
+                .tokens(jwtTokenService.issueExternalTokens(user))
+                .emailVerified(user.isEmailVerified())
+                .build();
     }
 
     @Override
